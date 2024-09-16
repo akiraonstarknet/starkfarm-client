@@ -4,6 +4,7 @@ import tg from '@/assets/tg.svg';
 import { useDotButton } from '@/components/EmblaCarouselDotButton';
 import Pools from '@/components/Pools';
 import Strategies from '@/components/Strategies';
+import Trade from '@/components/Trade';
 import TVL from '@/components/TVL';
 import CONSTANTS from '@/constants';
 import { useWindowSize } from '@/utils/useWindowSize';
@@ -66,10 +67,12 @@ export default function Home() {
   }
 
   function handleTabsChange(index: number) {
-    if (index === 0) {
-      setRoute('pools');
-    } else {
+    if (index === 2) {
+      setRoute('trade');
+    } else if (index === 1) {
       setRoute('strategies');
+    } else {
+      setRoute('pools')
     }
   }
 
@@ -82,6 +85,8 @@ export default function Home() {
       const tab = searchParams.get('tab');
       if (tab === 'strategies') {
         setTabIndex(1);
+      } else if (tab === 'trade') {
+        setTabIndex(2);
       } else {
         setTabIndex(0);
       }
@@ -200,7 +205,16 @@ export default function Home() {
               mixpanel.track('Strategies opened');
             }}
           >
-            Strategies✨
+            Strategies
+          </Tab>
+          <Tab
+            color="light_grey"
+            _selected={{ color: 'purple' }}
+            onClick={() => {
+              mixpanel.track('Long/Short opened');
+            }}
+          >
+           ✨ Long/Short
           </Tab>
         </TabList>
         <TabIndicator
@@ -216,6 +230,9 @@ export default function Home() {
           </TabPanel>
           <TabPanel bg="highlight" float={'left'} width={'100%'}>
             <Strategies />
+          </TabPanel>
+          <TabPanel bg="highlight" float={'left'} width={'100%'}>
+            <Trade />
           </TabPanel>
         </TabPanels>
       </Tabs>
