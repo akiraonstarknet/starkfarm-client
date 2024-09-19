@@ -1,5 +1,4 @@
 import CONSTANTS from '@/constants';
-import { PoolInfo } from '@/store/pools';
 import {
   Avatar,
   AvatarGroup,
@@ -11,31 +10,21 @@ import {
   GridItem,
   Heading,
   HStack,
-  Icon,
   Image,
   Link,
   Spinner,
-  Stack,
   Td,
   Text,
   Tooltip,
   Tr,
-  VStack,
 } from '@chakra-ui/react';
 import shield from '@/assets/shield.svg';
-import { IStrategyProps, StrategyLiveStatus } from '@/strategies/IStrategy';
-import { useAtomValue } from 'jotai';
-import { getDisplayCurrencyAmount } from '@/utils';
-import { addressAtom } from '@/store/claims.atoms';
-import { FaWallet } from 'react-icons/fa';
-import { UserStats, userStatsAtom } from '@/store/utils.atoms';
-import { getPoolInfoFromStrategy } from '@/store/protocols';
-import { TriangleDownIcon, TriangleUpIcon } from '@chakra-ui/icons';
-import { useState } from 'react';
+import { StrategyLiveStatus } from '@/strategies/IStrategy';
+import { UserStats } from '@/store/utils.atoms';
 import mixpanel from 'mixpanel-browser';
 import { TradeInfo } from '@/store/trades.atoms';
 
-interface TradeCardProps {
+export interface TradeCardProps {
   pool: TradeInfo;
   index: number;
   showProtocolName?: boolean;
@@ -109,12 +98,14 @@ function StrategyInfo(props: TradeCardProps) {
               </Tooltip>
             )}
           </HStack>
-        <HStack marginTop={'5px'} spacing={1}>
+          <HStack marginTop={'5px'} spacing={1}>
             {/* <Avatar size={'2xs'} src={pool.protocol.logo} /> */}
             <Text fontSize={'12px'} marginTop={'2px'} color={'light_grey'}>
-            Profit if {pool.pool.name.replace('Long ', '')} goes {pool.isLong ? "up" : "down"}
+              Profit if{' '}
+              {pool.pool.name.replace('Long ', '').replace('Short ', '')} goes{' '}
+              {pool.isLong ? 'up' : 'down'}
             </Text>
-        </HStack>
+          </HStack>
         </Box>
       </HStack>
     </Box>
@@ -182,23 +173,20 @@ function StrategyAPY(props: TradeCardProps) {
 }
 
 function StrategyLeverage(props: TradeCardProps) {
-    return <Tooltip label="Shows the increased capital efficiency of investments compared to direct deposit in popular lending protocols">
-        <Box width={'100%'}>
+  return (
+    <Tooltip label="Shows the increased capital efficiency of investments compared to direct deposit in popular lending protocols">
+      <Box width={'100%'}>
         <Box float={'right'} display={'flex'} fontSize={'13px'}>
-            <Text color="#FCC01E" textAlign={'right'}>
+          <Text color="#FCC01E" textAlign={'right'}>
             ⚡
-            </Text>
-            <Text
-            width="100%"
-            color="cyan"
-            textAlign={'right'}
-            fontWeight={600}
-            >
+          </Text>
+          <Text width="100%" color="cyan" textAlign={'right'} fontWeight={600}>
             {props.pool.additional?.leverage?.toFixed(1)}X
-            </Text>
+          </Text>
         </Box>
-        </Box>
+      </Box>
     </Tooltip>
+  );
 }
 
 function isLive(status: StrategyLiveStatus) {
@@ -208,23 +196,27 @@ function isLive(status: StrategyLiveStatus) {
 }
 
 function CollateralInfo(props: TradeCardProps) {
-    return <>
-        {props.pool.collaterals.map((collateral) => {
-            return <Badge
-                key={collateral.name}
-                padding={'5px 10px'}
-                ml={'5px'}
-                float={'right'}
-                bg='highlight'
-                color={'white'}
-            >
-                <Center>
-                    <Avatar size={'xs'} src={collateral.logo}/>
-                    <Text ml={'5px'}>{collateral.name}</Text>
-                </Center>
-            </Badge>
-        })}
+  return (
+    <>
+      {props.pool.collaterals.map((collateral) => {
+        return (
+          <Badge
+            key={collateral.name}
+            padding={'5px 10px'}
+            ml={'5px'}
+            float={'right'}
+            bg="highlight"
+            color={'white'}
+          >
+            <Center>
+              <Avatar size={'xs'} src={collateral.logo} />
+              <Text ml={'5px'}>{collateral.name}</Text>
+            </Center>
+          </Badge>
+        );
+      })}
     </>
+  );
 }
 
 function getStrategyWiseInfo(
@@ -304,7 +296,7 @@ function getLinkProps(pool: TradeInfo, showProtocolName?: boolean) {
     href: pool.protocol.link,
     target: '_blank',
     onClick: () => {
-        // todo update the event name and info
+      // todo update the event name and info
       mixpanel.track('Pool clicked', {
         pool: pool.pool.name,
         protocol: pool.protocol.name,
@@ -336,7 +328,7 @@ export default function TradeCard(props: TradeCardProps) {
           />
         </Td>
         <Td>
-            <StrategyLeverage pool={pool} index={index} />
+          <StrategyLeverage pool={pool} index={index} />
         </Td>
         <Td>
           <StrategyAPY pool={pool} index={index} />

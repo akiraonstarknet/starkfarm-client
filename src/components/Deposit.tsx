@@ -1,4 +1,4 @@
-import { DUMMY_BAL_ATOM } from '@/store/balance.atoms';
+import { BalanceResult, DUMMY_BAL_ATOM } from '@/store/balance.atoms';
 import { StrategyInfo } from '@/store/strategies.atoms';
 import { StrategyTxProps } from '@/store/transactions.atom';
 import { IStrategyActionHook, TokenInfo } from '@/strategies/IStrategy';
@@ -17,57 +17,141 @@ import {
   MenuButton,
   MenuItem,
   MenuList,
-  NumberDecrementStepper,
-  NumberIncrementStepper,
-  NumberInput,
-  NumberInputField,
-  NumberInputStepper,
   Progress,
   Spinner,
   Text,
   Tooltip,
+  VStack,
 } from '@chakra-ui/react';
 import { useAccount, useProvider } from '@starknet-react/core';
 import { useAtomValue } from 'jotai';
 import mixpanel from 'mixpanel-browser';
-import { useEffect, useMemo, useState } from 'react';
-import { ProviderInterface } from 'starknet';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ProviderInterface, uint256 } from 'starknet';
 import LoadingWrap from './LoadingWrap';
 import TxButton from './TxButton';
+import { DUMMY_TOKEN_INFO } from '@/constants';
+import { MyNumberInput, MyNumberInputRef } from './MyNumberInput';
+import { AtomWithQueryResult } from 'jotai-tanstack-query';
 
 interface DepositProps {
-  strategy: StrategyInfo;
+  strategy: StrategyInfo<any>;
   // ? If you want to add more button text, you can add here
   // ? @dev ensure below actionType is updated accordingly
   buttonText: 'Deposit' | 'Redeem';
-  callsInfo: (
+  callsInfoProm: (
     amount: MyNumber,
     address: string,
     provider: ProviderInterface,
-  ) => IStrategyActionHook[];
+  ) => Promise<IStrategyActionHook[]>;
+}
+export function MaxButton(props: { onClick: () => void }) {
+  return (
+    <Button
+      size={'sm'}
+      marginLeft={'5px'}
+      color="color2"
+      bg="none"
+      padding="0"
+      maxHeight={'25px'}
+      _hover={{
+        bg: 'highlight',
+        color: 'color_50p',
+      }}
+      _active={{
+        bg: 'highlight',
+        color: 'color_50p',
+      }}
+      onClick={props.onClick}
+    >
+      [Max]
+    </Button>
+  );
+}
+
+export function BalanceComponent(props: {
+  token: TokenInfo;
+  strategy: StrategyInfo<any>;
+  buttonText: string;
+  balData: AtomWithQueryResult<BalanceResult, Error>;
+  onClickMax?: () => void;
+}) {
+  const { balData } = props;
+
+  const balance = useMemo(() => {
+    return balData.data?.amount || MyNumber.fromZero();
+  }, [balData]);
+
+  return (
+    <Box color={'light_grey'} textAlign={'right'}>
+      <Text>Available balance </Text>
+      <LoadingWrap
+        isLoading={balData.isLoading || balData.isPending}
+        isError={balData.isError}
+        skeletonProps={{
+          height: '10px',
+          width: '50px',
+          float: 'right',
+          marginTop: '8px',
+          marginLeft: '5px',
+        }}
+        iconProps={{
+          marginLeft: '5px',
+          boxSize: '15px',
+        }}
+      >
+        <Tooltip label={balance.toEtherStr()}>
+          <b style={{ marginLeft: '5px' }}>
+            {balance.toEtherToFixedDecimals(4)}
+          </b>
+        </Tooltip>
+        {props.onClickMax != undefined && (
+          <MaxButton
+            onClick={() => {
+              if (props.onClickMax) props.onClickMax();
+            }}
+          ></MaxButton>
+        )}
+      </LoadingWrap>
+    </Box>
+  );
 }
 
 export default function Deposit(props: DepositProps) {
   const { address } = useAccount();
   const { provider } = useProvider();
-  const [dirty, setDirty] = useState(false);
-  const [isMaxClicked, setIsMaxClicked] = useState(false);
+  const [callsInfo, setCallsInfo] = useState<IStrategyActionHook[]>([]);
+  const amountRef = useRef<MyNumberInputRef>(null);
+
+  const [amount, setAmount] = useState(MyNumber.fromZero());
+
+  const depositMethodsFn = useCallback(async () => {
+    let _amount = amount;
+    if (amountRef.current?.getValue().isMax) {
+      _amount = new MyNumber(uint256.UINT_256_MAX.toString(), 0);
+    }
+    const result = await props.callsInfoProm(
+      _amount,
+      address || '0x0',
+      provider,
+    );
+    if (callsInfo.length === 0 && result.length > 0) {
+      setSelectedMarket(result[0].tokenInfo);
+    }
+    setCallsInfo(result);
+  }, [amountRef.current, address, provider, props.callsInfoProm]);
 
   const tvlInfo = useAtomValue(props.strategy.tvlAtom);
 
   // This is the selected market token
   const [selectedMarket, setSelectedMarket] = useState(
-    props.callsInfo(MyNumber.fromZero(), address || '0x0', provider)[0]
-      .tokenInfo,
-  );
-
-  // This is processed amount stored in MyNumber format and meant for sending tx
-  const [amount, setAmount] = useState(
-    MyNumber.fromEther('0', selectedMarket.decimals),
+    callsInfo.length ? callsInfo[0].tokenInfo : DUMMY_TOKEN_INFO,
   );
 
   // This is used to store the raw amount entered by the user
-  const [rawAmount, setRawAmount] = useState('');
+  useEffect(() => {
+    depositMethodsFn();
+  }, [amount, selectedMarket, address, provider]);
 
   // use to maintain tx history and show toasts
   const txInfo: StrategyTxProps = useMemo(() => {
@@ -79,23 +163,17 @@ export default function Deposit(props: DepositProps) {
     };
   }, [amount, props]);
 
-  // Function to reset the input fields to their initial state
-  const resetDepositForm = () => {
-    setAmount(MyNumber.fromEther('0', selectedMarket.decimals));
-    setRawAmount('');
-    setDirty(false);
-  };
-
   // constructs tx calls
-  const { calls, actions } = useMemo(() => {
-    const actions = props.callsInfo(amount, address || '0x0', provider);
-    const hook = actions.find((a) => a.tokenInfo.name === selectedMarket.name);
-    if (!hook) return { calls: [], actions };
-    return { calls: hook.calls, actions };
-  }, [selectedMarket, amount, address, provider]);
+  const { calls } = useMemo(() => {
+    const hook = callsInfo.find(
+      (a) => a.tokenInfo.name === selectedMarket.name,
+    );
+    if (!hook) return { calls: [] };
+    return { calls: hook.calls };
+  }, [callsInfo, selectedMarket, amount, address, provider]);
 
   const balData = useAtomValue(
-    actions.find((a) => a.tokenInfo.name === selectedMarket.name)
+    callsInfo.find((a) => a.tokenInfo.name === selectedMarket.name)
       ?.balanceAtom || DUMMY_BAL_ATOM,
   );
   const balance = useMemo(() => {
@@ -127,80 +205,13 @@ export default function Deposit(props: DepositProps) {
     return MyNumber.max(min, MyNumber.fromEther('0', selectedMarket.decimals));
   }, [balance, props.strategy, selectedMarket]);
 
-  useEffect(() => {
-    if (isMaxClicked) {
-      setRawAmount(maxAmount.toEtherStr());
-      setAmount(maxAmount);
-    }
-  }, [maxAmount, isMaxClicked]);
-
-  function BalanceComponent(props: {
-    token: TokenInfo;
-    strategy: StrategyInfo;
-    buttonText: string;
-  }) {
-    return (
-      <Box color={'light_grey'} textAlign={'right'}>
-        <Text>Available balance </Text>
-        <LoadingWrap
-          isLoading={balData.isLoading || balData.isPending}
-          isError={balData.isError}
-          skeletonProps={{
-            height: '10px',
-            width: '50px',
-            float: 'right',
-            marginTop: '8px',
-            marginLeft: '5px',
-          }}
-          iconProps={{
-            marginLeft: '5px',
-            boxSize: '15px',
-          }}
-        >
-          <Tooltip label={balance.toEtherStr()}>
-            <b style={{ marginLeft: '5px' }}>
-              {balance.toEtherToFixedDecimals(4)}
-            </b>
-          </Tooltip>
-          <Button
-            size={'sm'}
-            marginLeft={'5px'}
-            color="color2"
-            bg="highlight"
-            padding="0"
-            maxHeight={'25px'}
-            _hover={{
-              bg: 'highlight',
-              color: 'color_50p',
-            }}
-            _active={{
-              bg: 'highlight',
-              color: 'color_50p',
-            }}
-            onClick={() => {
-              setAmount(maxAmount);
-              setRawAmount(maxAmount.toEtherStr());
-              setIsMaxClicked(true);
-              mixpanel.track('Chose max amount', {
-                strategyId: props.strategy.id,
-                strategyName: props.strategy.name,
-                buttonText: props.buttonText,
-                amount: amount.toEtherStr(),
-                token: selectedMarket.name,
-                maxAmount: maxAmount.toEtherStr(),
-                address,
-              });
-            }}
-          >
-            [Max]
-          </Button>
-        </LoadingWrap>
-      </Box>
-    );
+  function isTradeStrategy() {
+    return props.strategy.actionTabs[0] == 'Open';
   }
+
   return (
-    <Box>
-      <Grid templateColumns="repeat(5, 1fr)" gap={6}>
+    <VStack spacing={4}>
+      <Grid templateColumns="repeat(5, 1fr)" gap={6} width={'100%'}>
         <GridItem colSpan={2}>
           <Menu>
             <MenuButton
@@ -223,16 +234,17 @@ export default function Deposit(props: DepositProps) {
               </Center>
             </MenuButton>
             <MenuList {...MyMenuListProps}>
-              {actions.map((dep) => (
+              {callsInfo.map((dep) => (
                 <MenuItem
                   key={dep.tokenInfo.name}
                   {...MyMenuItemProps}
                   onClick={() => {
                     if (selectedMarket.name != dep.tokenInfo.name) {
                       setSelectedMarket(dep.tokenInfo);
-                      setAmount(new MyNumber('0', dep.tokenInfo.decimals));
-                      setDirty(false);
-                      setRawAmount('');
+                      amountRef.current?.setValue(
+                        new MyNumber('0', dep.tokenInfo.decimals),
+                        false,
+                      );
                     }
                   }}
                 >
@@ -255,27 +267,32 @@ export default function Deposit(props: DepositProps) {
             token={selectedMarket}
             strategy={props.strategy}
             buttonText={props.buttonText}
+            balData={balData}
+            onClickMax={() => {
+              amountRef.current?.setValue(maxAmount, true);
+              setAmount(maxAmount);
+              mixpanel.track('Chose max amount', {
+                strategyId: props.strategy.id,
+                strategyName: props.strategy.name,
+                buttonText: props.buttonText,
+                amount: amount.toEtherStr(),
+                token: selectedMarket.name,
+                maxAmount: maxAmount.toEtherStr(),
+                address,
+              });
+            }}
           />
         </GridItem>
       </Grid>
 
       {/* add min max validations and show err */}
-      <NumberInput
-        min={0}
-        max={parseFloat(maxAmount.toEtherStr())}
-        step={parseFloat(selectedMarket.stepAmount.toEtherStr())}
-        color={'white'}
-        bg={'bg'}
-        borderRadius={'10px'}
-        onChange={(value) => {
-          if (value && Number(value) > 0)
-            setAmount(MyNumber.fromEther(value, selectedMarket.decimals));
-          else {
-            setAmount(new MyNumber('0', selectedMarket.decimals));
-          }
-          setIsMaxClicked(false);
-          setRawAmount(value);
-          setDirty(true);
+      <MyNumberInput
+        ref={amountRef}
+        market={selectedMarket}
+        maxAmount={maxAmount}
+        placeHolder="Amount"
+        onChange={(valueAsString, valueAsNumber) => {
+          setAmount(MyNumber.fromEther(valueAsString, selectedMarket.decimals));
           mixpanel.track('Enter amount', {
             strategyId: props.strategy.id,
             strategyName: props.strategy.name,
@@ -286,87 +303,65 @@ export default function Deposit(props: DepositProps) {
             address,
           });
         }}
-        marginTop={'10px'}
-        keepWithinRange={false}
-        clampValueOnBlur={false}
-        value={rawAmount}
-        isDisabled={maxAmount.isZero()}
-      >
-        <NumberInputField
-          border={'0px'}
-          borderRadius={'10px'}
-          placeholder="Amount"
-        />
-        <NumberInputStepper>
-          <NumberIncrementStepper color={'white'} border={'0px'} />
-          <NumberDecrementStepper color={'white'} border={'0px'} />
-        </NumberInputStepper>
-      </NumberInput>
-      {amount.isZero() && dirty && (
-        <Text marginTop="2px" marginLeft={'7px'} color="red" fontSize={'13px'}>
-          Require amount {'>'} 0
-        </Text>
-      )}
-      {amount.compare(maxAmount.toEtherStr(), 'gt') && (
-        <Text marginTop="2px" marginLeft={'7px'} color="red" fontSize={'13px'}>
-          Amount to be less than {maxAmount.toEtherToFixedDecimals(2)}
-        </Text>
-      )}
+      />
 
-      <Center marginTop={'10px'}>
+      <Center marginTop={'10px'} width={'100%'}>
         <TxButton
           txInfo={txInfo}
           buttonText={props.buttonText}
-          text={`${props.buttonText}: ${amount.toEtherToFixedDecimals(2)} ${selectedMarket.name}`}
+          text={`${props.buttonText}: ${amount.toEtherToFixedDecimals(4)} ${selectedMarket.name}`}
           calls={calls}
           buttonProps={{
-            isDisabled:
-              amount.isZero() || amount.compare(maxAmount.toEtherStr(), 'gt'),
+            isDisabled: amount.isZero() || amount.compare(maxAmount, 'gt'),
           }}
           selectedMarket={selectedMarket}
           strategy={props.strategy}
-          resetDepositForm={resetDepositForm}
+          resetDepositForm={amountRef.current?.resetField}
         />
       </Center>
 
-      <Text
-        textAlign="center"
-        color="disabled_bg"
-        fontSize="12px"
-        marginTop="20px"
-      >
-        No additional fees by STRKFarm
-      </Text>
+      {!isTradeStrategy() && (
+        <Text
+          textAlign="center"
+          color="disabled_bg"
+          fontSize="12px"
+          marginTop="20px"
+        >
+          No additional fees by STRKFarm
+        </Text>
+      )}
 
-      <Box width="100%" marginTop={'15px'}>
-        <Flex justifyContent="space-between">
-          <Text fontSize={'12px'} color="color2" fontWeight={'bold'}>
-            Current TVL Limit:
-          </Text>
-          <Text fontSize={'12px'} color="color2">
-            {!tvlInfo || !tvlInfo?.data ? (
-              <Spinner size="2xs" />
-            ) : (
-              Number(tvlInfo.data?.amount.toFixedStr(2)).toLocaleString()
-            )}
-            {' / '}
-            {props.strategy.settings.maxTVL.toLocaleString()}{' '}
-            {selectedMarket.name}
-          </Text>
-        </Flex>
-        <Progress
-          colorScheme="gray"
-          bg="bg"
-          value={
-            (100 *
-              (Number(tvlInfo.data?.amount.toEtherStr()) ||
-                props.strategy.settings.maxTVL)) /
-            props.strategy.settings.maxTVL
-          }
-          isIndeterminate={!tvlInfo || !tvlInfo?.data}
-        />
-        {/* {tvlInfo.isError ? 1 : 0}{tvlInfo.isLoading ? 1 : 0} {JSON.stringify(tvlInfo.error)} */}
-      </Box>
-    </Box>
+      {!isTradeStrategy() && (
+        <Box width="100%" marginTop={'15px'}>
+          <Flex justifyContent="space-between">
+            <Text fontSize={'12px'} color="color2" fontWeight={'bold'}>
+              Current TVL Limit:
+            </Text>
+            <Text fontSize={'12px'} color="color2">
+              {!tvlInfo || !tvlInfo?.data ? (
+                <Spinner size="2xs" />
+              ) : (
+                Number(tvlInfo.data?.amount.toFixedStr(2)).toLocaleString()
+              )}
+              {' / '}
+              {props.strategy.settings.maxTVL.toLocaleString()}{' '}
+              {selectedMarket.name}
+            </Text>
+          </Flex>
+          <Progress
+            colorScheme="gray"
+            bg="bg"
+            value={
+              (100 *
+                (Number(tvlInfo.data?.amount.toEtherStr()) ||
+                  props.strategy.settings.maxTVL)) /
+              props.strategy.settings.maxTVL
+            }
+            isIndeterminate={!tvlInfo || !tvlInfo?.data}
+          />
+          {/* {tvlInfo.isError ? 1 : 0}{tvlInfo.isLoading ? 1 : 0} {JSON.stringify(tvlInfo.error)} */}
+        </Box>
+      )}
+    </VStack>
   );
 }

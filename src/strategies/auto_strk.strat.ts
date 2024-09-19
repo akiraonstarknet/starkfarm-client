@@ -37,7 +37,7 @@ interface Step {
   ) => PoolInfo[])[];
 }
 
-export class AutoTokenStrategy extends IStrategy {
+export class AutoTokenStrategy extends IStrategy<void> {
   riskFactor = 0.5;
   token: TokenInfo;
   readonly lpTokenName: string;
@@ -172,7 +172,7 @@ export class AutoTokenStrategy extends IStrategy {
   //     this.leverage = this.netYield / normalYield;
   // }
 
-  depositMethods = (
+  depositMethods = async (
     amount: MyNumber,
     address: string,
     provider: ProviderInterface,
@@ -254,7 +254,7 @@ export class AutoTokenStrategy extends IStrategy {
     ];
   };
 
-  withdrawMethods = (
+  withdrawMethods = async (
     amount: MyNumber,
     address: string,
     provider: ProviderInterface,

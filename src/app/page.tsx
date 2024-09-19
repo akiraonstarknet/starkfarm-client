@@ -72,7 +72,7 @@ export default function Home() {
     } else if (index === 1) {
       setRoute('strategies');
     } else {
-      setRoute('pools')
+      setRoute('pools');
     }
   }
 
@@ -214,7 +214,7 @@ export default function Home() {
               mixpanel.track('Long/Short opened');
             }}
           >
-           ✨ Long/Short
+            ✨ Long/Short
           </Tab>
         </TabList>
         <TabIndicator

@@ -1,0 +1,637 @@
+[
+  {
+    "name": "TradeImpl",
+    "type": "impl",
+    "interface_name": "tradeo::interfaces::trade::ITrade"
+  },
+  {
+    "name": "core::integer::u256",
+    "type": "struct",
+    "members": [
+      {
+        "name": "low",
+        "type": "core::integer::u128"
+      },
+      {
+        "name": "high",
+        "type": "core::integer::u128"
+      }
+    ]
+  },
+  {
+    "name": "tradeo::interfaces::trade::Config",
+    "type": "struct",
+    "members": [
+      {
+        "name": "collateralToken",
+        "type": "core::starknet::contract_address::ContractAddress"
+      },
+      {
+        "name": "borrowedToken",
+        "type": "core::starknet::contract_address::ContractAddress"
+      },
+      {
+        "name": "tradeToken",
+        "type": "core::starknet::contract_address::ContractAddress"
+      }
+    ]
+  },
+  {
+    "name": "tradeo::interfaces::trade::Position",
+    "type": "struct",
+    "members": [
+      {
+        "name": "collateral",
+        "type": "core::integer::u256"
+      },
+      {
+        "name": "borrowed",
+        "type": "core::integer::u256"
+      },
+      {
+        "name": "tradeToken",
+        "type": "core::integer::u256"
+      }
+    ]
+  },
+  {
+    "name": "core::bool",
+    "type": "enum",
+    "variants": [
+      {
+        "name": "False",
+        "type": "()"
+      },
+      {
+        "name": "True",
+        "type": "()"
+      }
+    ]
+  },
+  {
+    "name": "ekubo::types::i129::i129",
+    "type": "struct",
+    "members": [
+      {
+        "name": "mag",
+        "type": "core::integer::u128"
+      },
+      {
+        "name": "sign",
+        "type": "core::bool"
+      }
+    ]
+  },
+  {
+    "name": "tradeo::interfaces::trade::PnLInfo",
+    "type": "struct",
+    "members": [
+      {
+        "name": "pnl",
+        "type": "ekubo::types::i129::i129"
+      },
+      {
+        "name": "token",
+        "type": "core::starknet::contract_address::ContractAddress"
+      },
+      {
+        "name": "collateral",
+        "type": "core::integer::u256"
+      },
+      {
+        "name": "borrowed",
+        "type": "core::integer::u256"
+      },
+      {
+        "name": "tradeToken",
+        "type": "core::integer::u256"
+      }
+    ]
+  },
+  {
+    "name": "tradeo::interfaces::trade::ITrade",
+    "type": "interface",
+    "items": [
+      {
+        "name": "add_collateral",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amount",
+            "type": "core::integer::u256"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "name": "withdraw_collateral",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "amount",
+            "type": "core::integer::u256"
+          },
+          {
+            "name": "minHf",
+            "type": "core::integer::u32"
+          },
+          {
+            "name": "receiver",
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "name": "add_position",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "trade_amount",
+            "type": "core::integer::u256"
+          },
+          {
+            "name": "min_hf",
+            "type": "core::integer::u32"
+          },
+          {
+            "name": "max_slippage_bps",
+            "type": "core::integer::u32"
+          },
+          {
+            "name": "path_borrow_to_trade",
+            "type": "core::array::Array::<core::starknet::contract_address::ContractAddress>"
+          },
+          {
+            "name": "path_trade_to_borrow",
+            "type": "core::array::Array::<core::starknet::contract_address::ContractAddress>"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "name": "close_position",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "trade_amount",
+            "type": "core::integer::u256"
+          },
+          {
+            "name": "max_slippage_bps",
+            "type": "core::integer::u32"
+          },
+          {
+            "name": "path_trade_to_borrow",
+            "type": "core::array::Array::<core::starknet::contract_address::ContractAddress>"
+          },
+          {
+            "name": "collateral_to_borrow_path",
+            "type": "core::array::Array::<core::starknet::contract_address::ContractAddress>"
+          },
+          {
+            "name": "receiver",
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "name": "claim_profit",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "receiver",
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::integer::u256"
+          }
+        ],
+        "state_mutability": "external"
+      },
+      {
+        "name": "config",
+        "type": "function",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "tradeo::interfaces::trade::Config"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "name": "position",
+        "type": "function",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "tradeo::interfaces::trade::Position"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "name": "position_scaled",
+        "type": "function",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "tradeo::interfaces::trade::Position"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "name": "health_factor",
+        "type": "function",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "core::integer::u32"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "name": "profit",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "paths_trade_to_borrow",
+            "type": "core::array::Array::<core::starknet::contract_address::ContractAddress>"
+          },
+          {
+            "name": "paths_collateral_to_borrow",
+            "type": "core::array::Array::<core::starknet::contract_address::ContractAddress>"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "tradeo::interfaces::trade::PnLInfo"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "name": "factory",
+        "type": "function",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "state_mutability": "view"
+      }
+    ]
+  },
+  {
+    "name": "UpgradeableImpl",
+    "type": "impl",
+    "interface_name": "openzeppelin::upgrades::interface::IUpgradeable"
+  },
+  {
+    "name": "openzeppelin::upgrades::interface::IUpgradeable",
+    "type": "interface",
+    "items": [
+      {
+        "name": "upgrade",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "new_class_hash",
+            "type": "core::starknet::class_hash::ClassHash"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      }
+    ]
+  },
+  {
+    "name": "LockerImpl",
+    "type": "impl",
+    "interface_name": "ekubo::interfaces::core::ILocker"
+  },
+  {
+    "name": "core::array::Span::<core::felt252>",
+    "type": "struct",
+    "members": [
+      {
+        "name": "snapshot",
+        "type": "@core::array::Array::<core::felt252>"
+      }
+    ]
+  },
+  {
+    "name": "ekubo::interfaces::core::ILocker",
+    "type": "interface",
+    "items": [
+      {
+        "name": "locked",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "id",
+            "type": "core::integer::u32"
+          },
+          {
+            "name": "data",
+            "type": "core::array::Span::<core::felt252>"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::array::Span::<core::felt252>"
+          }
+        ],
+        "state_mutability": "external"
+      }
+    ]
+  },
+  {
+    "name": "OwnableImpl",
+    "type": "impl",
+    "interface_name": "openzeppelin::access::ownable::interface::IOwnable"
+  },
+  {
+    "name": "openzeppelin::access::ownable::interface::IOwnable",
+    "type": "interface",
+    "items": [
+      {
+        "name": "owner",
+        "type": "function",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "name": "transfer_ownership",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "new_owner",
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "name": "renounce_ownership",
+        "type": "function",
+        "inputs": [],
+        "outputs": [],
+        "state_mutability": "external"
+      }
+    ]
+  },
+  {
+    "name": "strkfarm::components::nostra::nostraStruct",
+    "type": "struct",
+    "members": [
+      {
+        "name": "nostraInterestBearing",
+        "type": "core::starknet::contract_address::ContractAddress"
+      },
+      {
+        "name": "nostraDebtToken",
+        "type": "core::starknet::contract_address::ContractAddress"
+      },
+      {
+        "name": "nostraCDPManager",
+        "type": "core::starknet::contract_address::ContractAddress"
+      },
+      {
+        "name": "oracle",
+        "type": "core::starknet::contract_address::ContractAddress"
+      }
+    ]
+  },
+  {
+    "name": "strkfarm::interfaces::nostra::INostraRouterDispatcher",
+    "type": "struct",
+    "members": [
+      {
+        "name": "contract_address",
+        "type": "core::starknet::contract_address::ContractAddress"
+      }
+    ]
+  },
+  {
+    "name": "strkfarm::components::nostraSwap::NostraSwapStruct",
+    "type": "struct",
+    "members": [
+      {
+        "name": "router",
+        "type": "strkfarm::interfaces::nostra::INostraRouterDispatcher"
+      },
+      {
+        "name": "pair",
+        "type": "core::starknet::contract_address::ContractAddress"
+      }
+    ]
+  },
+  {
+    "name": "ekubo::interfaces::core::ICoreDispatcher",
+    "type": "struct",
+    "members": [
+      {
+        "name": "contract_address",
+        "type": "core::starknet::contract_address::ContractAddress"
+      }
+    ]
+  },
+  {
+    "name": "constructor",
+    "type": "constructor",
+    "inputs": [
+      {
+        "name": "owner",
+        "type": "core::starknet::contract_address::ContractAddress"
+      },
+      {
+        "name": "super_admin",
+        "type": "core::starknet::contract_address::ContractAddress"
+      },
+      {
+        "name": "config",
+        "type": "tradeo::interfaces::trade::Config"
+      },
+      {
+        "name": "collateral_lender_settings",
+        "type": "strkfarm::components::nostra::nostraStruct"
+      },
+      {
+        "name": "trade_lender_settings",
+        "type": "strkfarm::components::nostra::nostraStruct"
+      },
+      {
+        "name": "nostra_swap_settings",
+        "type": "strkfarm::components::nostraSwap::NostraSwapStruct"
+      },
+      {
+        "name": "ekubo_core",
+        "type": "ekubo::interfaces::core::ICoreDispatcher"
+      }
+    ]
+  },
+  {
+    "kind": "struct",
+    "name": "openzeppelin::access::ownable::ownable::OwnableComponent::OwnershipTransferred",
+    "type": "event",
+    "members": [
+      {
+        "kind": "key",
+        "name": "previous_owner",
+        "type": "core::starknet::contract_address::ContractAddress"
+      },
+      {
+        "kind": "key",
+        "name": "new_owner",
+        "type": "core::starknet::contract_address::ContractAddress"
+      }
+    ]
+  },
+  {
+    "kind": "struct",
+    "name": "openzeppelin::access::ownable::ownable::OwnableComponent::OwnershipTransferStarted",
+    "type": "event",
+    "members": [
+      {
+        "kind": "key",
+        "name": "previous_owner",
+        "type": "core::starknet::contract_address::ContractAddress"
+      },
+      {
+        "kind": "key",
+        "name": "new_owner",
+        "type": "core::starknet::contract_address::ContractAddress"
+      }
+    ]
+  },
+  {
+    "kind": "enum",
+    "name": "openzeppelin::access::ownable::ownable::OwnableComponent::Event",
+    "type": "event",
+    "variants": [
+      {
+        "kind": "nested",
+        "name": "OwnershipTransferred",
+        "type": "openzeppelin::access::ownable::ownable::OwnableComponent::OwnershipTransferred"
+      },
+      {
+        "kind": "nested",
+        "name": "OwnershipTransferStarted",
+        "type": "openzeppelin::access::ownable::ownable::OwnableComponent::OwnershipTransferStarted"
+      }
+    ]
+  },
+  {
+    "kind": "struct",
+    "name": "openzeppelin::upgrades::upgradeable::UpgradeableComponent::Upgraded",
+    "type": "event",
+    "members": [
+      {
+        "kind": "data",
+        "name": "class_hash",
+        "type": "core::starknet::class_hash::ClassHash"
+      }
+    ]
+  },
+  {
+    "kind": "enum",
+    "name": "openzeppelin::upgrades::upgradeable::UpgradeableComponent::Event",
+    "type": "event",
+    "variants": [
+      {
+        "kind": "nested",
+        "name": "Upgraded",
+        "type": "openzeppelin::upgrades::upgradeable::UpgradeableComponent::Upgraded"
+      }
+    ]
+  },
+  {
+    "kind": "struct",
+    "name": "tradeo::interfaces::trade::Position",
+    "type": "event",
+    "members": [
+      {
+        "kind": "data",
+        "name": "collateral",
+        "type": "core::integer::u256"
+      },
+      {
+        "kind": "data",
+        "name": "borrowed",
+        "type": "core::integer::u256"
+      },
+      {
+        "kind": "data",
+        "name": "tradeToken",
+        "type": "core::integer::u256"
+      }
+    ]
+  },
+  {
+    "kind": "struct",
+    "name": "tradeo::interfaces::trade::Config",
+    "type": "event",
+    "members": [
+      {
+        "kind": "data",
+        "name": "collateralToken",
+        "type": "core::starknet::contract_address::ContractAddress"
+      },
+      {
+        "kind": "data",
+        "name": "borrowedToken",
+        "type": "core::starknet::contract_address::ContractAddress"
+      },
+      {
+        "kind": "data",
+        "name": "tradeToken",
+        "type": "core::starknet::contract_address::ContractAddress"
+      }
+    ]
+  },
+  {
+    "kind": "enum",
+    "name": "tradeo::contracts::trade::Trade::Event",
+    "type": "event",
+    "variants": [
+      {
+        "kind": "flat",
+        "name": "OwnableEvent",
+        "type": "openzeppelin::access::ownable::ownable::OwnableComponent::Event"
+      },
+      {
+        "kind": "flat",
+        "name": "UpgradeableEvent",
+        "type": "openzeppelin::upgrades::upgradeable::UpgradeableComponent::Event"
+      },
+      {
+        "kind": "nested",
+        "name": "Position",
+        "type": "tradeo::interfaces::trade::Position"
+      },
+      {
+        "kind": "nested",
+        "name": "Config",
+        "type": "tradeo::interfaces::trade::Config"
+      }
+    ]
+  }
+]

@@ -6,13 +6,14 @@ import { capitalize, standariseAddress } from '@/utils';
 import MyNumber from '@/utils/MyNumber';
 import { Getter, Setter, atom } from 'jotai';
 import toast from 'react-hot-toast';
-import { RpcProvider, TransactionExecutionStatus } from 'starknet';
+import { TransactionExecutionStatus } from 'starknet';
 import { StrategyInfo, strategiesAtom } from './strategies.atoms';
 import { createAtomWithStorage } from './utils.atoms';
+import { getProvider } from './claims.atoms';
 
 export interface StrategyTxProps {
   strategyId: string;
-  actionType: 'deposit' | 'withdraw';
+  actionType: 'deposit' | 'withdraw' | 'long' | 'short';
   amount: MyNumber;
   tokenAddr: string;
 }
@@ -72,9 +73,7 @@ async function waitForTransaction(
   get: Getter,
   set: Setter,
 ) {
-  const provider = new RpcProvider({
-    nodeUrl: process.env.NEXT_PUBLIC_RPC_URL,
-  });
+  const provider = getProvider();
   console.log('waitForTransaction', tx);
   await provider.waitForTransaction(tx.txHash, {
     successStates: [TransactionExecutionStatus.SUCCEEDED],
@@ -115,7 +114,7 @@ function StrategyTxPropsToMessage(tx: StrategyTxProps, get: Getter) {
 
 export function StrategyTxPropsToMessageWithStrategies(
   tx: StrategyTxProps,
-  strategies: StrategyInfo[],
+  strategies: StrategyInfo<void>[],
 ) {
   const tokenInfo = TOKENS.find(
     (t) => standariseAddress(t.token) === standariseAddress(tx.tokenAddr),

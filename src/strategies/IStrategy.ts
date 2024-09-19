@@ -79,7 +79,7 @@ export interface AmountInfo {
   tokenInfo: TokenInfo;
 }
 
-export class IStrategyProps {
+export class IStrategyProps<T> {
   readonly liveStatus: StrategyLiveStatus;
   readonly id: string;
   readonly name: string;
@@ -107,6 +107,9 @@ export class IStrategyProps {
     'APYs shown are just indicative and do not promise exact returns',
   ];
 
+  // display tab names
+  actionTabs = ['Deposit', 'Withdraw'];
+
   getSafetyFactorLine() {
     let factorLevel = 'Low';
     if (this.riskFactor > 2) factorLevel = 'Medium';
@@ -118,16 +121,21 @@ export class IStrategyProps {
     amount: MyNumber,
     address: string,
     provider: ProviderInterface,
-  ): IStrategyActionHook[] => {
-    return [];
+    additionalData?: T,
+  ): Promise<IStrategyActionHook[]> => {
+    return new Promise((resolve, reject) => {
+      resolve([]);
+    });
   };
 
   withdrawMethods = (
     amount: MyNumber,
     address: string,
     provider: ProviderInterface,
-  ): IStrategyActionHook[] => {
-    return [];
+  ): Promise<IStrategyActionHook[]> => {
+    return new Promise((resolve, reject) => {
+      resolve([]);
+    });
   };
 
   getTVL = async (): Promise<AmountInfo> => {
@@ -175,7 +183,7 @@ export class IStrategyProps {
   }
 }
 
-export class IStrategy extends IStrategyProps {
+export class IStrategy<T> extends IStrategyProps<T> {
   readonly tag: string;
 
   constructor(

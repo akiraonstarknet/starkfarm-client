@@ -41,9 +41,9 @@ async function getStrategyInfo(strategy: IStrategy) {
     name: strategy.name,
     id: strategy.id,
     apy: strategy.netYield,
-    depositToken: strategy
-      .depositMethods(MyNumber.fromZero(), '', provider)
-      .map((t) => t.tokenInfo.token),
+    depositToken: (
+      await strategy.depositMethods(MyNumber.fromZero(), '', provider)
+    ).map((t) => t.tokenInfo.token),
     leverage: strategy.leverage,
     contract: strategy.holdingTokens.map((t) => ({
       name: t.name,

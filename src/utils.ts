@@ -101,3 +101,7 @@ export function getDisplayCurrencyAmount(
 ) {
   return Number(Number(amount).toFixed(decimals)).toLocaleString();
 }
+
+export function getSign(value: number) {
+  return value >= 0 ? '+' : '';
+}

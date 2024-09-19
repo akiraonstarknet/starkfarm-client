@@ -1,5 +1,7 @@
 import BigNumber from 'bignumber.js';
-import { ethers } from 'ethers';
+import { uint256 } from 'starknet';
+import Decimal from 'decimal.js';
+
 const customInspectSymbol = Symbol.for('nodejs.util.inspect.custom');
 
 export default class MyNumber {
@@ -14,7 +16,7 @@ export default class MyNumber {
   static fromEther(num: string, decimals: number) {
     try {
       return new MyNumber(
-        Number(ethers.parseUnits(num, decimals)).toFixed(6),
+        new Decimal(num).mul(10 ** decimals).toFixed(),
         decimals,
       );
     } catch (e) {
@@ -32,7 +34,9 @@ export default class MyNumber {
   }
 
   toEtherStr() {
-    return ethers.formatUnits(this.bigNumber.toFixed(), this.decimals);
+    return new Decimal(this.bigNumber.toFixed())
+      .div(10 ** this.decimals)
+      .toFixed(this.decimals);
   }
 
   toFixedStr(decimals: number) {
@@ -58,11 +62,8 @@ export default class MyNumber {
    * @returns
    * @dev Add more commands as needed
    */
-  compare(amountEther: string, command: 'gte' | 'gt' | 'lt') {
-    const fullNum = new BigNumber(
-      ethers.parseUnits(amountEther, this.decimals).toString(),
-    );
-    return this.bigNumber[command](fullNum);
+  compare(value: MyNumber, command: 'gte' | 'gt' | 'lt') {
+    return this.bigNumber[command](value.bigNumber);
   }
 
   operate(command: 'div' | 'plus', value: string | number) {
@@ -73,6 +74,10 @@ export default class MyNumber {
   subtract(value: MyNumber) {
     const bn = this.bigNumber.minus(value.bigNumber);
     return new MyNumber(bn.toString(), this.decimals);
+  }
+
+  toUint256() {
+    return uint256.bnToUint256(this.bigNumber.toFixed());
   }
 
   static min(a: MyNumber, b: MyNumber) {

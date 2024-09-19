@@ -11,7 +11,7 @@ import Mustache from 'mustache';
 import { getTokenInfoFromName } from '@/utils';
 import { allPoolsAtomUnSorted } from './protocols';
 
-export interface StrategyInfo extends IStrategyProps {
+export interface StrategyInfo<T> extends IStrategyProps<T> {
   name: string;
 }
 
@@ -78,7 +78,7 @@ export function getStrategies() {
     },
   );
 
-  const strategies: IStrategy[] = [
+  const strategies: IStrategy<void>[] = [
     autoStrkStrategy,
     autoUSDCStrategy,
     deltaNeutralMMUSDCETH,
@@ -91,7 +91,7 @@ export function getStrategies() {
 
 export const STRATEGIES_INFO = getStrategies();
 
-export const strategiesAtom = atom<StrategyInfo[]>((get) => {
+export const strategiesAtom = atom<StrategyInfo<void>[]>((get) => {
   const strategies = getStrategies();
   const allPools = get(allPoolsAtomUnSorted);
   const requiredPools = allPools.filter(

@@ -58,6 +58,10 @@ const CONSTANTS = {
       '0x20d5fc4c9df4f943ebb36078e703369c04176ed00accf290e8295b659d2cea6',
     DeltaNeutralMMETHUSDC:
       '0x9d23d9b1fa0db8c9d75a1df924c3820e594fc4ab1475695889286f3f6df250',
+    TradeFactory:
+      '0x0119d9347430b01c87117bfefe5d2e8203ff8351746d8b15d434acccff8f1b68',
+    TradeCh:
+      '0x4fcef3ade9e590f6a3e9171e270c3b8a3580a075d6adb94f241666e8e3aab36',
   },
   MOBILE_MSG: 'Desktop/Tablet only',
 };
@@ -190,6 +194,18 @@ export const NFTS: NFTInfo[] = [
     },
   },
 ];
+
+export const DUMMY_TOKEN_INFO: TokenInfo = {
+  token: '0x0',
+  name: '',
+  decimals: 0,
+  displayDecimals: 2,
+  logo: '',
+  minAmount: MyNumber.fromEther('0', 0),
+  maxAmount: MyNumber.fromEther('0', 0),
+  stepAmount: MyNumber.fromEther('0', 0),
+  isERC4626: false,
+};
 
 export const LATEST_TNC_DOC_VERSION = '1.0';
 

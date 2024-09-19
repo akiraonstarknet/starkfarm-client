@@ -54,7 +54,7 @@ const Strategy = ({ params }: StrategyParams) => {
     console.log('txs', transactions);
   }, [transactions]);
 
-  const strategy: StrategyInfo | undefined = useMemo(() => {
+  const strategy: StrategyInfo<void> | undefined = useMemo(() => {
     const id = params.strategyId;
 
     console.log('id', id);
@@ -225,7 +225,8 @@ const Strategy = ({ params }: StrategyParams) => {
                         // mixpanel.track('All pools clicked')
                       }}
                     >
-                      Deposit
+                      {/* Example: Deposit/Open */}
+                      {strategy.actionTabs[0]}
                     </Tab>
                     <Tab
                       color="light_grey"
@@ -234,7 +235,8 @@ const Strategy = ({ params }: StrategyParams) => {
                         // mixpanel.track('Strategies opened')
                       }}
                     >
-                      Withdraw
+                      {/* Example: Withdraw/Close */}
+                      {strategy.actionTabs[1]}
                     </Tab>
                   </TabList>
                   <TabIndicator
@@ -254,7 +256,7 @@ const Strategy = ({ params }: StrategyParams) => {
                       <Deposit
                         strategy={strategy}
                         buttonText="Deposit"
-                        callsInfo={strategy.depositMethods}
+                        callsInfoProm={strategy.depositMethods}
                       />
                     </TabPanel>
                     <TabPanel
@@ -266,7 +268,7 @@ const Strategy = ({ params }: StrategyParams) => {
                       <Deposit
                         strategy={strategy}
                         buttonText="Redeem"
-                        callsInfo={strategy.withdrawMethods}
+                        callsInfoProm={strategy.withdrawMethods}
                       />
                     </TabPanel>
                   </TabPanels>

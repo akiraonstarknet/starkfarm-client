@@ -2,9 +2,9 @@ import ERC4626Abi from '@/abi/erc4626.abi.json';
 import { NFTInfo, TokenInfo } from '@/strategies/IStrategy';
 import MyNumber from '@/utils/MyNumber';
 import { NFTS } from '@/constants';
-import { Contract, RpcProvider, num, uint256 } from 'starknet';
+import { Contract, num, uint256 } from 'starknet';
 import { atomWithQuery } from 'jotai-tanstack-query';
-import { addressAtom } from '@/store/claims.atoms';
+import { addressAtom, getProvider } from '@/store/claims.atoms';
 import ERC20Abi from '@/abi/erc20.abi.json';
 import DeltaNeutralAbi from '@/abi/deltraNeutral.abi.json';
 import { Atom } from 'jotai';
@@ -33,9 +33,7 @@ export async function getERC20Balance(
   if (!token) return returnEmptyBal();
   if (!address) return returnEmptyBal();
 
-  const provider = new RpcProvider({
-    nodeUrl: process.env.NEXT_PUBLIC_RPC_URL,
-  });
+  const provider = getProvider();
   const erc20Contract = new Contract(ERC20Abi, token.token, provider);
   const balance = await erc20Contract.call('balanceOf', [address]);
   console.log('erc20 balData', token.token, balance.toString());
@@ -54,9 +52,7 @@ export async function getERC4626Balance(
   if (!address) return returnEmptyBal();
 
   const bal = await getERC20Balance(token, address);
-  const provider = new RpcProvider({
-    nodeUrl: process.env.NEXT_PUBLIC_RPC_URL,
-  });
+  const provider = getProvider();
   const erc4626Contract = new Contract(ERC4626Abi, token.token, provider);
   const balance = await erc4626Contract.call('convert_to_assets', [
     uint256.bnToUint256(bal.amount.toString()),
@@ -86,9 +82,7 @@ export async function getERC721PositionValue(
   if (!token) return returnEmptyBal();
   if (!address) return returnEmptyBal();
 
-  const provider = new RpcProvider({
-    nodeUrl: process.env.NEXT_PUBLIC_RPC_URL,
-  });
+  const provider = getProvider();
   const erc721Contract = new Contract(DeltaNeutralAbi, token.address, provider);
   const tokenId = num.getDecimalString(address);
   const result: any = await erc721Contract.call('describe_position', [tokenId]);
@@ -103,36 +97,53 @@ export async function getERC721PositionValue(
   };
 }
 
-export function getERC20BalanceAtom(token: TokenInfo | undefined) {
+export function getERC20BalanceAtom(
+  token: TokenInfo | undefined,
+  address?: string,
+) {
   return atomWithQuery((get) => {
     return {
-      queryKey: ['getERC20Balance', token?.token],
+      queryKey: ['getERC20Balance', token?.token, address || get(addressAtom)],
       queryFn: async ({ queryKey }: any): Promise<BalanceResult> => {
-        return getERC20Balance(token, get(addressAtom));
+        const _addr = queryKey[2];
+        return getERC20Balance(token, _addr);
       },
       refetchInterval: 5000,
     };
   });
 }
 
-function getERC4626BalanceAtom(token: TokenInfo | undefined) {
+function getERC4626BalanceAtom(token: TokenInfo | undefined, address?: string) {
   return atomWithQuery((get) => {
     return {
-      queryKey: ['getERC4626Balance', token?.token],
+      queryKey: [
+        'getERC4626Balance',
+        token?.token,
+        address || get(addressAtom),
+      ],
       queryFn: async ({ queryKey }: any): Promise<BalanceResult> => {
-        return getERC4626Balance(token, get(addressAtom));
+        const _addr = queryKey[2];
+        return getERC4626Balance(token, _addr);
       },
       refetchInterval: 5000,
     };
   });
 }
 
-function getERC721PositionValueAtom(token: NFTInfo | undefined) {
+function getERC721PositionValueAtom(
+  token: NFTInfo | undefined,
+  address?: string,
+) {
   return atomWithQuery((get) => {
     return {
-      queryKey: ['getERC721PositionValue', token?.address],
+      queryKey: [
+        'getERC721PositionValue',
+        token?.address,
+        address || get(addressAtom),
+      ],
       queryFn: async ({ queryKey }: any): Promise<BalanceResult> => {
-        return getERC721PositionValue(token, get(addressAtom));
+        const _addr = queryKey[2];
+        return getERC721PositionValue(token, _addr);
       },
       refetchInterval: 5000,
     };
@@ -163,22 +174,23 @@ export async function getBalance(
 export function getBalanceAtom(
   token: TokenInfo | NFTInfo | undefined,
   enabledAtom: Atom<boolean>,
+  address?: string,
 ) {
   if (token) {
     console.log('token getBalanceAtom', token);
     if (Object.prototype.hasOwnProperty.call(token, 'isERC4626')) {
       const _token = <TokenInfo>token;
       console.log('token getBalanceAtom isERC4626', _token.isERC4626);
-      if (_token.isERC4626) return getERC4626BalanceAtom(_token);
+      if (_token.isERC4626) return getERC4626BalanceAtom(_token, address);
     } else {
       const _token = <NFTInfo>token;
       const isNFT = NFTS.find((nft) => nft.address === _token.address);
-      if (isNFT) return getERC721PositionValueAtom(_token);
+      if (isNFT) return getERC721PositionValueAtom(_token, address);
     }
   }
 
   // fallback option for now. if token is undefined, this will return 0 anyways
-  return getERC20BalanceAtom(<TokenInfo>token);
+  return getERC20BalanceAtom(<TokenInfo>token, address);
 }
 
 export const DUMMY_BAL_ATOM = atomWithQuery((get) => {

@@ -38,6 +38,7 @@
     "axios": "1.6.7",
     "bignumber.js": "4.0.4",
     "chroma.ts": "1.0.10",
+    "decimal.js": "^10.4.3",
     "ethers": "6.11.1",
     "framer-motion": "11.0.5",
     "get-starknet": "3.0.1",

@@ -24,7 +24,7 @@ import {
 import { atom } from 'jotai';
 import axios from 'axios';
 
-export class DeltaNeutralMM extends IStrategy {
+export class DeltaNeutralMM extends IStrategy<void> {
   riskFactor = 0.75;
   token: TokenInfo;
   readonly secondaryToken: string;
@@ -234,7 +234,7 @@ export class DeltaNeutralMM extends IStrategy {
     ];
   }
 
-  depositMethods = (
+  depositMethods = async (
     amount: MyNumber,
     address: string,
     provider: ProviderInterface,
@@ -344,7 +344,7 @@ export class DeltaNeutralMM extends IStrategy {
     }
   };
 
-  withdrawMethods = (
+  withdrawMethods = async (
     amount: MyNumber,
     address: string,
     provider: ProviderInterface,

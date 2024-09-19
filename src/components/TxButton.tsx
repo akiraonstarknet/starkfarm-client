@@ -28,14 +28,14 @@ import { Call } from 'starknet';
 
 interface TxButtonProps {
   txInfo: StrategyTxProps;
-  buttonText?: 'Deposit' | 'Redeem';
+  buttonText?: 'Deposit' | 'Redeem' | 'Long' | 'Short';
   text: string;
   calls: Call[];
   buttonProps: ButtonProps;
   justDisableIfNoWalletConnect?: boolean;
   selectedMarket?: TokenInfo;
-  strategy?: IStrategyProps;
-  resetDepositForm: () => void;
+  strategy?: IStrategyProps<any>;
+  resetDepositForm?: () => void;
 }
 
 export default function TxButton(props: TxButtonProps) {
@@ -54,6 +54,10 @@ export default function TxButton(props: TxButtonProps) {
     borderWidth: '1px',
   };
 
+  useEffect(() => {
+    console.log('txcalls', props.calls);
+  }, [props.calls]);
+
   const { writeAsync, data, status, isSuccess, isPending, error, isError } =
     useContractWrite({
       calls: props.calls,
@@ -61,7 +65,7 @@ export default function TxButton(props: TxButtonProps) {
 
   useEffect(() => {
     if (data && data.transaction_hash) {
-      props.resetDepositForm();
+      if (props.resetDepositForm) props.resetDepositForm();
       // initiates a toast and adds the tx to tx history if successful
       monitorNewTx({
         txHash: data.transaction_hash,

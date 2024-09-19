@@ -1,8 +1,10 @@
 'use client';
 import TxButton from '@/components/TxButton';
+import { DUMMY_BAL_ATOM } from '@/store/balance.atoms';
 import { addressAtom } from '@/store/claims.atoms';
 import { StrategyInfo, strategiesAtom } from '@/store/strategies.atoms';
 import { StrategyTxProps } from '@/store/transactions.atom';
+import { IStrategyActionHook } from '@/strategies/IStrategy';
 import MyNumber from '@/utils/MyNumber';
 import {
   Avatar,
@@ -19,7 +21,7 @@ import {
 import { useProvider } from '@starknet-react/core';
 import { useAtomValue } from 'jotai';
 import { Metadata } from 'next';
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 const metadata: Metadata = {
   title: 'STRKFarm | Yield aggregator on Starknet',
@@ -31,22 +33,43 @@ function GetCardSimple(strat: StrategyInfo) {
   const [amount, setAmount] = useState(MyNumber.fromZero());
   const address = useAtomValue(addressAtom);
   const { provider } = useProvider();
-  const depositMethods = strat.depositMethods(amount, address || '', provider);
+  const [depositMethods, setDepositMethods] = useState<IStrategyActionHook[]>(
+    [],
+  );
 
-  const balData = useAtomValue(depositMethods[0].balanceAtom);
+  const depositMethodsFn = useCallback(async () => {
+    const result = await strat.depositMethods(amount, address || '', provider);
+    setDepositMethods(result);
+  }, [amount, address, provider]);
+
+  useEffect(() => {
+    depositMethodsFn();
+  }, [amount, address, provider]);
+
+  const balData = useAtomValue(
+    depositMethods.length ? depositMethods[0].balanceAtom : DUMMY_BAL_ATOM,
+  );
 
   const balance = useMemo(() => {
     return balData.data?.amount || MyNumber.fromZero();
   }, [balData]);
 
   const txInfo: StrategyTxProps = useMemo(() => {
+    if (!depositMethods.length) {
+      return {
+        strategyId: strat.id,
+        actionType: 'deposit',
+        amount: MyNumber.fromZero(),
+        tokenAddr: '',
+      };
+    }
     return {
       strategyId: strat.id,
       actionType: 'deposit',
       amount,
       tokenAddr: depositMethods[0].tokenInfo.token,
     };
-  }, [amount, balData]);
+  }, [amount, balData, depositMethods]);
 
   const maxAmount: MyNumber = useMemo(() => {
     return balance;
