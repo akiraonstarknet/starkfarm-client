@@ -1,7 +1,7 @@
 import { DUMMY_BAL_ATOM } from '@/store/balance.atoms';
 import { StrategyInfo } from '@/store/strategies.atoms';
 import { StrategyTxProps } from '@/store/transactions.atom';
-import { IStrategyActionHook, TokenInfo } from '@/strategies/IStrategy';
+import { IStrategyActionHook } from '@/strategies/IStrategy';
 import { MyMenuItemProps, MyMenuListProps } from '@/utils';
 import MyNumber from '@/utils/MyNumber';
 import { ChevronDownIcon } from '@chakra-ui/icons';
@@ -27,7 +27,7 @@ import {
   VStack,
 } from '@chakra-ui/react';
 import { useAccount, useProvider } from '@starknet-react/core';
-import { useAtom, useAtomValue, useSetAtom } from 'jotai';
+import { useAtom, useAtomValue } from 'jotai';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ProviderInterface } from 'starknet';
 import TxButton from './TxButton';
@@ -81,7 +81,11 @@ export default function TradeAction(
   const [sliderValue, setSliderValue] = useState(0);
 
   const {
-    maxTradeAmount, maxUserTradeAmount, minTradeAmount, isLoading, minCollateralAmount
+    maxTradeAmount,
+    maxUserTradeAmount,
+    minTradeAmount,
+    isLoading,
+    minCollateralAmount,
   } = props;
   const [tradeAmount, setTradeAmountInStrat] = useAtom(
     getTradeStrategy().tradeAmountAtom,
@@ -89,7 +93,6 @@ export default function TradeAction(
   const [leverage, setLeverage] = useAtom(getTradeStrategy().leverageAtom);
 
   const tradeAmountRef = useRef<MyNumberInputRef>(null); // Ref with a method signature
-
 
   const [selectedCollateralAtom, setSelectedCollateralAtom] = useAtom(
     getTradeStrategy().selectedCollateralAtom,
@@ -108,7 +111,6 @@ export default function TradeAction(
   }, [tradeAmount, address, selectedCollateralAtom, minCollateralAmount]);
 
   const tvlInfo = useAtomValue(props.strategy.tvlAtom);
-
 
   // This is used to store the raw amount entered by the user
   useEffect(() => {

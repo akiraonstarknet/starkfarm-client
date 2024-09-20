@@ -435,10 +435,7 @@ export class TradeStrategy extends IStrategy<void> {
 
     // increase trade amount a little to offset for oracle price diff
     tradeAmount *= 1.01; // 1% increase
-    return MyNumber.fromEther(
-      tradeAmount.toString(),
-      this.mainToken.decimals,
-    );
+    return MyNumber.fromEther(tradeAmount.toString(), this.mainToken.decimals);
   }
 
   async getUserDebt(
@@ -540,10 +537,7 @@ export class TradeStrategy extends IStrategy<void> {
 
     // trade amount
     const tradeAmount = (collateralValue * leverage) / tradePrice;
-    return MyNumber.fromEther(
-      tradeAmount.toString(),
-      this.mainToken.decimals,
-    );
+    return MyNumber.fromEther(tradeAmount.toString(), this.mainToken.decimals);
   }
 
   withdrawMethods = async (

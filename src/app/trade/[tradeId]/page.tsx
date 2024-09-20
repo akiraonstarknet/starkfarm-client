@@ -28,7 +28,7 @@ import {
   WrapItem,
 } from '@chakra-ui/react';
 import { useAccount } from '@starknet-react/core';
-import { useAtom, useAtomValue, useSetAtom } from 'jotai';
+import { useAtomValue, useSetAtom } from 'jotai';
 import mixpanel from 'mixpanel-browser';
 import { useEffect, useMemo } from 'react';
 import { isMobile } from 'react-device-detect';
@@ -207,47 +207,43 @@ const TradeStrategyPage = (props: { strategy: TradeStrategy }) => {
     },
   ];
 
-    //
-    // form metrics
-    //
+  //
+  // form metrics
+  //
 
-    // This is the selected market token
-    const selectedCollateralAtom = useAtomValue<TokenInfo>(
-        strategy.selectedCollateralAtom,
-    );
+  // This is the selected market token
+  const selectedCollateralAtom = useAtomValue<TokenInfo>(
+    strategy.selectedCollateralAtom,
+  );
 
-    // selected leverage
-    const leverage = useAtomValue(strategy.leverageAtom);
+  // selected leverage
+  const leverage = useAtomValue(strategy.leverageAtom);
 
-    // min trade
-    const minTradeAmountRes = useAtomValue(strategy.minTradeAmountAtom);
-    const minTradeAmount = useMemo(() => {
-      if (minTradeAmountRes.data) {
-        return minTradeAmountRes.data;
-      }
-      return MyNumber.fromZero();
-    }, [minTradeAmountRes]);
+  // min trade
+  const minTradeAmountRes = useAtomValue(strategy.minTradeAmountAtom);
+  const minTradeAmount = useMemo(() => {
+    if (minTradeAmountRes.data) {
+      return minTradeAmountRes.data;
+    }
+    return MyNumber.fromZero();
+  }, [minTradeAmountRes]);
 
-    // min col
-    const minCollateralAmountRes = useAtomValue(
-        strategy.getMinCollateralAtom,
-      );
-    const minCollateralAmount = useMemo(() => {
-        return minCollateralAmountRes.data || MyNumber.fromZero();
-    }, [minCollateralAmountRes]);
+  // min col
+  const minCollateralAmountRes = useAtomValue(strategy.getMinCollateralAtom);
+  const minCollateralAmount = useMemo(() => {
+    return minCollateralAmountRes.data || MyNumber.fromZero();
+  }, [minCollateralAmountRes]);
 
-    // max trade
-    const maxTradeAmountRes = useAtomValue(strategy.maxTradeAmountAtom);
-    const maxUserTradeAmountRes = useAtomValue(
-      strategy.maxUserTradeAmountAtom,
-    );
+  // max trade
+  const maxTradeAmountRes = useAtomValue(strategy.maxTradeAmountAtom);
+  const maxUserTradeAmountRes = useAtomValue(strategy.maxUserTradeAmountAtom);
 
-    const maxUserTradeAmount = useMemo(() => {
-        const overAllMaxTradeAmount = maxTradeAmountRes.data || MyNumber.fromZero();
-        const maxUserTradeAmount =
-        maxUserTradeAmountRes.data || MyNumber.fromZero();
-        return MyNumber.min(overAllMaxTradeAmount, maxUserTradeAmount);
-    }, [maxTradeAmountRes, maxUserTradeAmountRes]);
+  const maxUserTradeAmount = useMemo(() => {
+    const overAllMaxTradeAmount = maxTradeAmountRes.data || MyNumber.fromZero();
+    const maxUserTradeAmount =
+      maxUserTradeAmountRes.data || MyNumber.fromZero();
+    return MyNumber.min(overAllMaxTradeAmount, maxUserTradeAmount);
+  }, [maxTradeAmountRes, maxUserTradeAmountRes]);
 
   return (
     <Container maxWidth={'1200px'} margin={'0 auto'} padding="30px 10px">
@@ -461,8 +457,10 @@ const TradeStrategyPage = (props: { strategy: TradeStrategy }) => {
                       maxTradeAmount={maxTradeAmountRes.data}
                       minCollateralAmount={minCollateralAmount}
                       minTradeAmount={minTradeAmount}
-                      isLoading={maxTradeAmountRes.isLoading ||
-                        minTradeAmountRes.isLoading}
+                      isLoading={
+                        maxTradeAmountRes.isLoading ||
+                        minTradeAmountRes.isLoading
+                      }
                     />
                   </TabPanel>
                   <TabPanel
@@ -545,67 +543,72 @@ const TradeStrategyPage = (props: { strategy: TradeStrategy }) => {
                   </TabPanel>
                 </TabPanels>
               </Tabs>
-                <Box bg="color2_50p" height={'1px'} width={'100%'} margin={'10px 0'}></Box>
+              <Box
+                bg="color2_50p"
+                height={'1px'}
+                width={'100%'}
+                margin={'10px 0'}
+              ></Box>
 
-                <VStack width={'100%'} spacing={1} gap={1}>
+              <VStack width={'100%'} spacing={1} gap={1}>
                 <Flex justifyContent={'space-between'} width={'100%'}>
-                    <Box>
+                  <Box>
                     <Label
-                        text={`Max trade amount at ${leverage.value.toFixed(2)}x`}
+                      text={`Max trade amount at ${leverage.value.toFixed(2)}x`}
                     ></Label>
-                    </Box>
-                    <Text color="color2" fontSize={'13px'}>
+                  </Box>
+                  <Text color="color2" fontSize={'13px'}>
                     {maxUserTradeAmount.toEtherToFixedDecimals(4) || '0.00'}{' '}
                     {strategy.mainToken.name}
-                    </Text>
+                  </Text>
                 </Flex>
                 <Flex justifyContent={'space-between'} width={'100%'}>
-                    <Box>
+                  <Box>
                     <Label text={`Min trade amount:`}></Label>
-                    </Box>
-                    <Text color="color2" fontSize={'13px'}>
+                  </Box>
+                  <Text color="color2" fontSize={'13px'}>
                     {minTradeAmount.toEtherToFixedDecimals(4) || '0.00'}{' '}
                     {strategy.mainToken.name}
-                    </Text>
+                  </Text>
                 </Flex>
                 <Box width={'100%'}>
-                    <Flex width={'100%'} justifyContent={'space-between'}>
+                  <Flex width={'100%'} justifyContent={'space-between'}>
                     <Box>
-                        <Label text="Collateral required:"></Label>
+                      <Label text="Collateral required:"></Label>
                     </Box>
                     <Center>
-                        {minCollateralAmountRes.isLoading && (
+                      {minCollateralAmountRes.isLoading && (
                         <Spinner size={'xs'} marginRight={'5px'} />
-                        )}
-                        <Text color="color2" fontSize={'13px'}>
+                      )}
+                      <Text color="color2" fontSize={'13px'}>
                         {minCollateralAmount.toEtherToFixedDecimals(4)}{' '}
                         {selectedCollateralAtom.name}
-                        </Text>
+                      </Text>
                     </Center>
-                    </Flex>
-                    {balData.data?.amount.compare(minCollateralAmount, 'lt') && (
+                  </Flex>
+                  {balData.data?.amount.compare(minCollateralAmount, 'lt') && (
                     <Text textAlign={'right'} fontSize="13px" color="red">
-                        Insufficient collateral
+                      Insufficient collateral
                     </Text>
-                    )}
+                  )}
                 </Box>
                 <Flex justifyContent={'space-between'} width={'100%'}>
-                    <Box>
+                  <Box>
                     <Label text="Liquidation:"></Label>
-                    </Box>
-                    <Text color="color2" fontSize={'12px'}>
+                  </Box>
+                  <Text color="color2" fontSize={'12px'}>
                     0.001 {selectedCollateralAtom.name}
-                    </Text>
+                  </Text>
                 </Flex>
                 <Flex justifyContent={'space-between'} width={'100%'}>
-                    <Box>
+                  <Box>
                     <Label text="Our fee:"></Label>
-                    </Box>
-                    <Text color="color2" fontSize={'12px'}>
+                  </Box>
+                  <Text color="color2" fontSize={'12px'}>
                     0.1%
-                    </Text>
+                  </Text>
                 </Flex>
-                </VStack>
+              </VStack>
             </Card>
           </GridItem>
         </Grid>
