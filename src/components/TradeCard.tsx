@@ -261,7 +261,7 @@ function StrategyMobileCard(props: TradeCardProps) {
           fontWeight={'bold'}
           fontSize={'13px'}
         >
-          Leverage
+          Max Leverage
         </Text>
         <StrategyLeverage pool={pool} index={index} />
       </GridItem>
@@ -272,7 +272,7 @@ function StrategyMobileCard(props: TradeCardProps) {
           fontWeight={'bold'}
           fontSize={'13px'}
         >
-          APY
+          Max APY
         </Text>
         <StrategyAPY pool={pool} index={index} />
       </GridItem>

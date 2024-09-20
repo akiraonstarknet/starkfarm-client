@@ -423,7 +423,7 @@ export class TradeStrategy extends IStrategy<void> {
     const effectiveMinDebt =
       userDebt >= minDebtAmount ? 0 : minDebtAmount - userDebt;
 
-    const tradePrice = await this.getTokenPrice(this.baseConfig.trade);
+    const tradePrice = await this.getTokenPrice(this.mainToken);
     let tradeAmount = (effectiveMinDebt * debtPrice) / tradePrice;
     console.log(
       'minTradeAmount',
@@ -437,7 +437,7 @@ export class TradeStrategy extends IStrategy<void> {
     tradeAmount *= 1.01; // 1% increase
     return MyNumber.fromEther(
       tradeAmount.toString(),
-      this.baseConfig.trade.decimals,
+      this.mainToken.decimals,
     );
   }
 
@@ -534,7 +534,7 @@ export class TradeStrategy extends IStrategy<void> {
 
     // trade price
     const tradePriceInfo = await axios.get(
-      `https://api.coinbase.com/v2/prices/${this.baseConfig.trade.name}-USDT/spot`,
+      `https://api.coinbase.com/v2/prices/${this.mainToken.name}-USDT/spot`,
     );
     const tradePrice = Number(tradePriceInfo.data.data.amount);
 
@@ -542,7 +542,7 @@ export class TradeStrategy extends IStrategy<void> {
     const tradeAmount = (collateralValue * leverage) / tradePrice;
     return MyNumber.fromEther(
       tradeAmount.toString(),
-      this.baseConfig.trade.decimals,
+      this.mainToken.decimals,
     );
   }
 

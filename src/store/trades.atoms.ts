@@ -140,8 +140,12 @@ export const tradePoolsAtom = atom<TradeInfo[]>((get) => {
         logo: '',
       },
       tvl: 0,
-      apr: 0,
-      aprSplits: [],
+      apr: strat.netYield,
+      aprSplits: [{
+        apr: strat.netYield,
+        title: 'Net Yield:',
+        description: ''
+      }],
       collaterals: strat.baseConfig.collateral.map(
         (collateral) => collateral.token,
       ),

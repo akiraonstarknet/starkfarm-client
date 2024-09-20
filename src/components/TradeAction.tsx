@@ -38,6 +38,20 @@ import {
 } from '@/strategies/trade.strat';
 import { BalanceComponent, MaxButton } from './Deposit';
 
+export function Label(props: { text: string }) {
+  return (
+    <Text
+      color="color2"
+      fontSize={'13px'}
+      fontWeight={'bold'}
+      width={'100%'}
+      marginBottom={'2px'}
+    >
+      {props.text}
+    </Text>
+  );
+}
+
 interface TradeActionProps<T> {
   strategy: StrategyInfo<TradeActionAdditionalData>;
   // ? If you want to add more button text, you can add here
@@ -49,6 +63,12 @@ interface TradeActionProps<T> {
     provider: ProviderInterface,
     additionalData: T,
   ) => Promise<IStrategyActionHook[]>;
+
+  maxTradeAmount?: MyNumber;
+  maxUserTradeAmount: MyNumber;
+  minTradeAmount: MyNumber;
+  minCollateralAmount: MyNumber;
+  isLoading: boolean;
 }
 
 export default function TradeAction(
@@ -59,43 +79,19 @@ export default function TradeAction(
   const [isMaxClicked, setIsMaxClicked] = useState(false);
   const [callsInfo, setCallsInfo] = useState<IStrategyActionHook[]>([]);
   const [sliderValue, setSliderValue] = useState(0);
-  const minCollateralAmountRes = useAtomValue(
-    getTradeStrategy().getMinCollateralAtom,
-  );
-  const minCollateralAmount = useMemo(() => {
-    return minCollateralAmountRes.data || MyNumber.fromZero();
-  }, [minCollateralAmountRes]);
-  const maxTradeAmountRes = useAtomValue(getTradeStrategy().maxTradeAmountAtom);
-  const maxUserTradeAmountRes = useAtomValue(
-    getTradeStrategy().maxUserTradeAmountAtom,
-  );
+
+  const {
+    maxTradeAmount, maxUserTradeAmount, minTradeAmount, isLoading, minCollateralAmount
+  } = props;
   const [tradeAmount, setTradeAmountInStrat] = useAtom(
     getTradeStrategy().tradeAmountAtom,
   );
   const [leverage, setLeverage] = useAtom(getTradeStrategy().leverageAtom);
-  const minTradeAmountRes = useAtomValue(getTradeStrategy().minTradeAmountAtom);
-  const minTradeAmount = useMemo(() => {
-    if (minTradeAmountRes.data) {
-      return minTradeAmountRes.data;
-    }
-    return MyNumber.fromZero();
-  }, [minTradeAmountRes]);
 
-  useEffect(() => {
-    console.log(
-      'maxTradeAmountRes',
-      maxTradeAmountRes,
-      maxTradeAmountRes.isLoading,
-      maxTradeAmountRes.data,
-    );
-  }, [maxTradeAmountRes]);
   const tradeAmountRef = useRef<MyNumberInputRef>(null); // Ref with a method signature
 
-  // This is the selected market token
-  const selectedCollateralAtom = useAtomValue<TokenInfo>(
-    getTradeStrategy().selectedCollateralAtom,
-  );
-  const setSelectedCollateralAtom = useSetAtom(
+
+  const [selectedCollateralAtom, setSelectedCollateralAtom] = useAtom(
     getTradeStrategy().selectedCollateralAtom,
   );
 
@@ -113,12 +109,6 @@ export default function TradeAction(
 
   const tvlInfo = useAtomValue(props.strategy.tvlAtom);
 
-  const maxTradeAmount = useMemo(() => {
-    const overAllMaxTradeAmount = maxTradeAmountRes.data || MyNumber.fromZero();
-    const maxUserTradeAmount =
-      maxUserTradeAmountRes.data || MyNumber.fromZero();
-    return MyNumber.min(overAllMaxTradeAmount, maxUserTradeAmount);
-  }, [maxTradeAmountRes, maxUserTradeAmountRes]);
 
   // This is used to store the raw amount entered by the user
   useEffect(() => {
@@ -163,20 +153,6 @@ export default function TradeAction(
     opacity: 0.75,
   };
 
-  function Label(props: { text: string }) {
-    return (
-      <Text
-        color="color2"
-        fontSize={'13px'}
-        fontWeight={'bold'}
-        width={'100%'}
-        marginBottom={'2px'}
-      >
-        {props.text}
-      </Text>
-    );
-  }
-
   function getCurrentLeverage(_sliderValue: number) {
     const diff = ((getTradeStrategy().leverage - 1) * _sliderValue) / 100;
     return 1 + diff;
@@ -209,8 +185,7 @@ export default function TradeAction(
     <Box width={'100%'} position={'relative'}>
       {(getTradeStrategy().netYield == 0 ||
         getTradeStrategy().leverage == 0 ||
-        maxTradeAmountRes.isLoading ||
-        minTradeAmountRes.isLoading ||
+        isLoading ||
         balData.isLoading) && (
         <Box
           width={'100%'}
@@ -297,7 +272,7 @@ export default function TradeAction(
             <Label text={`Trade Amount`}></Label>
             <MaxButton
               onClick={() => {
-                const amount = maxTradeAmountRes.data || MyNumber.fromZero();
+                const amount = maxTradeAmount || MyNumber.fromZero();
                 tradeAmountRef.current?.setValue(amount, true);
                 setSliderValue(100);
                 setTradeAmountInStrat(amount);
@@ -309,7 +284,7 @@ export default function TradeAction(
             ref={tradeAmountRef}
             market={getTradeStrategy().baseConfig.trade}
             minAmount={minTradeAmount}
-            maxAmount={maxTradeAmount}
+            maxAmount={maxUserTradeAmount}
             placeHolder={`Amount (${getTradeStrategy().baseConfig.trade.name})`}
             onChange={(valueAsString, valueAsNumber) => {
               setTradeAmountInStrat(
@@ -385,75 +360,13 @@ export default function TradeAction(
             buttonProps={{
               isDisabled:
                 tradeAmount.isZero() ||
-                tradeAmount.compare(maxTradeAmount, 'gt'),
+                tradeAmount.compare(maxUserTradeAmount, 'gt'),
             }}
             selectedMarket={selectedCollateralAtom}
             strategy={props.strategy}
             resetDepositForm={tradeAmountRef.current?.resetField}
           />
         </Center>
-
-        <Box bg="color2_50p" height={'1px'} width={'100%'}></Box>
-
-        <VStack width={'100%'} spacing={1} gap={1}>
-          <Flex justifyContent={'space-between'} width={'100%'}>
-            <Box>
-              <Label
-                text={`Max trade amount at ${leverage.value.toFixed(2)}x`}
-              ></Label>
-            </Box>
-            <Text color="color2" fontSize={'13px'}>
-              {maxTradeAmount.toEtherToFixedDecimals(4) || '0.00'}{' '}
-              {getTradeStrategy().baseConfig.trade.name}
-            </Text>
-          </Flex>
-          <Flex justifyContent={'space-between'} width={'100%'}>
-            <Box>
-              <Label text={`Min trade amount:`}></Label>
-            </Box>
-            <Text color="color2" fontSize={'13px'}>
-              {minTradeAmount.toEtherToFixedDecimals(4) || '0.00'}{' '}
-              {getTradeStrategy().baseConfig.trade.name}
-            </Text>
-          </Flex>
-          <Box width={'100%'}>
-            <Flex width={'100%'} justifyContent={'space-between'}>
-              <Box>
-                <Label text="Collateral required:"></Label>
-              </Box>
-              <Center>
-                {minCollateralAmountRes.isLoading && (
-                  <Spinner size={'xs'} marginRight={'5px'} />
-                )}
-                <Text color="color2" fontSize={'13px'}>
-                  {minCollateralAmount.toEtherToFixedDecimals(4)}{' '}
-                  {selectedCollateralAtom.name}
-                </Text>
-              </Center>
-            </Flex>
-            {balData.data?.amount.compare(minCollateralAmount, 'lt') && (
-              <Text textAlign={'right'} fontSize="13px" color="red">
-                Insufficient collateral
-              </Text>
-            )}
-          </Box>
-          <Flex justifyContent={'space-between'} width={'100%'}>
-            <Box>
-              <Label text="Liquidation:"></Label>
-            </Box>
-            <Text color="color2" fontSize={'12px'}>
-              0.001 {selectedCollateralAtom.name}
-            </Text>
-          </Flex>
-          <Flex justifyContent={'space-between'} width={'100%'}>
-            <Box>
-              <Label text="Our fee:"></Label>
-            </Box>
-            <Text color="color2" fontSize={'12px'}>
-              0.1%
-            </Text>
-          </Flex>
-        </VStack>
       </VStack>
     </Box>
   );
