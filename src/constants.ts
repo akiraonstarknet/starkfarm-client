@@ -40,7 +40,7 @@ const CONSTANTS = {
     BASE_API: '/ekubo',
   },
   HAIKO: {
-    BASE_APR_API: 'haiko/markets?network=mainnet',
+    BASE_APR_API: '/haiko/markets?network=mainnet',
   },
   MY_SWAP: {
     POOLS_API: '/myswap/data/pools/all.json',

@@ -44,6 +44,7 @@ interface DepositProps {
     address: string,
     provider: ProviderInterface,
   ) => Promise<IStrategyActionHook[]>;
+  onChangeAmount?: (amount: MyNumber, selectedMarket: TokenInfo) => void;
 }
 export function MaxButton(props: { onClick: () => void }) {
   return (
@@ -271,6 +272,7 @@ export default function Deposit(props: DepositProps) {
             onClickMax={() => {
               amountRef.current?.setValue(maxAmount, true);
               setAmount(maxAmount);
+              props.onChangeAmount?.(maxAmount, selectedMarket);
               mixpanel.track('Chose max amount', {
                 strategyId: props.strategy.id,
                 strategyName: props.strategy.name,
@@ -292,7 +294,12 @@ export default function Deposit(props: DepositProps) {
         maxAmount={maxAmount}
         placeHolder="Amount"
         onChange={(valueAsString, valueAsNumber) => {
-          setAmount(MyNumber.fromEther(valueAsString, selectedMarket.decimals));
+          const amount = MyNumber.fromEther(
+            valueAsString,
+            selectedMarket.decimals,
+          );
+          setAmount(amount);
+          props.onChangeAmount?.(amount, selectedMarket);
           mixpanel.track('Enter amount', {
             strategyId: props.strategy.id,
             strategyName: props.strategy.name,

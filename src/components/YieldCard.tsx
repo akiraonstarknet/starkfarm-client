@@ -470,7 +470,7 @@ export default function YieldCard(props: YieldCardProps) {
 }
 
 export function YieldStrategyCard(props: {
-  strat: IStrategyProps;
+  strat: IStrategyProps<void>;
   index: number;
 }) {
   const tvlInfo = useAtomValue(props.strat.tvlAtom);

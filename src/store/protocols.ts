@@ -147,7 +147,7 @@ export const allPoolsAtomUnSorted = atom((get) => {
 });
 
 export function getPoolInfoFromStrategy(
-  strat: IStrategyProps,
+  strat: IStrategyProps<void>,
   tvlInfo: number,
 ): PoolInfo {
   let category = Category.Others;

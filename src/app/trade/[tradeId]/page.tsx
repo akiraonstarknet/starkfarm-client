@@ -28,7 +28,7 @@ import {
   WrapItem,
 } from '@chakra-ui/react';
 import { useAccount } from '@starknet-react/core';
-import { useAtomValue, useSetAtom } from 'jotai';
+import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import mixpanel from 'mixpanel-browser';
 import { useEffect, useMemo } from 'react';
 import { isMobile } from 'react-device-detect';
@@ -41,6 +41,8 @@ import { getDisplayCurrencyAmount, getSign, getUniqueById } from '@/utils';
 import {
   currentTradeIdAtom,
   getLiquidationPriceAtom,
+  newLiquidationPriceAtom,
+  positionChangeAtom,
   tradeCloseActions,
   tradeEffectiveAPYAtom,
   tradeEffectiveLeverageAtom,
@@ -62,6 +64,7 @@ const TradeStrategyPage = (props: { strategy: TradeStrategy }) => {
   const setBalQueryEnable = useSetAtom(strategy.balEnabled);
   const { address } = useAccount();
   const transactions = useAtomValue(transactionsAtom);
+  const [positionChange, setPositionChange] = useAtom(positionChangeAtom);
 
   // user trade Address
   const userTradeAddressRes = useAtomValue(userTradeAddressAtom);
@@ -119,6 +122,15 @@ const TradeStrategyPage = (props: { strategy: TradeStrategy }) => {
     return null;
   }, [liquidationPriceRes]);
 
+  // get new liquidation price (based on form inputs)
+  const newLiquidationPriceRes = useAtomValue(newLiquidationPriceAtom);
+  const newLiquidationPriceInfo = useMemo(() => {
+    if (newLiquidationPriceRes.data) {
+      return newLiquidationPriceRes.data;
+    }
+    return null;
+  }, [newLiquidationPriceRes]);
+
   // effective yield
   const tradeEffectiveAPYRes = useAtomValue(tradeEffectiveAPYAtom);
   const tradeEffectiveAPY = useMemo(() => {
@@ -141,9 +153,20 @@ const TradeStrategyPage = (props: { strategy: TradeStrategy }) => {
     setBalQueryEnable(true);
   }, []);
 
-  // const balAtom = getBalanceAtom(strategy?.holdingTokens[0]);
-  const balData = useAtomValue(strategy?.balanceAtom || DUMMY_BAL_ATOM);
-  // cons{ balance, underlyingTokenInfo, isLoading, isError }
+  // This is the selected market token
+  const selectedCollateralAtom = useAtomValue<TokenInfo>(
+    strategy.selectedCollateralAtom,
+  );
+
+  const balData = useAtomValue(
+    strategy.baseConfig.collateral.find(
+      (a) => a.token.name === selectedCollateralAtom.name,
+    )?.balanceAtom || DUMMY_BAL_ATOM,
+  );
+  const balance = useMemo(() => {
+    return balData.data?.amount || MyNumber.fromZero();
+  }, [balData]);
+
   useEffect(() => {
     console.log(
       'balData',
@@ -162,7 +185,7 @@ const TradeStrategyPage = (props: { strategy: TradeStrategy }) => {
     {
       name: 'Net value',
       value: position
-        ? `${position?.tradeToken.toEtherToFixedDecimals(4)} ${strategy.baseConfig.trade.name}`
+        ? `${position?.tradeToken.toEtherToFixedDecimals(4)} ${strategy.mainToken.name}`
         : '-',
       subText: position
         ? `$${getDisplayCurrencyAmount(tradePositionInUSDValue?.tradeUSD || 0, 2)}`
@@ -210,11 +233,6 @@ const TradeStrategyPage = (props: { strategy: TradeStrategy }) => {
   //
   // form metrics
   //
-
-  // This is the selected market token
-  const selectedCollateralAtom = useAtomValue<TokenInfo>(
-    strategy.selectedCollateralAtom,
-  );
 
   // selected leverage
   const leverage = useAtomValue(strategy.leverageAtom);
@@ -451,7 +469,7 @@ const TradeStrategyPage = (props: { strategy: TradeStrategy }) => {
                   >
                     <TradeAction
                       strategy={strategy}
-                      buttonText="Long"
+                      buttonText={strategy.isLong() ? 'Long' : 'Short'}
                       callsInfoProm={tradeOpenActionsFn}
                       maxUserTradeAmount={maxUserTradeAmount}
                       maxTradeAmount={maxTradeAmountRes.data}
@@ -473,6 +491,14 @@ const TradeStrategyPage = (props: { strategy: TradeStrategy }) => {
                       strategy={strategy}
                       buttonText="Redeem"
                       callsInfoProm={tradeCloseActionsFn}
+                      onChangeAmount={(amount, market) => {
+                        setPositionChange({
+                          collateral: MyNumber.fromZero(),
+                          collateralToken: selectedCollateralAtom,
+                          tradeAmount: amount.operate('mul', -1),
+                          actionType: 'close-trade',
+                        });
+                      }}
                     />
                   </TabPanel>
                   <TabPanel
@@ -524,6 +550,14 @@ const TradeStrategyPage = (props: { strategy: TradeStrategy }) => {
                             strategy={strategy}
                             buttonText="Deposit"
                             callsInfoProm={strategy.depositMethods}
+                            onChangeAmount={(amount, market) => {
+                              setPositionChange({
+                                collateral: amount,
+                                collateralToken: market,
+                                tradeAmount: MyNumber.fromZero(),
+                                actionType: 'add-collateral',
+                              });
+                            }}
                           />
                         </TabPanel>
                         <TabPanel
@@ -536,6 +570,14 @@ const TradeStrategyPage = (props: { strategy: TradeStrategy }) => {
                             strategy={strategy}
                             buttonText="Redeem"
                             callsInfoProm={strategy.withdrawMethods}
+                            onChangeAmount={(amount, market) => {
+                              setPositionChange({
+                                collateral: amount.operate('mul', -1),
+                                collateralToken: market,
+                                tradeAmount: MyNumber.fromZero(),
+                                actionType: 'remove-collateral',
+                              });
+                            }}
                           />
                         </TabPanel>
                       </TabPanels>
@@ -588,18 +630,44 @@ const TradeStrategyPage = (props: { strategy: TradeStrategy }) => {
                   </Flex>
                   {balData.data?.amount.compare(minCollateralAmount, 'lt') && (
                     <Text textAlign={'right'} fontSize="13px" color="red">
-                      Insufficient collateral
+                      Insufficient collateral {minCollateralAmount.toEtherStr()}{' '}
+                      {balData.data?.amount.toEtherStr()}
                     </Text>
                   )}
                 </Box>
                 <Flex justifyContent={'space-between'} width={'100%'}>
                   <Box>
-                    <Label text="Liquidation:"></Label>
+                    <Label text="Liquidation price:"></Label>
                   </Box>
-                  <Text color="color2" fontSize={'12px'}>
-                    0.001 {selectedCollateralAtom.name}
-                  </Text>
+                  {newLiquidationPriceInfo &&
+                    !isNaN(newLiquidationPriceInfo.price) &&
+                    newLiquidationPriceInfo.price != 0 && (
+                      <Box>
+                        <Text
+                          color="color2"
+                          fontSize={'12px'}
+                          textAlign={'right'}
+                        >
+                          {newLiquidationPriceInfo.price.toFixed(2)} per{' '}
+                          {strategy.mainToken.name}
+                        </Text>
+                        <Text
+                          color="color2"
+                          fontSize={'12px'}
+                          textAlign={'right'}
+                        >
+                          ({newLiquidationPriceInfo.percentChange.toFixed(2)}%)
+                        </Text>
+                      </Box>
+                    )}
+                  {newLiquidationPriceInfo == null ? (
+                    <Spinner size={'xs'} />
+                  ) : isNaN(newLiquidationPriceInfo.price) ? (
+                    <Text>-</Text>
+                  ) : null}
                 </Flex>
+                <Text>{positionChange.collateral.toEtherStr()}</Text>
+                <Text>{positionChange.tradeAmount.toEtherStr()}</Text>
                 <Flex justifyContent={'space-between'} width={'100%'}>
                   <Box>
                     <Label text="Our fee:"></Label>

@@ -34,7 +34,7 @@ const provider = new RpcProvider({
   nodeUrl: process.env.RPC_URL || 'https://starknet-mainnet.public.blastapi.io',
 });
 
-async function getStrategyInfo(strategy: IStrategy) {
+async function getStrategyInfo(strategy: IStrategy<void>) {
   const tvl = await strategy.getTVL();
 
   return {

@@ -37,6 +37,7 @@ import {
   TradeStrategy,
 } from '@/strategies/trade.strat';
 import { BalanceComponent, MaxButton } from './Deposit';
+import { positionChangeAtom } from '@/store/trades.atoms';
 
 export function Label(props: { text: string }) {
   return (
@@ -99,22 +100,40 @@ export default function TradeAction(
   );
 
   const depositMethodsFn = useCallback(async () => {
-    const result = await props.callsInfoProm(
-      minCollateralAmount,
-      address || '0x0',
-      provider,
-      {
-        tradeAmount,
-      },
+    console.log(
+      'triggered getMinCollateral1 txCall',
+      tradeAmount.toEtherStr(),
+      minCollateralAmount.toEtherStr(),
     );
-    setCallsInfo(result);
+    try {
+      const result = await props.callsInfoProm(
+        minCollateralAmount,
+        address || '0x0',
+        provider,
+        {
+          tradeAmount,
+        },
+      );
+      console.log('triggered getMinCollateral2 txCall', result);
+      setCallsInfo(result);
+    } catch (e) {
+      console.error('triggered getMinCollateral3 txCall', e);
+    }
   }, [tradeAmount, address, selectedCollateralAtom, minCollateralAmount]);
 
   const tvlInfo = useAtomValue(props.strategy.tvlAtom);
 
+  const [positionChange, setPositionChange] = useAtom(positionChangeAtom);
+
   // This is used to store the raw amount entered by the user
   useEffect(() => {
     depositMethodsFn();
+    setPositionChange({
+      tradeAmount,
+      collateral: minCollateralAmount,
+      collateralToken: selectedCollateralAtom,
+      actionType: 'add-trade',
+    });
   }, [tradeAmount, selectedCollateralAtom, address, minCollateralAmount]);
 
   // use to maintain tx history and show toasts
@@ -284,15 +303,20 @@ export default function TradeAction(
           </Flex>
           <MyNumberInput
             ref={tradeAmountRef}
-            market={getTradeStrategy().baseConfig.trade}
+            market={getTradeStrategy().mainToken}
             minAmount={minTradeAmount}
             maxAmount={maxUserTradeAmount}
-            placeHolder={`Amount (${getTradeStrategy().baseConfig.trade.name})`}
+            placeHolder={`Amount (${getTradeStrategy().mainToken.name})`}
             onChange={(valueAsString, valueAsNumber) => {
+              console.log(
+                'triggered getMinCollateral3',
+                valueAsNumber,
+                valueAsString,
+              );
               setTradeAmountInStrat(
                 MyNumber.fromEther(
                   valueAsString,
-                  getTradeStrategy().baseConfig.trade.decimals,
+                  getTradeStrategy().mainToken.decimals,
                 ),
               );
             }}

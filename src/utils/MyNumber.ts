@@ -30,11 +30,11 @@ export default class MyNumber {
   }
 
   toString() {
-    return this.bigNumber.toFixed();
+    return this.bigNumber.toFixed(0);
   }
 
   toEtherStr() {
-    return new Decimal(this.bigNumber.toFixed())
+    return new Decimal(this.bigNumber.toFixed(0))
       .div(10 ** this.decimals)
       .toFixed(this.decimals);
   }
@@ -66,7 +66,7 @@ export default class MyNumber {
     return this.bigNumber[command](value.bigNumber);
   }
 
-  operate(command: 'div' | 'plus', value: string | number) {
+  operate(command: 'div' | 'plus' | 'mul', value: string | number) {
     const bn = new BigNumber(Number(value).toFixed(6));
     return new MyNumber(this.bigNumber[command](bn).toFixed(0), this.decimals);
   }
@@ -77,7 +77,7 @@ export default class MyNumber {
   }
 
   toUint256() {
-    return uint256.bnToUint256(this.bigNumber.toFixed());
+    return uint256.bnToUint256(this.bigNumber.toFixed(0));
   }
 
   static min(a: MyNumber, b: MyNumber) {

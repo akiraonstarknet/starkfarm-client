@@ -17,16 +17,17 @@ import {
   getBalanceAtom,
 } from '@/store/balance.atoms';
 import { atom } from 'jotai';
-import axios from 'axios';
 import {
   assetCollateralTokenMap,
   assetDebtTokenMap,
   BaseTradeConfig,
+  currentCollateralAmountAtom,
   getTradeContract,
   getTradeFactoryContract,
 } from '@/store/trades.atoms';
 import { atomWithQuery } from 'jotai-tanstack-query';
 import { addressAtom, getProvider } from '@/store/claims.atoms';
+import { getPrice } from '@/utils';
 
 export interface TradeActionAdditionalData {
   tradeAmount: MyNumber;
@@ -120,10 +121,21 @@ export class TradeStrategy extends IStrategy<void> {
         get(this.leverageAtom),
       ],
       queryFn: async ({ queryKey }: any): Promise<MyNumber> => {
-        const tradeAmount: MyNumber = queryKey[2];
-        const collateral: TokenInfo = queryKey[3];
-        const leverage = queryKey[4];
-        return this.getMinCollateral(tradeAmount, collateral, leverage.value);
+        console.log('triggered getMinCollateral', queryKey);
+        try {
+          const tradeAmount: MyNumber = queryKey[2];
+          const collateral: TokenInfo = queryKey[3];
+          const leverage = queryKey[4];
+          console.log(
+            'triggered getMinCollateral2',
+            queryKey,
+            tradeAmount.toEtherStr(),
+          );
+          return this.getMinCollateral(tradeAmount, collateral, leverage.value);
+        } catch (e) {
+          console.error('getMinCollateral err', e);
+          throw e;
+        }
       },
     };
   });
@@ -142,7 +154,7 @@ export class TradeStrategy extends IStrategy<void> {
       poolName,
       description,
       rewardTokens,
-      [TradeStrategy.getCollateralToken(baseConfig.trade)],
+      [],
       liveStatus,
       { maxTVL: 10000000000 }, // not applicable
     );
@@ -252,8 +264,15 @@ export class TradeStrategy extends IStrategy<void> {
       return 1;
     }
 
+    console.log('maxLeverage2', {
+      colCf: collateralPool.lending.collateralFactor,
+      borBf: borrowPool.borrow.borrowFactor,
+      traCf: tradePool.lending.collateralFactor,
+      collateralValue: 1000,
+    });
     const collateralValue = 1000; // just a initial value in usd
     // (1000 * cf *bf)  / (min_hf  - cf1 * bf)
+    // todo check if this works for short
     const borrowValue =
       (collateralValue *
         collateralPool.lending.collateralFactor *
@@ -412,7 +431,7 @@ export class TradeStrategy extends IStrategy<void> {
     address: string,
     collateral: TokenInfo = this.baseConfig.collateral[0].token,
   ) {
-    const debtPrice = await this.getTokenPrice(this.baseConfig.debt.token);
+    const debtPrice = await getPrice(this.baseConfig.debt.token);
 
     const userDebt = Number(
       (await this.getUserDebt(address, collateral)).toEtherStr(),
@@ -423,7 +442,7 @@ export class TradeStrategy extends IStrategy<void> {
     const effectiveMinDebt =
       userDebt >= minDebtAmount ? 0 : minDebtAmount - userDebt;
 
-    const tradePrice = await this.getTokenPrice(this.mainToken);
+    const tradePrice = await getPrice(this.mainToken);
     let tradeAmount = (effectiveMinDebt * debtPrice) / tradePrice;
     console.log(
       'minTradeAmount',
@@ -483,23 +502,19 @@ export class TradeStrategy extends IStrategy<void> {
     leverage: number,
   ) {
     if (tradeAmount.isZero()) return MyNumber.fromZero();
-    const tradePriceInfo = await axios.get(
-      `https://api.coinbase.com/v2/prices/${this.baseConfig.trade.name}-USDT/spot`,
-    );
-    const tradePrice = Number(tradePriceInfo.data.data.amount);
+    const tradePrice = await getPrice(this.mainToken);
     const tradeAmountValue = Number(tradeAmount.toEtherStr()) * tradePrice;
 
     // collateral price
-    const collateralPriceInfo = await axios.get(
-      `https://api.coinbase.com/v2/prices/${collateral.name}-USDT/spot`,
-    );
-    const collateralPrice = Number(collateralPriceInfo.data.data.amount);
+    const collateralPrice = await getPrice(collateral);
 
     // collateral required
     const collateralAmount = tradeAmountValue / leverage / collateralPrice;
     console.log(
       'getMinCollateral',
       tradeAmountValue,
+      tradeAmount.toEtherStr(),
+      tradePrice,
       leverage,
       collateralPrice,
     );
@@ -522,21 +537,17 @@ export class TradeStrategy extends IStrategy<void> {
       collateral.name,
       leverage,
     );
-    const collateralPriceInfo = await axios.get(
-      `https://api.coinbase.com/v2/prices/${collateral.name}-USDT/spot`,
-    );
-    const collateralPrice = Number(collateralPriceInfo.data.data.amount);
+    const collateralPrice = await getPrice(collateral);
     const collateralValue =
       Number(collateralAmount.toEtherStr()) * collateralPrice;
 
     // trade price
-    const tradePriceInfo = await axios.get(
-      `https://api.coinbase.com/v2/prices/${this.mainToken.name}-USDT/spot`,
-    );
-    const tradePrice = Number(tradePriceInfo.data.data.amount);
+    const tradePrice = await getPrice(this.mainToken);
 
     // trade amount
-    const tradeAmount = (collateralValue * leverage) / tradePrice;
+    let tradeAmount = (collateralValue * leverage) / tradePrice;
+    // offset the amount by reducing it 0.1% (to avoid oracle price diff)
+    tradeAmount *= 0.999;
     return MyNumber.fromEther(tradeAmount.toString(), this.mainToken.decimals);
   }
 
@@ -584,7 +595,7 @@ export class TradeStrategy extends IStrategy<void> {
         {
           tokenInfo: baseToken,
           calls,
-          balanceAtom: getBalanceAtom(baseToken, atom(true)),
+          balanceAtom: currentCollateralAmountAtom,
         },
       ];
     }
@@ -638,14 +649,7 @@ export class TradeStrategy extends IStrategy<void> {
       return 1;
     }
 
-    return this.getTokenPrice(token);
-  }
-
-  async getTokenPrice(token: TokenInfo) {
-    const priceInfo = await axios.get(
-      `https://api.coinbase.com/v2/prices/${token.name}-USDT/spot`,
-    );
-    return Number(priceInfo.data.data.amount);
+    return getPrice(token);
   }
 
   async getUserTradeAddress(address: string, collateral: TokenInfo) {

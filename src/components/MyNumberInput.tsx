@@ -19,13 +19,13 @@ interface MyNumberInputProps {
   placeHolder?: string;
 }
 
-interface MyNumberInputRef {
+export interface MyNumberInputRef {
   getValue: () => { amount: MyNumber; isMax: boolean };
   resetField: () => void;
   setValue: (value: MyNumber, isMax: boolean) => void;
 }
 
-const MyNumberInput = forwardRef<MyNumberInputRef, MyNumberInputProps>(
+export const MyNumberInput = forwardRef<MyNumberInputRef, MyNumberInputProps>(
   (props, ref) => {
     const [amount, setAmount] = useState(
       new MyNumber('0', props.market.decimals),
@@ -122,5 +122,3 @@ const MyNumberInput = forwardRef<MyNumberInputRef, MyNumberInputProps>(
 );
 
 MyNumberInput.displayName = 'MyNumberInput';
-
-export { MyNumberInput, MyNumberInputRef };

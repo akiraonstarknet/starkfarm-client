@@ -5,8 +5,8 @@ import {
 } from '@/strategies/IStrategy';
 import { PoolInfo } from './pools';
 import CONSTANTS from '@/constants';
-import { getTokenInfoFromName } from '@/utils';
-import { atom } from 'jotai';
+import { getPrice, getTokenInfoFromName } from '@/utils';
+import { Atom, atom } from 'jotai';
 import {
   TradeActionAdditionalData,
   TradeStrategy,
@@ -14,7 +14,7 @@ import {
 import { allPoolsAtomUnSorted } from './protocols';
 import MyNumber from '@/utils/MyNumber';
 import { atomWithQuery, AtomWithQueryResult } from 'jotai-tanstack-query';
-import { Call, Contract, num, ProviderInterface, uint256 } from 'starknet';
+import { Call, Contract, num, ProviderInterface } from 'starknet';
 import TradeAbi from '@/abi/trade.abi.json';
 import TradeFactoryAbi from '@/abi/tradeFactory.abi.json';
 import { addressAtom, getProvider } from './claims.atoms';
@@ -30,6 +30,7 @@ export interface TradeInfo
 export interface BaseTradeConfig {
   collateral: {
     token: TokenInfo;
+    balanceAtom: Atom<AtomWithQueryResult<BalanceResult, Error>>;
   }[];
   debt: {
     token: TokenInfo;
@@ -58,6 +59,7 @@ const allowedTrades: BaseTradeConfig[] = [
     collateral: [
       {
         token: getTokenInfoFromName('ETH'),
+        balanceAtom: getBalanceAtom(getTokenInfoFromName('ETH'), atom(true)),
       },
     ],
     debt: {
@@ -70,6 +72,7 @@ const allowedTrades: BaseTradeConfig[] = [
     collateral: [
       {
         token: getTokenInfoFromName('ETH'),
+        balanceAtom: getBalanceAtom(getTokenInfoFromName('ETH'), atom(true)),
       },
     ],
     debt: {
@@ -81,7 +84,8 @@ const allowedTrades: BaseTradeConfig[] = [
   {
     collateral: [
       {
-        token: getTokenInfoFromName('STRK'),
+        token: getTokenInfoFromName('USDC'),
+        balanceAtom: getBalanceAtom(getTokenInfoFromName('USDC'), atom(true)),
       },
     ],
     debt: {
@@ -93,7 +97,8 @@ const allowedTrades: BaseTradeConfig[] = [
   {
     collateral: [
       {
-        token: getTokenInfoFromName('STRK'),
+        token: getTokenInfoFromName('USDC'),
+        balanceAtom: getBalanceAtom(getTokenInfoFromName('USDC'), atom(true)),
       },
     ],
     debt: {
@@ -235,7 +240,7 @@ export const tradePositionAtom = atomWithQuery<TradePosition | null>((get) => {
   };
 });
 
-export const userTradeAddressAtom = atomWithQuery<string>((get) => {
+export const userTradeAddressAtom = atomWithQuery<string | null>((get) => {
   return {
     queryKey: ['userTradeAddress', get(addressAtom), get(currentTradeStrategy)],
     queryFn: async ({ queryKey }) => {
@@ -254,7 +259,9 @@ export const userTradeAddressAtom = atomWithQuery<string>((get) => {
         baseConfig.trade.token,
       ]);
       console.log('tradeCloseActionsAtom3', result);
-      return num.getHexString((result as BigInt).toString());
+      const addr = num.getHexString((result as BigInt).toString());
+      if (addr == '0x0') return null;
+      return addr;
     },
   };
 });
@@ -296,7 +303,7 @@ export const tradeOpenMethodsAtom = atom((get) => {
         // approve base token
         baseTokenContract.populate('approve', [
           userTradeAddress || factoryContract.address,
-          uint256.bnToUint256(collateralAmount.toString()),
+          collateralAmount.toUint256(),
         ]),
       ];
 
@@ -306,10 +313,8 @@ export const tradeOpenMethodsAtom = atom((get) => {
           collateral: baseTokenInfo.token,
           borrowed: strat.baseConfig.debt.token.token,
           trade_token: strat.baseConfig.trade.token,
-          collateral_amount: uint256.bnToUint256(collateralAmount.toString()),
-          trade_amount: uint256.bnToUint256(
-            additionalData.tradeAmount.toString(),
-          ),
+          collateral_amount: collateralAmount.toUint256(),
+          trade_amount: additionalData.tradeAmount.toUint256(),
           min_hf: (strat.minHf * 10000).toFixed(0),
           max_slippage_bps: 100,
           // todo make this dynamic later
@@ -330,13 +335,11 @@ export const tradeOpenMethodsAtom = atom((get) => {
         // add collateral
         const tradeContract = getTradeContract(userTradeAddress);
         const addCollateralCall = tradeContract.populate('add_collateral', {
-          amount: uint256.bnToUint256(collateralAmount.toString()),
+          amount: collateralAmount.toUint256(),
         });
 
         const addTradeCall = tradeContract.populate('add_position', {
-          trade_amount: uint256.bnToUint256(
-            additionalData.tradeAmount.toString(),
-          ),
+          trade_amount: additionalData.tradeAmount.toUint256(),
           min_hf: strat.minHf * 10000,
           max_slippage_bps: 100,
           path_borrow_to_trade: [
@@ -393,31 +396,41 @@ export const currentTradeAmountAtom = atomWithQuery((get) => {
   };
 });
 
-// export const currentCollateralAmountAtom = atomWithQuery((get) => {
-//     return {
-//         queryKey: ['tradePositionColAmount', get(tradePositionAtom), get(currentTradeStrategy)],
-//         queryFn: async ({ queryKey }: any): Promise<BalanceResult> => {
-//             const position: AtomWithQueryResult<TradePosition | null, Error> = queryKey[1];
-//             const strat: TradeStrategy | null = queryKey[2];
-//             if (!position || !strat) {
-//                 return {
-//                     amount: MyNumber.fromZero(),
-//                     tokenInfo: undefined,
-//                 };
-//             }
-//             return {
-//                 amount: position.data?.collateral || MyNumber.fromEther('0', strat.baseConfig.collateral[0].token.decimals),
-//                 tokenInfo: strat.baseConfig.collateral[0].token,
-//             };
-//         }
-//     }
-// })
+export const currentCollateralAmountAtom = atomWithQuery((get) => {
+  return {
+    queryKey: [
+      'tradePositionColAmount',
+      get(tradePositionAtom),
+      get(currentTradeStrategy),
+    ],
+    queryFn: async ({ queryKey }: any): Promise<BalanceResult> => {
+      const position: AtomWithQueryResult<TradePosition | null, Error> =
+        queryKey[1];
+      const strat: TradeStrategy | null = queryKey[2];
+      if (!position || !strat) {
+        return {
+          amount: MyNumber.fromZero(),
+          tokenInfo: undefined,
+        };
+      }
+      return {
+        amount:
+          position.data?.collateral ||
+          MyNumber.fromEther(
+            '0',
+            strat.baseConfig.collateral[0].token.decimals,
+          ),
+        tokenInfo: strat.baseConfig.collateral[0].token,
+      };
+    },
+  };
+});
 
 export const tradeCloseActions = async (
   amount: MyNumber,
   address: string,
   strat: TradeStrategy | null,
-  userTradeAddressRes: AtomWithQueryResult<string, Error>,
+  userTradeAddressRes: AtomWithQueryResult<string | null, Error>,
 ): Promise<IStrategyActionHook[]> => {
   console.log('tradeCloseActionsAtom4', userTradeAddressRes, strat?.id);
 
@@ -472,6 +485,84 @@ export const tradeCloseActions = async (
   ];
 };
 
+export interface TradePositionChange {
+  collateral: MyNumber;
+  collateralToken?: TokenInfo;
+  tradeAmount: MyNumber;
+  actionType:
+    | 'add-collateral'
+    | 'add-trade'
+    | 'remove-collateral'
+    | 'close-trade';
+}
+export const positionChangeAtom = atom<TradePositionChange>({
+  collateral: MyNumber.fromZero(),
+  collateralToken: undefined,
+  tradeAmount: MyNumber.fromZero(),
+  actionType: 'add-trade',
+});
+
+export const tradeMetricsChangeAtom = atomWithQuery<TradePosition>((get) => {
+  return {
+    queryKey: ['tradeMetricsChange', get(positionChangeAtom)],
+    queryFn: async ({ queryKey }: any): Promise<TradePosition> => {
+      const positionChange: TradePositionChange = queryKey[1];
+
+      const strat: TradeStrategy | null = get(currentTradeStrategy);
+      if (!strat) {
+        return {
+          collateral: MyNumber.fromZero(),
+          borrowed: MyNumber.fromZero(),
+          tradeToken: MyNumber.fromZero(),
+        };
+      }
+      if (!positionChange.collateralToken) {
+        return getEmptyPosition(strat);
+      }
+
+      // if add/remove trade, compute debt amount
+      if (positionChange.actionType.includes('trade')) {
+        const tradeToken = strat.mainToken;
+        const otherToken = strat.isLong()
+          ? strat.baseConfig.debt.token
+          : strat.baseConfig.trade;
+
+        const tradeTokenPrice = await getPrice(tradeToken);
+        const otherTokenPrice = await getPrice(otherToken);
+
+        const otherTokenAmount =
+          (Number(positionChange.tradeAmount.toEtherStr()) * tradeTokenPrice) /
+          otherTokenPrice;
+        return {
+          collateral: positionChange.collateral,
+          borrowed: strat.isLong()
+            ? MyNumber.fromEther(
+                otherTokenAmount.toFixed(6),
+                otherToken.decimals,
+              )
+            : positionChange.tradeAmount,
+          tradeToken: strat.isLong()
+            ? positionChange.tradeAmount
+            : MyNumber.fromEther(
+                otherTokenAmount.toFixed(6),
+                otherToken.decimals,
+              ),
+        };
+      }
+
+      return {
+        collateral: positionChange.collateral,
+        borrowed: strat.isLong()
+          ? positionChange.tradeAmount
+          : MyNumber.fromZero(),
+        tradeToken: strat.isLong()
+          ? MyNumber.fromZero()
+          : positionChange.tradeAmount,
+      };
+    },
+  };
+});
+
 export const getLiquidationPriceAtom = atomWithQuery<{
   price: number;
   percentChange: number;
@@ -493,113 +584,249 @@ export const getLiquidationPriceAtom = atomWithQuery<{
       const strat: TradeStrategy | null = queryKey[2];
       const position: AtomWithQueryResult<TradePosition | null, Error> =
         queryKey[1];
-      if (!strat || !position.data) {
-        return {
-          price: 0,
-          percentChange: 0,
-          currentPrice: 0,
-        };
-      }
-      const baseConfig = strat.baseConfig;
+
       const allPools = get(allPoolsAtomUnSorted);
-      // currently we can only solve with one
-      // volatile token involed. all others have
-      // to be ETH
-      const collateral = baseConfig.collateral[0].token;
-      const uniqueTokens = new Set(
-        [
-          collateral,
-          strat.baseConfig.trade,
-          strat.baseConfig.debt.token,
-        ].filter((t) => t.name != 'USDC'),
-      );
-      const condition1 = uniqueTokens.size == 1;
 
-      // get lending info (cf, bf) of pools
-      const { collateralPool, borrowPool, tradePool } = strat.getLendingInfo(
-        collateral,
-        allPools,
-      );
-      if (!collateralPool || !borrowPool || !tradePool || !condition1) {
-        console.warn(
-          'getLiquidationPriceAtom: collateral, borrow or trade pool not found',
-          {
-            collateralPool,
-            borrowPool,
-            tradePool,
-            condition1,
-          },
-          uniqueTokens,
-        );
-        return {
-          price: 0,
-          percentChange: 0,
-          currentPrice: 0,
-        };
-      }
-
-      // get prices
-      const collateralPrice = await strat.getTokenPriceForLiq(
-        baseConfig.collateral[0].token,
-      );
-      const debtPrice = await strat.getTokenPriceForLiq(baseConfig.debt.token);
-      const tradePrice = await strat.getTokenPriceForLiq(baseConfig.trade);
-
-      // What is the price of token when hf 1
-      if (
-        collateral.name == 'USDC' &&
-        strat.baseConfig.debt.token.name == 'USDC'
-      ) {
-        // long using USDC
-        // hf = [(colAmount * colPrice * cf) + (tradeAmount * tradePrice * cf2)] * bf / (debtAmount * debtPrice)
-        // tradePrice = ((hf * debtAmount * debtPrice / bf) - (colAmount * colPrice * cf)) / (tradeAmount * cf2)
-        const price =
-          ((Number(position.data.borrowed.toEtherStr()) * debtPrice) /
-            borrowPool.borrow.borrowFactor -
-            Number(position.data.collateral.toEtherStr()) *
-              collateralPrice *
-              collateralPool.lending.collateralFactor) /
-          (Number(position.data.tradeToken.toEtherStr()) *
-            tradePool.lending.collateralFactor);
-        return {
-          price,
-          percentChange: (-100 * (tradePrice - price)) / tradePrice,
-          currentPrice: tradePrice,
-        };
-      } else if (strat.baseConfig.debt.token.name == 'USDC') {
-        // long using trade token as collateral
-        if (baseConfig.trade.token != baseConfig.collateral[0].token.token) {
-          throw new Error(
-            'getLiquidationPriceAtom: trade and collateral token must be the same',
-          );
-        }
-
-        // hf = [(colAmount * tradePrice * cf) + (tradeAmount * tradePrice * cf2)] * bf / (debtAmount * debtPrice)
-        // hf = [(colAmount + tradeAmount) * tradePrice * cf] * bf / (debtAmount * debtPrice)
-        // tradePrice = (hf * debtAmount * debtPrice) / [(colAmount + tradeAmount) * bf * cf]
-        const price =
-          (Number(position.data.borrowed.toEtherStr()) * debtPrice) /
-          ((Number(position.data.collateral.toEtherStr()) +
-            Number(position.data.tradeToken.toEtherStr())) *
-            borrowPool.borrow.borrowFactor *
-            collateralPool.lending.collateralFactor);
-        return {
-          price,
-          percentChange: (-100 * (tradePrice - price)) / tradePrice,
-          currentPrice: tradePrice,
-        };
-      }
-
-      // todo other conditions
-
-      return {
-        price: 0,
-        percentChange: 0,
-        currentPrice: 0,
-      };
+      return getLiquidationPrice(position.data || null, allPools, strat);
     },
   };
 });
+
+function getEmptyPosition(strat: TradeStrategy) {
+  return {
+    collateral: new MyNumber(
+      '0',
+      strat.baseConfig.collateral[0].token.decimals,
+    ),
+    borrowed: new MyNumber('0', strat.baseConfig.debt.token.decimals),
+    tradeToken: new MyNumber('0', strat.baseConfig.trade.decimals),
+  };
+}
+
+export const newLiquidationPriceAtom = atomWithQuery<{
+  price: number;
+  percentChange: number;
+  currentPrice: number;
+}>((get) => {
+  return {
+    queryKey: [
+      'liquidationPrice',
+      get(tradePositionAtom),
+      get(tradeMetricsChangeAtom),
+      get(currentTradeStrategy),
+    ],
+    queryFn: async ({
+      queryKey,
+    }: any): Promise<{
+      price: number;
+      percentChange: number;
+      currentPrice: number;
+    }> => {
+      console.log('newLiquidationPriceAtom1', 'positionChangeAtom2', queryKey);
+      const positionRes: AtomWithQueryResult<TradePosition | null, Error> =
+        queryKey[1];
+      const strat: TradeStrategy | null = queryKey[3];
+      if (!strat) {
+        return {
+          price: 0,
+          percentChange: 0,
+          currentPrice: 0,
+        };
+      }
+
+      const position = positionRes.data || getEmptyPosition(strat);
+      const positionChangeRes: AtomWithQueryResult<TradePosition, Error> =
+        queryKey[2];
+      const positionChange: TradePosition =
+        positionChangeRes.data || getEmptyPosition(strat);
+
+      console.log(
+        'positionChangeAtom10',
+        positionChange.borrowed.toEtherStr(),
+        positionChange.collateral.toEtherStr(),
+        positionChange.tradeToken.toEtherStr(),
+      );
+
+      const allPools = get(allPoolsAtomUnSorted);
+
+      const newTradePosition: TradePosition = {
+        collateral:
+          position.collateral.operate(
+            'plus',
+            positionChange.collateral.toString(),
+          ) || positionChange.collateral,
+        borrowed:
+          position.borrowed.operate(
+            'plus',
+            positionChange.borrowed.toString(),
+          ) || positionChange.borrowed,
+        tradeToken:
+          position.tradeToken.operate(
+            'plus',
+            positionChange.tradeToken.toString(),
+          ) || positionChange.tradeToken,
+      };
+
+      console.log(
+        'newLiquidationPriceAtom2',
+        'positionChangeAtom4',
+        newTradePosition.borrowed.toEtherStr(),
+        newTradePosition.collateral.toEtherStr(),
+        newTradePosition.tradeToken.toEtherStr(),
+      );
+      return getLiquidationPrice(newTradePosition, allPools, strat);
+    },
+  };
+});
+
+async function getLiquidationPrice(
+  position: TradePosition | null,
+  allPools: PoolInfo[],
+  strat: TradeStrategy | null,
+) {
+  console.log(
+    'getLiquidationPriceAtom1',
+    'positionChangeAtom3',
+    position,
+    strat,
+  );
+  if (!strat || !position) {
+    return {
+      price: 0,
+      percentChange: 0,
+      currentPrice: 0,
+    };
+  }
+
+  const collateral = strat.baseConfig.collateral[0].token;
+  // amounts
+  const collateralAmount = Number(position.collateral.toEtherStr());
+  const tradeAmount = Number(position.tradeToken.toEtherStr());
+  const debtAmount = Number(position.borrowed.toEtherStr());
+
+  // currently we can only solve with one
+  // volatile token involed. all others have
+  // to be ETH
+  const uniqueTokens = new Set(
+    [collateral, strat.baseConfig.trade, strat.baseConfig.debt.token].filter(
+      (t) => t.name != 'USDC',
+    ),
+  );
+  const condition1 = uniqueTokens.size == 1;
+
+  // get lending info (cf, bf) of pools
+  const { collateralPool, borrowPool, tradePool } = strat.getLendingInfo(
+    collateral,
+    allPools,
+  );
+  if (!collateralPool || !borrowPool || !tradePool || !condition1) {
+    console.warn(
+      'getLiquidationPriceAtom: collateral, borrow or trade pool not found',
+      {
+        collateralPool,
+        borrowPool,
+        tradePool,
+        condition1,
+      },
+      uniqueTokens,
+    );
+    return {
+      price: 0,
+      percentChange: 0,
+      currentPrice: 0,
+    };
+  }
+
+  const baseConfig = strat.baseConfig;
+  // get prices
+  const collateralPrice = await strat.getTokenPriceForLiq(
+    baseConfig.collateral[0].token,
+  );
+  const debtPrice = await strat.getTokenPriceForLiq(baseConfig.debt.token);
+  const tradePrice = await strat.getTokenPriceForLiq(baseConfig.trade);
+
+  console.log(
+    'getLiquidationPriceAtom2',
+    'positionChangeAtom6',
+    collateralPrice,
+    debtPrice,
+    tradePrice,
+  );
+
+  // What is the price of token when hf 1
+
+  // Case 1: USDC/USDC/mainToken
+  if (collateral.name == 'USDC' && strat.baseConfig.debt.token.name == 'USDC') {
+    // long using USDC
+    // hf = [(colAmount * colPrice * cf) + (tradeAmount * tradePrice * cf2)] * bf / (debtAmount * debtPrice)
+    // tradePrice = ((hf * debtAmount * debtPrice / bf) - (colAmount * colPrice * cf)) / (tradeAmount * cf2)
+
+    console.log(
+      'getLiquidationPriceAtom2',
+      'positionChangeAtom7',
+      strat.baseConfig.debt.token.name,
+      strat.baseConfig.trade.name,
+    );
+    const price =
+      ((debtAmount * debtPrice) / borrowPool.borrow.borrowFactor -
+        collateralAmount *
+          collateralPrice *
+          collateralPool.lending.collateralFactor) /
+      (tradeAmount * tradePool.lending.collateralFactor);
+
+    console.log('getLiquidationPriceAtom2', 'positionChangeAtom8', {
+      debtPrice,
+      borrowFactor: borrowPool.borrow.borrowFactor,
+      collateralPrice,
+      collateralFactor: collateralPool.lending.collateralFactor,
+      tradeAmount,
+      debtAmount,
+      collateralAmount,
+    });
+    return {
+      price,
+      percentChange: (-100 * (tradePrice - price)) / tradePrice,
+      currentPrice: tradePrice,
+    };
+  } else if (strat.baseConfig.debt.token.name == 'USDC') {
+    // Case 2: mainToken/USDC/mainToken
+    // long using trade token as collateral
+
+    console.log(
+      'getLiquidationPriceAtom2',
+      'positionChangeAtom5',
+      strat.baseConfig.debt.token.name,
+      strat.baseConfig.trade.name,
+    );
+    if (baseConfig.trade.token != baseConfig.collateral[0].token.token) {
+      throw new Error(
+        'getLiquidationPriceAtom: trade and collateral token must be the same',
+      );
+    }
+
+    // hf = [(colAmount * tradePrice * cf) + (tradeAmount * tradePrice * cf2)] * bf / (debtAmount * debtPrice)
+    // hf = [(colAmount + tradeAmount) * tradePrice * cf] * bf / (debtAmount * debtPrice)
+    // tradePrice = (hf * debtAmount * debtPrice) / [(colAmount + tradeAmount) * bf * cf]
+    const price =
+      (debtAmount * debtPrice) /
+      ((collateralAmount + tradeAmount) *
+        borrowPool.borrow.borrowFactor *
+        collateralPool.lending.collateralFactor);
+    return {
+      price,
+      percentChange: (-100 * (tradePrice - price)) / tradePrice,
+      currentPrice: tradePrice,
+    };
+  }
+
+  // todo other conditions
+
+  return {
+    price: 0,
+    percentChange: 0,
+    currentPrice: 0,
+  };
+}
 
 export const tradeProfitAtom = atomWithQuery((get) => {
   return {

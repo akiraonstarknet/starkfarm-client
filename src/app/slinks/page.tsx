@@ -29,7 +29,7 @@ const metadata: Metadata = {
     'Find and invest in high yield pools. STRKFarm is the best yield aggregator on Starknet.',
 };
 
-function GetCardSimple(strat: StrategyInfo) {
+function GetCardSimple(strat: StrategyInfo<void>) {
   const [amount, setAmount] = useState(MyNumber.fromZero());
   const address = useAtomValue(addressAtom);
   const { provider } = useProvider();
@@ -136,8 +136,7 @@ function GetCardSimple(strat: StrategyInfo) {
             justDisableIfNoWalletConnect={true}
             buttonProps={{
               size: 'sm',
-              isDisabled:
-                amount.isZero() || amount.compare(maxAmount.toEtherStr(), 'gt'),
+              isDisabled: amount.isZero() || amount.compare(maxAmount, 'gt'),
             }}
             resetDepositForm={resetDepositForm}
           />
