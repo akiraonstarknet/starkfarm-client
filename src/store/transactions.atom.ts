@@ -9,6 +9,9 @@ import toast from 'react-hot-toast';
 import { RpcProvider, TransactionExecutionStatus } from 'starknet';
 import { StrategyInfo, strategiesAtom } from './strategies.atoms';
 import { createAtomWithStorage } from './utils.atoms';
+import { atomWithQuery } from 'jotai-tanstack-query';
+import { gql } from '@apollo/client';
+import apolloClient from '@/utils/apolloClient';
 
 export interface StrategyTxProps {
   strategyId: string;
@@ -24,6 +27,69 @@ export interface TransactionInfo {
   status: 'pending' | 'success' | 'failed';
   createdAt: Date;
 }
+
+export interface TxHistory {
+  findManyInvestment_flows: {
+    amount: string;
+    timestamp: number;
+    type: string;
+    txHash: string;
+    asset: string;
+    __typename: 'Investment_flows';
+  }[];
+}
+
+async function getTxHistory(
+  contract: string,
+  owner: string,
+): Promise<TxHistory> {
+  try {
+    const { data } = await apolloClient.query({
+      query: gql`
+        query Query(
+          $where: Investment_flowsWhereInput
+          $skip: Int
+          $take: Int
+        ) {
+          findManyInvestment_flows(where: $where, skip: $skip, take: $take) {
+            amount
+            timestamp
+            type
+            txHash
+            asset
+          }
+        }
+      `,
+      variables: {
+        where: {
+          contract: {
+            equals: contract,
+          },
+          owner: {
+            equals: owner,
+          },
+        },
+        skip: 0,
+        take: 10,
+      },
+    });
+
+    return data;
+  } catch (error) {
+    console.error('GraphQL Error:', error);
+    throw error;
+  }
+}
+
+export const TxHistoryAtom = (contract: string, owner: string) =>
+  atomWithQuery((post) => ({
+    queryKey: ['tx_history', { contract, owner }],
+    queryFn: async ({ queryKey }: any): Promise<TxHistory> => {
+      const [, { contract, owner }] = queryKey;
+      const res = await getTxHistory(contract, owner);
+      return res;
+    },
+  }));
 
 // in local storage, objects like Date, MyNumber are stored as strings
 // this function deserialises them back to their original types
