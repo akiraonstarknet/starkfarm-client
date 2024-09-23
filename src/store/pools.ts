@@ -182,24 +182,6 @@ export const StrkIncentivesQueryKeyAtom = atom([
   'isNostraDegen',
 ]);
 
-export const VesuIncentivesAtom = atomWithQuery((get) => ({
-  queryKey: get(VesuIncentivesQueryKeyAtom),
-  queryFn: async ({ queryKey }) => {
-    const res = await fetch(CONSTANTS.LENDING_INCENTIVES_URL);
-    let data = await res.text();
-    data = data.replaceAll('NaN', '0');  // Replace any NaN values with 0
-    const parsedData = JSON.parse(data); // Parse the cleaned data into JSON
-
-    // Extract and return the Vesu object directly
-    if (parsedData && parsedData['Vesu']) {
-      return parsedData['Vesu'];
-    }
-
-    // Return an empty object if 'Vesu' is not found
-    return {};
-  },
-}));
-
 export const VesuIncentivesQueryKeyAtom = atom(['strk_incentives', 'isVesu']);
 
 export const StrkLendingIncentivesAtom = atomWithQuery((get) => ({
