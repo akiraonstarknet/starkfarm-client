@@ -20,8 +20,7 @@ import {
   getERC20Balance,
   getERC20BalanceAtom,
 } from '@/store/balance.atoms';
-import { getTokenInfoFromName } from '@/utils';
-import axios from 'axios';
+import { getPrice, getTokenInfoFromName } from '@/utils';
 
 interface Step {
   name: string;
@@ -38,6 +37,7 @@ interface Step {
 }
 
 export class AutoTokenStrategy extends IStrategy {
+  riskFactor = 0.5;
   token: TokenInfo;
   readonly lpTokenName: string;
   readonly strategyAddress: string;
@@ -81,10 +81,10 @@ export class AutoTokenStrategy extends IStrategy {
     ];
     const _risks = [...this.risks];
     this.risks = [
-      `Safety score: 4.5/5`,
+      this.getSafetyFactorLine(),
       `Your original investment is safe. If you deposit 100 tokens, you will always get at least 100 tokens back, unless due to below reasons.`,
       `Transfering excess ${lpTokenName} may take your borrows in zkLend near liquidaton. It's safer to deposit ${token} directly.`,
-      ..._risks,
+      ..._risks.slice(1),
     ];
     this.lpTokenName = lpTokenName;
     this.strategyAddress = strategyAddress;
@@ -132,10 +132,7 @@ export class AutoTokenStrategy extends IStrategy {
         tokenInfo: this.token,
       };
     }
-    const priceInfo = await axios.get(
-      `https://api.coinbase.com/v2/prices/${this.token.name}-USDT/spot`,
-    );
-    const price = Number(priceInfo.data.data.amount);
+    const price = await getPrice(this.token);
     console.log('getUserTVL autoc', price, balanceInfo.amount.toEtherStr());
     return {
       amount: balanceInfo.amount,
@@ -154,10 +151,7 @@ export class AutoTokenStrategy extends IStrategy {
 
     const zTokenInfo = getTokenInfoFromName(this.lpTokenName);
     const bal = await getERC20Balance(zTokenInfo, this.strategyAddress);
-    const priceInfo = await axios.get(
-      `https://api.coinbase.com/v2/prices/${this.token.name}-USDT/spot`,
-    );
-    const price = Number(priceInfo.data.data.amount);
+    const price = await getPrice(this.token);
     return {
       amount: bal.amount,
       usdValue: Number(bal.amount.toEtherStr()) * price,

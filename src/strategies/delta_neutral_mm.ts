@@ -14,7 +14,7 @@ import DeltaNeutralAbi from '@/abi/deltraNeutral.abi.json';
 import MyNumber from '@/utils/MyNumber';
 import { Call, Contract, ProviderInterface, uint256 } from 'starknet';
 import { nostraLending } from '@/store/nostralending.store';
-import { getTokenInfoFromName, standariseAddress } from '@/utils';
+import { getPrice, getTokenInfoFromName, standariseAddress } from '@/utils';
 import {
   DUMMY_BAL_ATOM,
   getBalance,
@@ -22,9 +22,9 @@ import {
   getERC20Balance,
 } from '@/store/balance.atoms';
 import { atom } from 'jotai';
-import axios from 'axios';
 
 export class DeltaNeutralMM extends IStrategy {
+  riskFactor = 0.75;
   token: TokenInfo;
   readonly secondaryToken: string;
   readonly strategyAddress: string;
@@ -104,11 +104,11 @@ export class DeltaNeutralMM extends IStrategy {
 
     const _risks = [...this.risks];
     this.risks = [
-      `Safety score: 4.25/5`,
+      this.getSafetyFactorLine(),
       `For upto 2 weeks, your position value may reduce due to high borrow APR. This will be compensated by STRK rewards.`,
       `Your original investment is safe. If you deposit 100 tokens, you will always get at least 100 tokens back, unless due to below reasons.`,
       `Technical failures in rebalancing positions to maintain healthy health factor may result in liquidations.`,
-      ..._risks,
+      ..._risks.slice(1),
     ];
     this.secondaryToken = secondaryTokenName;
     this.strategyAddress = strategyAddress;
@@ -297,10 +297,7 @@ export class DeltaNeutralMM extends IStrategy {
         tokenInfo: this.token,
       };
     }
-    const priceInfo = await axios.get(
-      `https://api.coinbase.com/v2/prices/${balanceInfo.tokenInfo.name}-USDT/spot`,
-    );
-    const price = Number(priceInfo.data.data.amount);
+    const price = await getPrice(balanceInfo.tokenInfo);
     console.log('getUserTVL dnmm', price, balanceInfo.amount.toEtherStr());
     return {
       amount: balanceInfo.amount,
@@ -327,11 +324,7 @@ export class DeltaNeutralMM extends IStrategy {
       const discountFactor = this.stepAmountFactors[4];
       const amount = bal.amount.operate('div', 1 + discountFactor);
       console.log('getTVL1', amount.toString());
-      const priceInfo = await axios.get(
-        `https://api.coinbase.com/v2/prices/${mainTokenName}-USDT/spot`,
-      );
-      console.log('getTVL2', priceInfo);
-      const price = Number(priceInfo.data.data.amount);
+      const price = await getPrice(this.token);
       return {
         amount,
         usdValue: Number(amount.toEtherStr()) * price,
@@ -375,6 +368,7 @@ export class DeltaNeutralMM extends IStrategy {
     const call = strategyContract.populate('withdraw', [
       uint256.bnToUint256(amount.toString()),
       address,
+      500, // 5% max slippage
     ]);
 
     const calls: Call[] = [call];

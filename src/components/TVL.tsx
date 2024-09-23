@@ -2,7 +2,7 @@ import { addressAtom } from '@/store/claims.atoms';
 import { referralCodeAtom } from '@/store/referral.store';
 import { strategiesAtom } from '@/store/strategies.atoms';
 import { dAppStatsAtom, userStatsAtom } from '@/store/utils.atoms';
-import { getReferralUrl } from '@/utils';
+import { copyReferralLink } from '@/utils';
 import { CopyIcon } from '@chakra-ui/icons';
 import {
   Box,
@@ -18,7 +18,6 @@ import {
 import { useAtomValue } from 'jotai';
 import Link from 'next/link';
 import React from 'react';
-import toast from 'react-hot-toast';
 
 const TVL: React.FC = () => {
   const _strategies = useAtomValue(strategiesAtom);
@@ -29,18 +28,6 @@ const TVL: React.FC = () => {
   const address = useAtomValue(addressAtom);
   const referralCode = useAtomValue(referralCodeAtom);
 
-  function copyReferralLink() {
-    if (window.location.origin.includes('app.strkfarm.xyz')) {
-      navigator.clipboard.writeText(`https://strkfarm.xyz/r/${referralCode}`);
-    } else {
-      navigator.clipboard.writeText(getReferralUrl(referralCode));
-    }
-
-    toast.success('Referral link copied to clipboard', {
-      position: 'bottom-right',
-    });
-  }
-
   return (
     <Grid
       templateColumns={{ base: 'repeat(1, 1, 1fr)', md: 'repeat(3, 1fr)' }}
@@ -48,7 +35,7 @@ const TVL: React.FC = () => {
       width="100%"
     >
       <GridItem display="flex">
-        <Card width="100%" padding={'15px 30px'} color="white" bg="bg">
+        <Card width="100%" padding={'15px 30px'} color="white" bg="color2_50p">
           <Stat>
             <StatLabel>Total Value locked (TVL)</StatLabel>
             <StatNumber>
@@ -64,9 +51,9 @@ const TVL: React.FC = () => {
       </GridItem>
 
       <GridItem display="flex">
-        <Card width="100%" padding={'15px 30px'} color="white" bg="bg">
+        <Card width="100%" padding={'15px 30px'} color="white" bg="color2_50p">
           <Stat>
-            <StatLabel>Your holdings ($)</StatLabel>
+            <StatLabel>Your holdings</StatLabel>
             <StatNumber>
               $
               {userStatsPending ? (
@@ -110,7 +97,9 @@ const TVL: React.FC = () => {
                     textDecoration="underline"
                     fontWeight="600"
                     cursor={'pointer'}
-                    onClick={copyReferralLink}
+                    onClick={() => {
+                      copyReferralLink(referralCode);
+                    }}
                   >
                     {referralCode}
                   </StatNumber>
@@ -124,7 +113,12 @@ const TVL: React.FC = () => {
               )}
 
               {address && (
-                <CopyIcon cursor="pointer" onClick={copyReferralLink} />
+                <CopyIcon
+                  cursor="pointer"
+                  onClick={() => {
+                    copyReferralLink(referralCode);
+                  }}
+                />
               )}
             </Box>
           </Stat>

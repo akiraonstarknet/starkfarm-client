@@ -1,10 +1,15 @@
-import { ChevronDownIcon } from '@chakra-ui/icons';
+import { ChevronDownIcon, HamburgerIcon } from '@chakra-ui/icons';
 import {
   Avatar,
   Box,
   Button,
   Center,
   Container,
+  Drawer,
+  DrawerBody,
+  DrawerContent,
+  DrawerHeader,
+  DrawerOverlay,
   Flex,
   IconButton,
   Image,
@@ -14,6 +19,7 @@ import {
   MenuItem,
   MenuList,
   Text,
+  useDisclosure,
 } from '@chakra-ui/react';
 import { useAtom, useSetAtom } from 'jotai';
 import { useStarknetkitConnectModal } from 'starknetkit';
@@ -24,15 +30,15 @@ import CONSTANTS from '@/constants';
 import { getERC20Balance } from '@/store/balance.atoms';
 import { addressAtom } from '@/store/claims.atoms';
 import { referralCodeAtom } from '@/store/referral.store';
-import { useEffect } from 'react';
 import { lastWalletAtom } from '@/store/utils.atoms';
 import {
   generateReferralCode,
   getTokenInfoFromName,
   MyMenuItemProps,
   MyMenuListProps,
-  truncate,
   shortAddress,
+  standariseAddress,
+  truncate,
 } from '@/utils';
 import fulllogo from '@public/fulllogo.png';
 import {
@@ -43,8 +49,9 @@ import {
 } from '@starknet-react/core';
 import axios from 'axios';
 import mixpanel from 'mixpanel-browser';
-import { isMobile } from 'react-device-detect';
 import { useSearchParams } from 'next/navigation';
+import { useEffect } from 'react';
+import { isMobile } from 'react-device-detect';
 
 interface NavbarProps {
   hideTg?: boolean;
@@ -88,12 +95,16 @@ export default function Navbar(props: NavbarProps) {
   useEffect(() => {
     (async () => {
       if (address) {
-        mixpanel.track('wallet connect trigger', {
-          address,
+        const standardAddr = standariseAddress(address);
+        const userProps = {
+          address: standardAddr,
           ethAmount: await getTokenBalance('ETH', address),
           usdcAmount: await getTokenBalance('USDC', address),
           strkAmount: await getTokenBalance('STRK', address),
-        });
+        };
+        mixpanel.track('wallet connect trigger', userProps);
+        mixpanel.identify(standariseAddress(standardAddr));
+        mixpanel.people.set(userProps);
       }
     })();
   }, [address]);
@@ -159,9 +170,7 @@ export default function Navbar(props: NavbarProps) {
     (async () => {
       if (address) {
         try {
-          const { data } = await axios.post('/api/tnc/getUser', {
-            address,
-          });
+          const { data } = await axios.get(`/api/tnc/getUser/${address}`);
 
           if (data.success && data.user) {
             setReferralCode(data.user.referralCode);
@@ -195,21 +204,36 @@ export default function Navbar(props: NavbarProps) {
     })();
   }, [address]);
 
+  const { isOpen, onOpen, onClose } = useDisclosure();
+
   return (
     <Container
       width={'100%'}
       padding={'0'}
-      borderBottom={'1px solid var(--chakra-colors-color2)'}
       position={'fixed'}
-      bg="bg"
+      bg="black"
       zIndex={999}
       top="0"
     >
-      <Center bg="highlight" color="orange" padding={0}>
-        <Text fontSize="12px" textAlign={'center'} padding="0px 5px">
-          {''}
-          <b>Report bugs & share feedback in our Telegram group.</b>
-          {''}
+      <Center bg="bg" color="gray" padding={0}>
+        <Text
+          fontSize="12px"
+          textAlign={'center'}
+          padding="6px 5px"
+          color="#a5a5d9"
+        >
+          <b>
+            STRKFarm just got <span className="orange">audited</span> by one of
+            the top auditors in the ecosystem.
+            <Link
+              target="_blank"
+              href="https://x.com/strkfarm/status/1833071604856987678"
+              color="orange"
+            >
+              {' '}
+              Read more
+            </Link>
+          </b>
         </Text>
       </Center>
       <Box
@@ -250,6 +274,25 @@ export default function Navbar(props: NavbarProps) {
               Claims
             </Button>
           </Link> */}
+
+          <Link href="/community" margin="0 10px 0 0">
+            <Button
+              bg="transparent"
+              color="color2"
+              variant="outline"
+              border="none"
+              _hover={{
+                bg: 'color2_50p',
+              }}
+              display={{ base: 'none !important', md: 'flex !important' }}
+              onClick={() => {
+                mixpanel.track('community_program_click');
+              }}
+            >
+              ✨ Community Program
+            </Button>
+          </Link>
+
           {!props.hideTg && (
             <Link href={CONSTANTS.COMMUNITY_TG} isExternal>
               <Button
@@ -270,7 +313,6 @@ export default function Navbar(props: NavbarProps) {
                   bg: 'color2_50p',
                 }}
                 display={{ base: 'none !important', md: 'flex !important' }}
-                className="glow-button"
               >
                 Join Telegram
               </Button>
@@ -295,6 +337,7 @@ export default function Navbar(props: NavbarProps) {
               />
             </Link>
           )}
+
           {(!isMobile || props.forceShowConnect) && (
             <Menu>
               <MenuButton
@@ -329,7 +372,10 @@ export default function Navbar(props: NavbarProps) {
                   {address ? (
                     <Center display="flex" alignItems="center" gap=".5rem">
                       <Image
-                        src={starkProfile?.profilePicture}
+                        src={
+                          starkProfile?.profilePicture ||
+                          'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQa5dG19ABS0ge6iFAgpsvE_ULDUa4fJyT7hg&s'
+                        }
                         alt="pfp"
                         width={30}
                         height={30}
@@ -363,6 +409,44 @@ export default function Navbar(props: NavbarProps) {
               </MenuList>
             </Menu>
           )}
+
+          {isMobile && (
+            <IconButton
+              aria-label="Open menu"
+              icon={<HamburgerIcon color="color2" height="30px" width="30px" />}
+              background="transparent"
+              display={{ base: 'flex', md: 'none' }}
+              onClick={onOpen}
+              _focus={{
+                bg: 'none',
+              }}
+            />
+          )}
+
+          <Drawer placement="right" onClose={onClose} isOpen={isOpen}>
+            <DrawerOverlay />
+            <DrawerContent background="bg">
+              <DrawerHeader color="color1_light">Menu</DrawerHeader>
+              <DrawerBody>
+                <Flex direction="column">
+                  <Link href="/" color="color1_light" onClick={onClose}>
+                    Home
+                  </Link>
+                  <Link
+                    href="/community"
+                    color="color1_light"
+                    onClick={() => {
+                      onClose();
+                      mixpanel.track('community_program_click');
+                    }}
+                    mt={4}
+                  >
+                    ✨ Community Program
+                  </Link>
+                </Flex>
+              </DrawerBody>
+            </DrawerContent>
+          </Drawer>
         </Flex>
       </Box>
     </Container>
