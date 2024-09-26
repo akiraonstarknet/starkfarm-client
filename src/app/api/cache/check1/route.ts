@@ -16,3 +16,4 @@ export async function GET(_req: Request, res: Response) {
   );
   return response;
 }
+
