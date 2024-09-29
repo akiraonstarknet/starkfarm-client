@@ -1,3 +1,4 @@
+import { DUMMY_TOKEN_INFO } from '@/constants';
 import { BalanceResult, DUMMY_BAL_ATOM } from '@/store/balance.atoms';
 import { StrategyInfo } from '@/store/strategies.atoms';
 import { StrategyTxProps } from '@/store/transactions.atom';
@@ -25,14 +26,13 @@ import {
 } from '@chakra-ui/react';
 import { useAccount, useProvider } from '@starknet-react/core';
 import { useAtomValue } from 'jotai';
+import { AtomWithQueryResult } from 'jotai-tanstack-query';
 import mixpanel from 'mixpanel-browser';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ProviderInterface, uint256 } from 'starknet';
 import LoadingWrap from './LoadingWrap';
-import TxButton from './TxButton';
-import { DUMMY_TOKEN_INFO } from '@/constants';
 import { MyNumberInput, MyNumberInputRef } from './MyNumberInput';
-import { AtomWithQueryResult } from 'jotai-tanstack-query';
+import TxButton from './TxButton';
 
 interface DepositProps {
   strategy: StrategyInfo<any>;
@@ -211,7 +211,7 @@ export default function Deposit(props: DepositProps) {
   }
 
   return (
-    <VStack spacing={4}>
+    <VStack spacing={4} paddingX="10px" paddingY="4px">
       <Grid templateColumns="repeat(5, 1fr)" gap={6} width={'100%'}>
         <GridItem colSpan={2}>
           <Menu>

@@ -40,16 +40,16 @@ const TradePage: NextPage = () => {
           gap={'4'}
         >
           <Box
-            bg="#D9D9D9"
+            bg="color1_50p"
             pl="12px"
             py="12px"
             pr={{ base: '12px', sm: '50px' }}
             borderRadius={'4px'}
           >
-            <Text color={'gray'} fontSize={'14px'} fontWeight={'700'}>
+            <Text color={'light_grey'} fontSize={'14px'} fontWeight={'700'}>
               P&L
             </Text>
-            <Text fontSize="22px" color="#333333" fontWeight={'bold'}>
+            <Text fontSize="22px" color="white" fontWeight={'bold'}>
               $12,000.00
             </Text>
           </Box>
@@ -60,10 +60,10 @@ const TradePage: NextPage = () => {
             pr={{ base: '12px', sm: '50px' }}
             borderRadius={'4px'}
           >
-            <Text color={'white'} fontSize={'14px'} fontWeight={'700'}>
+            <Text color={'light_grey'} fontSize={'14px'} fontWeight={'700'}>
               Net collateral
             </Text>
-            <Text fontSize="22px" color="#565656" fontWeight={'bold'}>
+            <Text fontSize="22px" color="white" fontWeight={'bold'}>
               $12,000.00
             </Text>
           </Box>

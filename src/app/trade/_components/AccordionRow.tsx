@@ -13,6 +13,13 @@ import React from 'react';
 import { useERC20Balance } from '@/hooks/useERC20Balance';
 import { TradeStrategy } from '@/strategies/trade.strat';
 
+import {
+  getLiquidationPriceAtom,
+  tradePositionAtom,
+  tradePositionInUSDAtom,
+} from '@/store/trades.atoms';
+import { getDisplayCurrencyAmount } from '@/utils';
+import { useAtomValue } from 'jotai';
 import TradingCard from './TradingCard';
 import TradingViewWidget from './TradingViewWidget';
 
@@ -27,6 +34,36 @@ const AccordionRow: React.FC<AccordionRowProps> = ({ strategy }) => {
   const colSpan1: any = { base: '5', md: '3' };
   const colSpan2: any = { base: '5', md: '2' };
 
+  const collateralTokenName =
+    strategy.baseConfig.collateral[0].token.name ?? '-';
+
+  // get position values
+  const positionRes = useAtomValue(tradePositionAtom);
+  const position = React.useMemo(() => {
+    if (positionRes.data) {
+      return positionRes.data;
+    }
+    return null;
+  }, [positionRes]);
+
+  // position in usd
+  const tradePositionInUSD = useAtomValue(tradePositionInUSDAtom);
+  const tradePositionInUSDValue = React.useMemo(() => {
+    if (tradePositionInUSD.data) {
+      return tradePositionInUSD.data;
+    }
+    return null;
+  }, [tradePositionInUSD]);
+
+  // get liquidationn price
+  const liquidationPriceRes = useAtomValue(getLiquidationPriceAtom);
+  const liquidationPriceInfo = React.useMemo(() => {
+    if (liquidationPriceRes.data) {
+      return liquidationPriceRes.data;
+    }
+    return null;
+  }, [liquidationPriceRes]);
+
   return (
     <AccordionItem minW="948px" w="full" border={'none'}>
       <AccordionButton
@@ -34,28 +71,28 @@ const AccordionRow: React.FC<AccordionRowProps> = ({ strategy }) => {
         alignItems="start"
         justifyContent="space-between"
         w="full"
-        bg="#D9D9D9"
+        bg="color1_65p"
         gap={16}
         py="8px"
         borderRadius={'4px'}
-        _hover={{ bg: '#D9D9D9' }}
+        _hover={{ bg: 'color1_50p' }}
       >
         <Box display="flex" flexDir={'column'} alignItems="start" w="100px">
           <Text
             fontSize={'17px'}
             fontWeight={'700'}
-            color={'#575757'}
+            color={'white'}
             style={{ textWrap: 'nowrap' }}
           >
             {strategy.name}
           </Text>
           <Text
             fontSize={'12px'}
-            fontWeight={'700'}
-            color={'#959595'}
+            fontWeight={'500'}
+            color={'light_grey'}
             style={{ textWrap: 'nowrap' }}
           >
-            using ETH
+            using {collateralTokenName}
           </Text>
         </Box>
 
@@ -69,7 +106,7 @@ const AccordionRow: React.FC<AccordionRowProps> = ({ strategy }) => {
           >
             <Text
               fontSize={'10px'}
-              color="#919191"
+              color="light_grey"
               fontWeight={'700'}
               style={{ textWrap: 'nowrap' }}
             >
@@ -78,7 +115,7 @@ const AccordionRow: React.FC<AccordionRowProps> = ({ strategy }) => {
             <Text
               fontSize="15px"
               fontWeight="700"
-              color="#333333"
+              color="white"
               style={{ textWrap: 'nowrap' }}
             >
               ${mainTokenValue.toFixed(2)}
@@ -95,7 +132,7 @@ const AccordionRow: React.FC<AccordionRowProps> = ({ strategy }) => {
         >
           <Text
             fontSize={'10px'}
-            color="#919191"
+            color="light_grey"
             fontWeight={'700'}
             style={{ textWrap: 'nowrap' }}
           >
@@ -104,13 +141,16 @@ const AccordionRow: React.FC<AccordionRowProps> = ({ strategy }) => {
           <Text
             fontSize="15px"
             fontWeight="700"
-            color="#333333"
+            color="white"
             style={{ textWrap: 'nowrap' }}
           >
-            0.01 ETH
+            {position?.tradeToken?.toEtherToFixedDecimals(4) ?? '0'}{' '}
+            {strategy.mainToken.name}
           </Text>
-          <Text fontSize={'11px'} fontWeight={'700'} color={'#757575'}>
-            $30.00
+          <Text fontSize={'11px'} fontWeight={'700'} color={'light_grey'}>
+            {position
+              ? `$${getDisplayCurrencyAmount(tradePositionInUSDValue?.tradeUSD || 0, 2)}`
+              : '$0'}
           </Text>
         </Box>
 
@@ -123,7 +163,7 @@ const AccordionRow: React.FC<AccordionRowProps> = ({ strategy }) => {
         >
           <Text
             fontSize={'10px'}
-            color="#919191"
+            color="light_grey"
             fontWeight={'700'}
             style={{ textWrap: 'nowrap' }}
           >
@@ -132,7 +172,7 @@ const AccordionRow: React.FC<AccordionRowProps> = ({ strategy }) => {
           <Text
             fontSize="15px"
             fontWeight="700"
-            color="#333333"
+            color="white"
             style={{ textWrap: 'nowrap' }}
           >
             {(strategy.netYield * 100).toFixed(2)}%
@@ -148,7 +188,7 @@ const AccordionRow: React.FC<AccordionRowProps> = ({ strategy }) => {
         >
           <Text
             fontSize={'10px'}
-            color="#919191"
+            color="light_grey"
             fontWeight={'700'}
             style={{ textWrap: 'nowrap' }}
           >
@@ -157,7 +197,7 @@ const AccordionRow: React.FC<AccordionRowProps> = ({ strategy }) => {
           <Text
             fontSize="15px"
             fontWeight="700"
-            color="#333333"
+            color="white"
             style={{ textWrap: 'nowrap' }}
           >
             {strategy.leverage.toFixed(2)}x
@@ -173,7 +213,7 @@ const AccordionRow: React.FC<AccordionRowProps> = ({ strategy }) => {
         >
           <Text
             fontSize={'10px'}
-            color="#919191"
+            color="light_grey"
             fontWeight={'700'}
             style={{ textWrap: 'nowrap' }}
           >
@@ -182,13 +222,18 @@ const AccordionRow: React.FC<AccordionRowProps> = ({ strategy }) => {
           <Text
             fontSize="15px"
             fontWeight="700"
-            color="#333333"
+            color="white"
             style={{ textWrap: 'nowrap' }}
           >
-            0.005 ETH
+            {position?.collateral.toEtherToFixedDecimals(4) ?? '0'}{' '}
+            {collateralTokenName}
           </Text>
-          <Text fontSize={'11px'} fontWeight={'700'} color={'#757575'}>
-            $15.00
+          <Text fontSize={'11px'} fontWeight={'700'} color={'light_grey'}>
+            $
+            {getDisplayCurrencyAmount(
+              tradePositionInUSDValue?.collateralUSD || 0,
+              2,
+            )}
           </Text>
         </Box>
 
@@ -201,7 +246,7 @@ const AccordionRow: React.FC<AccordionRowProps> = ({ strategy }) => {
         >
           <Text
             fontSize={'10px'}
-            color="#919191"
+            color="light_grey"
             fontWeight={'700'}
             style={{ textWrap: 'nowrap' }}
           >
@@ -210,13 +255,18 @@ const AccordionRow: React.FC<AccordionRowProps> = ({ strategy }) => {
           <Text
             fontSize="15px"
             fontWeight="700"
-            color="#333333"
+            color="white"
             style={{ textWrap: 'nowrap' }}
           >
-            $2,100.00
+            {(liquidationPriceInfo &&
+              position &&
+              `${liquidationPriceInfo.percentChange.toFixed(2)}%`) ??
+              '$0'}
           </Text>
-          <Text fontSize={'11px'} fontWeight={'700'} color={'#757575'}>
-            below -17%
+          <Text fontSize={'11px'} fontWeight={'700'} color={'light_grey'}>
+            {liquidationPriceInfo && position
+              ? `${liquidationPriceInfo.percentChange < 0 ? 'below' : 'above'} ${Math.abs(liquidationPriceInfo.percentChange).toFixed(2)}%`
+              : '-'}
           </Text>
         </Box>
       </AccordionButton>

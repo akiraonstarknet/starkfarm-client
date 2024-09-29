@@ -65,7 +65,7 @@ export const MyNumberInput = forwardRef<MyNumberInputRef, MyNumberInputProps>(
           min={Number(minAmount.toEtherStr())}
           color={'white'}
           bg={'bg'}
-          borderRadius={'10px'}
+          borderRadius={'4px'}
           onChange={(value, valueAsNumber) => {
             setIsMax(false);
             if (value && Number(value) > 0)
