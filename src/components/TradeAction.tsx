@@ -1,7 +1,12 @@
 import { DUMMY_BAL_ATOM } from '@/store/balance.atoms';
 import { StrategyInfo } from '@/store/strategies.atoms';
+import { positionChangeAtom } from '@/store/trades.atoms';
 import { StrategyTxProps } from '@/store/transactions.atom';
 import { IStrategyActionHook } from '@/strategies/IStrategy';
+import {
+  TradeActionAdditionalData,
+  TradeStrategy,
+} from '@/strategies/trade.strat';
 import { MyMenuItemProps, MyMenuListProps } from '@/utils';
 import MyNumber from '@/utils/MyNumber';
 import { ChevronDownIcon } from '@chakra-ui/icons';
@@ -30,14 +35,9 @@ import { useAccount, useProvider } from '@starknet-react/core';
 import { useAtom, useAtomValue } from 'jotai';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ProviderInterface } from 'starknet';
-import TxButton from './TxButton';
-import { MyNumberInput, MyNumberInputRef } from './MyNumberInput';
-import {
-  TradeActionAdditionalData,
-  TradeStrategy,
-} from '@/strategies/trade.strat';
 import { BalanceComponent, MaxButton } from './Deposit';
-import { positionChangeAtom } from '@/store/trades.atoms';
+import { MyNumberInput, MyNumberInputRef } from './MyNumberInput';
+import TxButton from './TxButton';
 
 export function Label(props: { text: string }) {
   return (
@@ -223,12 +223,18 @@ export default function TradeAction(
       <VStack spacing={4} width={'100%'} position={'relative'} padding={'10px'}>
         <Box
           width={'100%'}
-          padding={'15px'}
+          paddingX={'15px'}
+          paddingY={'10px'}
           bg="color2_50p"
-          borderRadius={'10px'}
+          borderRadius={'4px'}
         >
           <Label text="Collateral Market"></Label>
-          <Grid templateColumns="repeat(5, 1fr)" gap={6} width={'100%'}>
+          <Grid
+            templateColumns="repeat(5, 1fr)"
+            gap={6}
+            width={'100%'}
+            mt="1.5"
+          >
             <GridItem colSpan={2}>
               <Menu>
                 <MenuButton

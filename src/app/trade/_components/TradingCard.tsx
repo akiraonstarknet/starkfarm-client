@@ -245,9 +245,17 @@ const TradingCard: React.FC<AccordionRowProps> = ({ strategy }) => {
   }, [maxTradeAmountRes, maxUserTradeAmountRes]);
 
   return (
-    <Card width="100%" padding={'15px'} color="white" bg="highlight">
+    <Card width="100%" padding={'15px'} color="white" bg="#111119">
       <Tabs position="relative" variant="unstyled" width={'100%'}>
-        <TabList>
+        <TabList
+          display="flex"
+          alignItems="center"
+          justifyContent="start"
+          w={'fit-content'}
+          gap="4"
+          bg="color2_50p"
+          borderRadius={'4px'}
+        >
           <Tab
             color="light_grey"
             _selected={{ color: 'purple' }}
@@ -258,6 +266,7 @@ const TradingCard: React.FC<AccordionRowProps> = ({ strategy }) => {
             {/* Example: Deposit/Open */}
             {strategy.actionTabs[0]}
           </Tab>
+
           <Tab
             color="light_grey"
             _selected={{ color: 'purple' }}
@@ -268,6 +277,7 @@ const TradingCard: React.FC<AccordionRowProps> = ({ strategy }) => {
             {/* Example: Withdraw/Close */}
             {strategy.actionTabs[1]}
           </Tab>
+
           <Tab
             color="light_grey"
             _selected={{ color: 'purple' }}
@@ -278,19 +288,22 @@ const TradingCard: React.FC<AccordionRowProps> = ({ strategy }) => {
             Collateral
           </Tab>
         </TabList>
+
         <TabIndicator
           mt="-1.5px"
           height="2px"
           bg="purple"
           color="color1"
-          borderRadius="1px"
+          borderRadius="4px"
         />
-        <TabPanels>
+
+        <TabPanels mt="4">
           <TabPanel
             bg="highlight"
             float={'left'}
             width={'100%'}
-            padding={'10px 0'}
+            padding={'4px 0'}
+            borderRadius="4px"
           >
             <TradeAction
               strategy={strategy}
@@ -305,11 +318,13 @@ const TradingCard: React.FC<AccordionRowProps> = ({ strategy }) => {
               }
             />
           </TabPanel>
+
           <TabPanel
             bg="highlight"
             width={'100%'}
             float={'left'}
             padding={'10px 0'}
+            borderRadius="4px"
           >
             <Deposit
               strategy={strategy}
@@ -325,14 +340,16 @@ const TradingCard: React.FC<AccordionRowProps> = ({ strategy }) => {
               }}
             />
           </TabPanel>
+
           <TabPanel
             bg="highlight"
             width={'100%'}
             float={'left'}
-            padding={'10px 0'}
+            padding={'10px 10px'}
+            borderRadius="4px"
           >
             <Tabs position="relative" variant="unstyled" width={'100%'}>
-              <TabList bg="color2_50p" padding={'0 10px'} borderRadius={'10px'}>
+              <TabList bg="color2_50p" borderRadius={'4px'}>
                 <Tab
                   color="light_grey"
                   _selected={{ color: 'purple' }}
@@ -352,6 +369,7 @@ const TradingCard: React.FC<AccordionRowProps> = ({ strategy }) => {
                   Reduce
                 </Tab>
               </TabList>
+
               <TabIndicator
                 mt="-1.5px"
                 height="2px"
@@ -359,12 +377,13 @@ const TradingCard: React.FC<AccordionRowProps> = ({ strategy }) => {
                 color="color1"
                 borderRadius="1px"
               />
+
               <TabPanels>
                 <TabPanel
                   bg="highlight"
                   float={'left'}
                   width={'100%'}
-                  padding={'10px 0'}
+                  paddingX={'0'}
                 >
                   <Deposit
                     strategy={strategy}
@@ -380,11 +399,12 @@ const TradingCard: React.FC<AccordionRowProps> = ({ strategy }) => {
                     }}
                   />
                 </TabPanel>
+
                 <TabPanel
                   bg="highlight"
                   width={'100%'}
                   float={'left'}
-                  padding={'10px 0'}
+                  paddingX={'0'}
                 >
                   <Deposit
                     strategy={strategy}
@@ -405,10 +425,89 @@ const TradingCard: React.FC<AccordionRowProps> = ({ strategy }) => {
           </TabPanel>
         </TabPanels>
       </Tabs>
-      <Box bg="color2_50p" height={'1px'} width={'100%'} margin={'10px 0'} />
+
+      <Box
+        bg="color2_50p"
+        height={'1.5px'}
+        width={'50%'}
+        margin={'12px auto'}
+      />
 
       <VStack width={'100%'} spacing={1} gap={1}>
-        <Flex justifyContent={'space-between'} width={'100%'}>
+        <Box display="flex" w="full" gap="3">
+          <Box
+            display="flex"
+            flexDir={'column'}
+            paddingY={'10px'}
+            paddingX={'14px'}
+            borderRadius={'4px'}
+            bg="color2_50p"
+            gap="1"
+            w="full"
+          >
+            <Text
+              color="light_grey"
+              fontWeight={'700'}
+              fontSize="13px"
+              style={{ textWrap: 'nowrap' }}
+            >
+              Your Debt
+            </Text>
+            <Text
+              fontWeight="700"
+              fontSize="16px"
+              style={{ textWrap: 'nowrap' }}
+              opacity="0.8"
+            >
+              {position
+                ? `${position?.borrowed.toEtherToFixedDecimals(4)} ${strategy.baseConfig.debt.token.name}`
+                : '-'}
+            </Text>
+            <Text fontSize={'12px'} fontWeight={'700'} color={'light_grey'}>
+              {position
+                ? `$${getDisplayCurrencyAmount(tradePositionInUSDValue?.debtUSD || 0, 2)}`
+                : '$0'}
+            </Text>
+          </Box>
+
+          <Box
+            display="flex"
+            flexDir={'column'}
+            paddingY={'10px'}
+            paddingX={'14px'}
+            borderRadius={'4px'}
+            bg="color2_50p"
+            gap="1"
+            w="full"
+          >
+            <Text
+              color="light_grey"
+              fontWeight={'700'}
+              fontSize="13px"
+              style={{ textWrap: 'nowrap' }}
+            >
+              Your Collateral
+            </Text>
+            <Text
+              fontWeight="700"
+              fontSize="16px"
+              style={{ textWrap: 'nowrap' }}
+              opacity="0.8"
+            >
+              {position?.collateral.toEtherToFixedDecimals(4) ?? '0'}{' '}
+              {strategy.baseConfig.collateral[0].token.name ?? '-'}
+            </Text>
+            <Text fontSize={'12px'} fontWeight={'700'} color={'light_grey'}>
+              $
+              {getDisplayCurrencyAmount(
+                tradePositionInUSDValue?.collateralUSD || 0,
+                2,
+              )}
+            </Text>
+          </Box>
+        </Box>
+
+        <Flex justifyContent={'space-between'} width={'100%'} mt="3">
           <Box>
             <Label
               text={`Max trade amount at ${strategy.leverage.toFixed(2)}x`}
@@ -419,6 +518,7 @@ const TradingCard: React.FC<AccordionRowProps> = ({ strategy }) => {
             {strategy.mainToken.name}
           </Text>
         </Flex>
+
         <Flex justifyContent={'space-between'} width={'100%'}>
           <Box>
             <Label text={`Min trade amount:`}></Label>
@@ -428,6 +528,7 @@ const TradingCard: React.FC<AccordionRowProps> = ({ strategy }) => {
             {strategy.mainToken.name}
           </Text>
         </Flex>
+
         <Box width={'100%'}>
           <Flex width={'100%'} justifyContent={'space-between'}>
             <Box>
@@ -443,6 +544,7 @@ const TradingCard: React.FC<AccordionRowProps> = ({ strategy }) => {
               </Text>
             </Center>
           </Flex>
+
           {balData.data?.amount.compare(minCollateralAmount, 'lt') && (
             <Text textAlign={'right'} fontSize="13px" color="red">
               Insufficient collateral {minCollateralAmount.toEtherStr()}{' '}
@@ -450,13 +552,14 @@ const TradingCard: React.FC<AccordionRowProps> = ({ strategy }) => {
             </Text>
           )}
         </Box>
+
         <Flex justifyContent={'space-between'} width={'100%'}>
           <Box>
             <Label text="Liquidation price:"></Label>
           </Box>
           {newLiquidationPriceInfo &&
             !isNaN(newLiquidationPriceInfo.price) &&
-            newLiquidationPriceInfo.price != 0 && (
+            newLiquidationPriceInfo.price !== 0 && (
               <Box>
                 <Text color="color2" fontSize={'12px'} textAlign={'right'}>
                   {newLiquidationPriceInfo.price.toFixed(2)} per{' '}
@@ -467,14 +570,13 @@ const TradingCard: React.FC<AccordionRowProps> = ({ strategy }) => {
                 </Text>
               </Box>
             )}
-          {newLiquidationPriceInfo == null ? (
+          {newLiquidationPriceInfo === null ? (
             <Spinner size={'xs'} />
           ) : isNaN(newLiquidationPriceInfo.price) ? (
             <Text>-</Text>
           ) : null}
         </Flex>
-        <Text>{positionChange.collateral.toEtherStr()}</Text>
-        <Text>{positionChange.tradeAmount.toEtherStr()}</Text>
+
         <Flex justifyContent={'space-between'} width={'100%'}>
           <Box>
             <Label text="Our fee:"></Label>
@@ -483,6 +585,9 @@ const TradingCard: React.FC<AccordionRowProps> = ({ strategy }) => {
             0.1%
           </Text>
         </Flex>
+
+        {/* <Text>{positionChange.collateral.toEtherStr()}</Text>
+        <Text>{positionChange.tradeAmount.toEtherStr()}</Text> */}
       </VStack>
     </Card>
   );
