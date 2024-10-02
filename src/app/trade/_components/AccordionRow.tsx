@@ -76,6 +76,15 @@ const AccordionRow: React.FC<AccordionRowProps> = ({ strategy }) => {
         py="8px"
         borderRadius={'4px'}
         _hover={{ bg: 'color1_50p' }}
+        onClick={(e: any) => {
+          setTimeout(function () {
+            const top = e.target.offsetTop;
+            scrollTo({
+              top: top - 120,
+              behavior: 'smooth',
+            });
+          }, 200);
+        }}
       >
         <Box display="flex" flexDir={'column'} alignItems="start" w="100px">
           <Text
@@ -274,7 +283,7 @@ const AccordionRow: React.FC<AccordionRowProps> = ({ strategy }) => {
       <AccordionPanel pb={4} color={'white'}>
         <Grid width={'100%'} templateColumns="repeat(5, 1fr)" gap={2}>
           <GridItem display="flex" colSpan={colSpan1}>
-            <TradingViewWidget />
+            <TradingViewWidget tokenName={strategy.mainToken.name} />
           </GridItem>
           <GridItem display="flex" colSpan={colSpan2}>
             <TradingCard strategy={strategy} />
