@@ -33,43 +33,45 @@ const TradePage: NextPage = () => {
         py="10px"
         px="22px"
       >
-        <Box
-          display={'flex'}
-          alignItems="center"
-          justifyContent={'start'}
-          gap={'4'}
-        >
+        <Box maxW="1400px" marginX={'auto'}>
           <Box
-            bg="color1_50p"
-            pl="12px"
-            py="12px"
-            pr={{ base: '12px', sm: '50px' }}
-            borderRadius={'4px'}
+            display={'flex'}
+            alignItems="center"
+            justifyContent={'start'}
+            gap={'4'}
           >
-            <Text color={'light_grey'} fontSize={'14px'} fontWeight={'700'}>
-              P&L
-            </Text>
-            <Text fontSize="22px" color="white" fontWeight={'bold'}>
-              $12,000.00
-            </Text>
+            <Box
+              bg="color1_50p"
+              pl="12px"
+              py="12px"
+              pr={{ base: '12px', sm: '50px' }}
+              borderRadius={'4px'}
+            >
+              <Text color={'light_grey'} fontSize={'14px'} fontWeight={'700'}>
+                P&L
+              </Text>
+              <Text fontSize="22px" color="white" fontWeight={'bold'}>
+                $12,000.00
+              </Text>
+            </Box>
+            <Box
+              bg="#111119"
+              pl="12px"
+              py="12px"
+              pr={{ base: '12px', sm: '50px' }}
+              borderRadius={'4px'}
+            >
+              <Text color={'light_grey'} fontSize={'14px'} fontWeight={'700'}>
+                Net collateral
+              </Text>
+              <Text fontSize="22px" color="white" fontWeight={'bold'}>
+                $12,000.00
+              </Text>
+            </Box>
           </Box>
-          <Box
-            bg="#111119"
-            pl="12px"
-            py="12px"
-            pr={{ base: '12px', sm: '50px' }}
-            borderRadius={'4px'}
-          >
-            <Text color={'light_grey'} fontSize={'14px'} fontWeight={'700'}>
-              Net collateral
-            </Text>
-            <Text fontSize="22px" color="white" fontWeight={'bold'}>
-              $12,000.00
-            </Text>
-          </Box>
-        </Box>
 
-        <AccordionWrapper />
+          <AccordionWrapper />
+        </Box>
       </Box>
     </div>
   );
