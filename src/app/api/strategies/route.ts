@@ -10,7 +10,7 @@ import MyNumber from '@/utils/MyNumber';
 import { IStrategy, NFTInfo, TokenInfo } from '@/strategies/IStrategy';
 import { STRKFarmStrategyAPIResult } from '@/store/strkfarm.atoms';
 
-export const revalidate = 3600; // 1 hr
+export const revalidate = 1; // 1 hr
 
 const allPoolsAtom = atom<PoolInfo[]>((get) => {
   const pools: PoolInfo[] = [];
@@ -113,12 +113,14 @@ export async function GET(req: Request) {
     return NextResponse.json({
       status: true,
       strategies: stratsData,
+      region: process.env.VERCEL_REGION
     });
   } catch (err) {
     console.error('Error /api/strategies', err);
     return NextResponse.json({
       status: false,
       strategies: [],
+      region: process.env.VERCEL_REGION
     });
   }
 }
