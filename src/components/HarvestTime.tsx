@@ -242,6 +242,7 @@ const HarvestTime: React.FC<HarvestTimeProps> = ({ strategy, balData }) => {
           )}
         </Text>
       </Box>
+
     </Box>
   );
 };
