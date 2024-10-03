@@ -113,14 +113,14 @@ export async function GET(req: Request) {
     return NextResponse.json({
       status: true,
       strategies: stratsData,
-      region: process.env.VERCEL_REGION
+      region: process.env.VERCEL_REGION,
     });
   } catch (err) {
     console.error('Error /api/strategies', err);
     return NextResponse.json({
       status: false,
       strategies: [],
-      region: process.env.VERCEL_REGION
+      region: process.env.VERCEL_REGION,
     });
   }
 }

@@ -4,6 +4,7 @@ import {
   Avatar,
   Box,
   Card,
+  Center,
   Flex,
   Grid,
   GridItem,
@@ -18,7 +19,10 @@ import {
   TabPanels,
   Tabs,
   Text,
+  Tooltip,
   VStack,
+  Wrap,
+  WrapItem,
 } from '@chakra-ui/react';
 import { useAccount } from '@starknet-react/core';
 import { atom, useAtomValue, useSetAtom } from 'jotai';
@@ -33,6 +37,7 @@ import HarvestTime from '@/components/HarvestTime';
 import {
   capitalize,
   getTokenInfoFromAddr,
+  getUniqueById,
   shortAddress,
   timeAgo,
 } from '@/utils';

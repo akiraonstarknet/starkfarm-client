@@ -8,7 +8,7 @@ export async function GET(_req: Request, res: Response) {
   const response = NextResponse.json({
     time: new Date(),
     data: json,
-    region: process.env.VERCEL_REGION
+    region: process.env.VERCEL_REGION,
   });
 
   response.headers.set(
@@ -17,4 +17,3 @@ export async function GET(_req: Request, res: Response) {
   );
   return response;
 }
-
