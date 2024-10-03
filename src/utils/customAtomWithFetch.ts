@@ -11,7 +11,7 @@ export const customAtomWithFetch = (args: {
     queryFn: async () => {
       const urlPrefix =
         typeof window === 'undefined' && !url.includes('http')
-          ? 'http://localhost:3000'
+          ? process.env.HOSTNAME || 'https://app.strkfarm.xyz'
           : '';
 
       try {
