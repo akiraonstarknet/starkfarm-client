@@ -49,12 +49,12 @@ import {
 import mixpanel from 'mixpanel-browser';
 import { useEffect } from 'react';
 import { isMobile } from 'react-device-detect';
-import TncModal from './TncModal';
 import {
   ArgentMobileConnector,
   isInArgentMobileAppBrowser,
 } from 'starknetkit/argentMobile';
 import { WebWalletConnector } from 'starknetkit/webwallet';
+import TncModal from './TncModal';
 
 export const MYCONNECTORS: any[] = isInArgentMobileAppBrowser()
   ? [
@@ -273,22 +273,40 @@ export default function Navbar(props: NavbarProps) {
             </Button>
           </Link> */}
 
-          <Link href="/" margin="0">
+          <Link href="/" margin="0 10px 0 0">
             <Button
               bg="transparent"
               color="color2"
               variant="outline"
               border="none"
-              padding={'0'}
+              px="10px"
               _hover={{
                 bg: 'color2_50p',
               }}
-              display={{ base: 'none !important', md: 'flex !important' }}
+              display={{ base: 'none !important', lg: 'flex !important' }}
               onClick={() => {
                 mixpanel.track('home_clicked');
               }}
             >
               Home
+            </Button>
+          </Link>
+          <Link href="/raffle" margin="0 10px 0 0">
+            <Button
+              bg="transparent"
+              color="color2"
+              variant="outline"
+              border="none"
+              px="10px"
+              _hover={{
+                bg: 'color2_50p',
+              }}
+              display={{ base: 'none !important', lg: 'flex !important' }}
+              onClick={() => {
+                mixpanel.track('home_clicked');
+              }}
+            >
+              🚀 {'  '}Raffle
             </Button>
           </Link>
           <Link href="/community" margin="0 10px 0 0">
@@ -300,7 +318,7 @@ export default function Navbar(props: NavbarProps) {
               _hover={{
                 bg: 'color2_50p',
               }}
-              display={{ base: 'none !important', md: 'flex !important' }}
+              display={{ base: 'none !important', lg: 'flex !important' }}
               onClick={() => {
                 mixpanel.track('community_program_click');
               }}
