@@ -41,6 +41,11 @@ const banner_images = [
     mobile: '/banners/seed_grant_small.jpg',
     link: 'https://x.com/strkfarm/status/1787783906982260881',
   },
+  {
+    desktop: '/banners/strkfarm_braavos.jpg',
+    mobile: '/banners/strkfarm_braavos.jpg',
+    link: 'https://x.com/strkfarm/status/1871870516686209314',
+  },
 ];
 
 export default function Home() {
