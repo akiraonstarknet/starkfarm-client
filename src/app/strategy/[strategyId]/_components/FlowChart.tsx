@@ -19,6 +19,7 @@ import { Spinner } from '@chakra-ui/react';
 
 const boxStyle = {
   background: 'var(--chakra-colors-bg)',
+  opacity: 0.9,
   color: 'white',
   padding: '10px',
   borderRadius: '5px',
@@ -29,7 +30,13 @@ const boxStyle = {
 // Dagre layouting
 const getLayoutedElements = (nodes: any[], edges: any[]) => {
   const g = new Dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
-  g.setGraph({ ranker: 'network-simplex', rankdir: 'TB', ranksep: 75 });
+  g.setDefaultEdgeLabel(() => ({}));
+  g.setGraph({
+    ranker: 'network-simplex',
+    rankdir: 'TB',
+    nodesep: 30,
+    ranksep: 100,
+  });
 
   edges.forEach((edge) => g.setEdge(edge.source, edge.target));
   nodes.forEach((node) =>
@@ -58,7 +65,8 @@ const getLayoutedElements = (nodes: any[], edges: any[]) => {
   for (let i = 0; i <= maxLevels; i++) {
     const nodesInLevel = newNodes.filter((n) => n.level == i);
     const maxInRow = 3;
-    const MOVE_BY = 100;
+
+    const MOVE_BY = 120;
 
     const totalGap = nodesInLevel.reduce((acc, n, index) => {
       if (index == 0) return 0;
@@ -170,18 +178,25 @@ function getNodesAndEdges(
       <div>
         <b>{flow.title}</b>
         <br />
-        {flow.subItems.map((item) => (
-          <p key={item} style={{ fontSize: '11px' }}>
-            {item}
-          </p>
-        ))}
+        <table style={{ width: '100%', fontSize: '11px' }}>
+          {flow.subItems.map((item) => (
+            <tr key={item.key}>
+              <td style={{ textAlign: 'right', width: '50%' }}>{item.key}:</td>
+              <td style={{ textAlign: 'left', width: '50%' }}>{item.value}</td>
+            </tr>
+          ))}
+        </table>
       </div>
     );
+    let style = boxStyle;
+    if (flow.style) {
+      style = { ...style, ...flow.style };
+    }
     const _node: FlowNode = {
       id: `${level}_${nodes.length}`,
       position: { x: 0, y: 0 }, // doesnt matter as we use dagre for layout
       data: { label: reactElement },
-      style: boxStyle,
+      style,
       level,
     };
     if (flow.linkedFlows.length) {
