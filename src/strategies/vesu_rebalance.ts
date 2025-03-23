@@ -17,6 +17,7 @@ import {
   VesuRebalance,
   PricerFromApi,
   Web3Number,
+  VesuRebalanceSettings,
 } from '@strkfarm/sdk';
 import MyNumber from '@/utils/MyNumber';
 import { PoolInfo } from '@/store/pools';
@@ -30,7 +31,7 @@ export class VesuRebalanceStrategy extends IStrategy {
     token: TokenInfo,
     name: string,
     description: string,
-    strategy: IStrategyMetadata,
+    strategy: IStrategyMetadata<VesuRebalanceSettings>,
     liveStatus: StrategyLiveStatus,
     settings: IStrategySettings,
   ) {
