@@ -3,12 +3,11 @@ import {
   AvatarGroup,
   Box,
   Flex,
-  Image,
   Link,
   Text,
   Tooltip,
 } from '@chakra-ui/react';
-import shield from '@/assets/shield.svg';
+import ShieldIcon from '@/assets/shield.svg';
 import { StrategyInfo } from '@/store/strategies.atoms';
 
 export function StrategyInfoComponent(props: { strategy: StrategyInfo<any> }) {
@@ -56,11 +55,12 @@ export function StrategyInfoComponent(props: { strategy: StrategyInfo<any> }) {
             borderRadius={'20px'}
           >
             <Link href={strategy.metadata.auditUrl} target="_blank">
-              <Image
+              <ShieldIcon />
+              {/* <Image
                 src={shield.src}
                 alt="badge"
                 filter={'brightness(0) invert(0.8)'}
-              />
+              /> */}
             </Link>
           </Box>
         </Tooltip>

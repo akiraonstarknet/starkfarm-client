@@ -1,4 +1,4 @@
-import shield from '@/assets/shield.svg';
+import ShieldIcon from '@/assets/shield.svg';
 import { addressAtom } from '@/store/claims.atoms';
 import { isPoolRetired, PoolInfo } from '@/store/pools';
 import { getPoolInfoFromStrategy, sortAtom } from '@/store/protocols';
@@ -106,11 +106,7 @@ export function StrategyInfo(props: YieldCardProps) {
                       bg={'badge_green'}
                       padding={'3px 5px'}
                     >
-                      <Image
-                        src={shield.src}
-                        alt="badge"
-                        filter={'brightness(0) invert(0.8);'}
-                      />
+                      <ShieldIcon />
                     </Box>
                   </Link>
                 </Tooltip>
