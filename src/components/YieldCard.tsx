@@ -568,12 +568,9 @@ export default function YieldCard(props: YieldCardProps) {
   return (
     <>
       <Tr
+        className="faded-purple-gradient"
         color={'white'}
         display={{ base: 'none', md: 'table-row' }}
-        bg={getStratCardBg(
-          pool.additional?.tags?.[0] || StrategyLiveStatus.ACTIVE,
-          index,
-        )}
         filter={isRetired ? 'opacity(0.7)' : 'none'}
         _hover={{
           bg: 'mycard_light',

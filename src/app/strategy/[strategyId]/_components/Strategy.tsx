@@ -50,6 +50,7 @@ import { ManageTab } from './ManageTab';
 import { RiskTab } from './RiskTab';
 import { StrategyInfoComponent } from './StrategyInfo';
 import { TransactionsTab } from './TransactionsTab';
+import { APYHistoryTab } from './APYHistory';
 
 import ManageIcon from '@/assets/manage.svg';
 import RiskIcon from '@/assets/risk.svg';
@@ -209,12 +210,15 @@ const Strategy = ({ params }: StrategyParams) => {
         setRoute('details');
         break;
       case 2:
-        setRoute('risks');
+        setRoute('apys');
         break;
       case 3:
-        setRoute('faq');
+        setRoute('risks');
         break;
       case 4:
+        setRoute('faq');
+        break;
+      case 5:
         setRoute('transactions');
         break;
       default:
@@ -238,14 +242,17 @@ const Strategy = ({ params }: StrategyParams) => {
         case 'details':
           setTabIndex(1);
           break;
-        case 'risks':
+        case 'apys':
           setTabIndex(2);
           break;
-        case 'faq':
+        case 'risks':
           setTabIndex(3);
           break;
-        case 'transactions':
+        case 'faq':
           setTabIndex(4);
+          break;
+        case 'transactions':
+          setTabIndex(5);
           break;
         default:
           setTabIndex(0);
@@ -494,6 +501,21 @@ const Strategy = ({ params }: StrategyParams) => {
                   color={'text_secondary'}
                   _selected={{ color: 'purple', fontWeight: 'bold' }}
                   onClick={() => {
+                    mixpanel.track('APY History clicked');
+                  }}
+                >
+                  <DetailsIcon
+                    style={{ width: 20, height: 20 }}
+                    _selected={{ color: 'purple' }}
+                  />
+                  APY History
+                </Tab>
+                <Tab
+                  display="flex"
+                  gap={1}
+                  color={'text_secondary'}
+                  _selected={{ color: 'purple', fontWeight: 'bold' }}
+                  onClick={() => {
                     mixpanel.track('Risk clicked');
                   }}
                 >
@@ -552,6 +574,9 @@ const Strategy = ({ params }: StrategyParams) => {
                       strategy={strategy}
                     />
                   )}
+                </TabPanel>
+                <TabPanel width={'100%'} padding={0}>
+                  {strategyCached && strategy && <APYHistoryTab />}
                 </TabPanel>
                 <TabPanel width={'100%'} padding={0}>
                   {strategy && <RiskTab strategy={strategy} />}
