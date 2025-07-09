@@ -18,7 +18,7 @@ export function ManageTab(props: ManageTabProps) {
       <Flex
         maxWidth={'1152px'}
         margin={'0 auto'}
-        padding={'24px 0px'}
+        padding={'32px 0px'}
         gap={'2'}
         direction={{ base: 'column-reverse', md: 'row' }}
       >

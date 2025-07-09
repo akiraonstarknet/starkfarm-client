@@ -166,7 +166,6 @@ export default function Home() {
             bg="color_3"
             float={'left'}
             width={'100%'}
-            // borderWidth={'1px'}
             borderColor={'color_3'}
             borderRadius={'8px'}
             padding={'1rem 0'}
@@ -177,7 +176,6 @@ export default function Home() {
             bg="color_3"
             width={'100%'}
             float={'left'}
-            // borderWidth={'1px'}
             borderColor={'color_3'}
             borderRadius={'8px'}
             padding={'1rem 0'}

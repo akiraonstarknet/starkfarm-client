@@ -27,7 +27,7 @@ export function FAQTab(props: FAQTabProps) {
         maxWidth={'1152px'}
         margin={'0 auto'}
         flexDirection={'column'}
-        padding={'24px 16px'}
+        padding={'32px 0px'}
         gap={'24px'}
       >
         <Text

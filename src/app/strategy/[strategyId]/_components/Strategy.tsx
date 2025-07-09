@@ -53,6 +53,7 @@ import { TransactionsTab } from './TransactionsTab';
 import { APYHistoryTab } from './APYHistory';
 
 import ManageIcon from '@/assets/manage.svg';
+import APYHistoryIcon from '@/assets/apy-history.svg';
 import RiskIcon from '@/assets/risk.svg';
 import DetailsIcon from '@/assets/details.svg';
 import FaqIcon from '@/assets/faq.svg';
@@ -207,13 +208,13 @@ const Strategy = ({ params }: StrategyParams) => {
         setRoute('manage');
         break;
       case 1:
-        setRoute('details');
-        break;
-      case 2:
         setRoute('apys');
         break;
-      case 3:
+      case 2:
         setRoute('risks');
+        break;
+      case 3:
+        setRoute('details');
         break;
       case 4:
         setRoute('faq');
@@ -239,13 +240,13 @@ const Strategy = ({ params }: StrategyParams) => {
         case 'manage':
           setTabIndex(0);
           break;
-        case 'details':
+        case 'apys':
           setTabIndex(1);
           break;
-        case 'apys':
+        case 'risks':
           setTabIndex(2);
           break;
-        case 'risks':
+        case 'details':
           setTabIndex(3);
           break;
         case 'faq':
@@ -486,25 +487,10 @@ const Strategy = ({ params }: StrategyParams) => {
                   color={'text_secondary'}
                   _selected={{ color: 'purple', fontWeight: 'bold' }}
                   onClick={() => {
-                    mixpanel.track('Details clicked');
-                  }}
-                >
-                  <DetailsIcon
-                    style={{ width: 20, height: 20 }}
-                    _selected={{ color: 'purple' }}
-                  />
-                  Details
-                </Tab>
-                <Tab
-                  display="flex"
-                  gap={1}
-                  color={'text_secondary'}
-                  _selected={{ color: 'purple', fontWeight: 'bold' }}
-                  onClick={() => {
                     mixpanel.track('APY History clicked');
                   }}
                 >
-                  <DetailsIcon
+                  <APYHistoryIcon
                     style={{ width: 20, height: 20 }}
                     _selected={{ color: 'purple' }}
                   />
@@ -524,6 +510,21 @@ const Strategy = ({ params }: StrategyParams) => {
                     _selected={{ color: 'purple' }}
                   />
                   Risks
+                </Tab>
+                <Tab
+                  display="flex"
+                  gap={1}
+                  color={'text_secondary'}
+                  _selected={{ color: 'purple', fontWeight: 'bold' }}
+                  onClick={() => {
+                    mixpanel.track('Details clicked');
+                  }}
+                >
+                  <DetailsIcon
+                    style={{ width: 20, height: 20 }}
+                    _selected={{ color: 'purple' }}
+                  />
+                  Details
                 </Tab>
                 <Tab
                   display="flex"
@@ -568,6 +569,12 @@ const Strategy = ({ params }: StrategyParams) => {
                   {strategy && <ManageTab strategy={strategy} />}
                 </TabPanel>
                 <TabPanel width={'100%'} padding={0}>
+                  {strategyCached && strategy && <APYHistoryTab />}
+                </TabPanel>
+                <TabPanel width={'100%'} padding={0}>
+                  {strategy && <RiskTab strategy={strategy} />}
+                </TabPanel>
+                <TabPanel width={'100%'} padding={0}>
                   {strategyCached && strategy && (
                     <DetailsTab
                       strategyAPIResult={strategyCached}
@@ -575,13 +582,6 @@ const Strategy = ({ params }: StrategyParams) => {
                     />
                   )}
                 </TabPanel>
-                <TabPanel width={'100%'} padding={0}>
-                  {strategyCached && strategy && <APYHistoryTab />}
-                </TabPanel>
-                <TabPanel width={'100%'} padding={0}>
-                  {strategy && <RiskTab strategy={strategy} />}
-                </TabPanel>
-
                 <TabPanel width={'100%'} padding={0}>
                   {strategy && <FAQTab strategy={strategy} />}
                 </TabPanel>

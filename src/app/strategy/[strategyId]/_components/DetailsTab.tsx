@@ -34,7 +34,7 @@ export function DetailsTab(props: DetailsTabProps) {
       <Flex
         maxWidth={'1152px'}
         margin={'0 auto'}
-        padding={'24px 0px'}
+        padding={'32px 0px'}
         gap={'24px'}
       >
         <Flex width={'100%'} flexDirection={'column'} gap={5}>

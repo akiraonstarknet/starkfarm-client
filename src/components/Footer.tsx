@@ -80,7 +80,7 @@ const Footer: React.FC = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   return (
-    <Container width={'100%'} bg="mycard_dark">
+    <Container width={'100%'} bg="mycard_dark" marginTop="100px">
       <Box
         width={'100%'}
         maxWidth="1152px"

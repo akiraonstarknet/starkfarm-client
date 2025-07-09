@@ -68,6 +68,8 @@ function DesktopTransactionHistory(props: { transactions: ITransaction[] }) {
                   textTransform={'capitalize'}
                   borderTopLeftRadius={'lg'}
                   borderBottomLeftRadius={'lg'}
+                  borderRightWidth={'1px'}
+                  borderColor={'mybg'}
                 >
                   #
                 </Th>
@@ -76,6 +78,8 @@ function DesktopTransactionHistory(props: { transactions: ITransaction[] }) {
                   fontSize={'14px'}
                   fontWeight={'600'}
                   textTransform={'capitalize'}
+                  borderRightWidth={'1px'}
+                  borderColor={'mybg'}
                 >
                   Amount
                 </Th>
@@ -84,6 +88,8 @@ function DesktopTransactionHistory(props: { transactions: ITransaction[] }) {
                   fontSize={'14px'}
                   fontWeight={'600'}
                   textTransform={'capitalize'}
+                  borderRightWidth={'1px'}
+                  borderColor={'mybg'}
                 >
                   Transaction type
                 </Th>
@@ -92,6 +98,8 @@ function DesktopTransactionHistory(props: { transactions: ITransaction[] }) {
                   fontSize={'14px'}
                   fontWeight={'600'}
                   textTransform={'capitalize'}
+                  borderRightWidth={'1px'}
+                  borderColor={'mybg'}
                 >
                   Transaction hash
                 </Th>
@@ -289,7 +297,7 @@ export function TransactionsTab(props: TransactionsTabProps) {
         flexDirection="column"
         gap="16px"
         width="100%"
-        padding={'16px'}
+        padding={'32px 0px'}
       >
         <Box>
           <Text fontSize="18px" color="white" fontWeight="600" mb={1}>

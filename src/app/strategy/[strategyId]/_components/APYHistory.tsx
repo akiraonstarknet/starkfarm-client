@@ -173,7 +173,7 @@ export function APYHistoryTab() {
         flexDirection="column"
         gap="16px"
         width="100%"
-        padding={'16px'}
+        padding={'32px 0px'}
       >
         <APYHistory />
       </Flex>
