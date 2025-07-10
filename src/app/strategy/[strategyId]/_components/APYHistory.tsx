@@ -7,42 +7,38 @@ import {
   CartesianGrid,
   ResponsiveContainer,
 } from 'recharts';
+import TimeRangeSelector from '@/components/TimeRangeSelector';
+import { useState, useMemo } from 'react';
 
-import { StrategyInfo } from '@/store/strategies.atoms';
+type TimeRange = '1d' | '7d' | '30d' | 'all';
 
-interface ITransaction {
-  amount: string;
-  timestamp: number;
-  type: string;
-  txHash: string;
-  asset: string;
-  __typename: 'Investment_flows';
-}
-interface TransactionsTabProps {
-  strategy: StrategyInfo<any>;
-  // txHistoryResult: AtomWithQueryResult<TxHistory, Error>;
-  txHistory: {
-    findManyInvestment_flows: ITransaction[];
-  };
-  isMobile?: boolean;
-}
-
-// Dummy APY history data for months and APY percentage
-interface APYHistoryPoint {
+interface APYHistoryData {
   month: string;
   apy: number;
 }
 
-const dummyAPYHistory: APYHistoryPoint[] = [
-  { month: '2023-10', apy: 4.2 },
-  { month: '2023-11', apy: 4.5 },
-  { month: '2023-12', apy: 4.7 },
-  { month: '2024-01', apy: 5.0 },
-  { month: '2024-02', apy: 5.1 },
-  { month: '2024-03', apy: 5.3 },
-  { month: '2024-04', apy: 5.0 },
-  { month: '2024-05', apy: 5.2 },
-];
+const dummyAPYHistory: APYHistoryData[] = (() => {
+  const days = 60;
+  const today = new Date();
+  const data: APYHistoryData[] = [];
+  const baseAPY = 4.0;
+  for (let i = days - 1; i >= 0; i--) {
+    const date = new Date(today);
+    date.setDate(today.getDate() - i);
+    const dayStr = date.toISOString().slice(0, 10);
+
+    const apy =
+      baseAPY +
+      Math.sin(i / 7) * 0.2 +
+      Math.random() * 0.1 +
+      (i > 30 ? 0.5 : 0);
+    data.push({
+      month: dayStr,
+      apy: Number(apy.toFixed(2)),
+    });
+  }
+  return data;
+})();
 
 function getMinMax<T>(arr: T[], key: keyof T & string): [number, number] {
   const values = arr.map((item) => item[key] as unknown as number);
@@ -63,9 +59,20 @@ function formatYAxis(value: number): string {
   return `${value.toFixed(1)}%`;
 }
 
-const yAxisDomain: [number, number] = getMinMax(dummyAPYHistory, 'apy');
+const timeRangeToDays: Record<TimeRange, number> = {
+  '1d': 10,
+  '7d': 7,
+  '30d': 30,
+  all: dummyAPYHistory.length,
+};
 
-const renderAPYHistoryChart = () => {
+const renderAPYHistoryChart = (
+  selectedRange: TimeRange,
+  onRangeChange: (range: TimeRange) => void,
+  filteredData: APYHistoryData[],
+) => {
+  const yAxisDomain: [number, number] = getMinMax(filteredData, 'apy');
+
   return (
     <Box
       className="faded-purple-gradient"
@@ -84,17 +91,22 @@ const renderAPYHistoryChart = () => {
         px={4}
         py={3}
         borderBottom="1px solid"
-        borderColor="gray.700"
+        borderColor="border_grey"
+        borderBottomWidth="1px"
       >
         <Text fontWeight="bold" fontSize="lg" color="white">
           APY History
         </Text>
+        <TimeRangeSelector
+          selectedRange={selectedRange}
+          onRangeChange={onRangeChange}
+        />
       </Flex>
       <Box p={4} flex="1 1 0" display="flex" flexDirection="column">
         <Box flex="1 1 0" minHeight="300px">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart
-              data={dummyAPYHistory}
+              data={filteredData}
               margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
               syncId="validator-charts"
             >
@@ -120,23 +132,21 @@ const renderAPYHistoryChart = () => {
               <XAxis
                 dataKey="month"
                 stroke="none"
-                tick={{ fill: '#10B981', fontSize: 10 }}
+                tick={{ fill: '#868898', fontSize: 10 }}
+                tickMargin={10}
                 tickFormatter={(value) => {
-                  // Format YYYY-MM to 'MMM YY'
-                  const [year, month] = value.split('-');
-                  return new Date(
-                    Number(year),
-                    Number(month) - 1,
-                  ).toLocaleString('default', {
+                  const date = new Date(value);
+                  return date.toLocaleString('default', {
                     month: 'short',
-                    year: '2-digit',
+                    day: 'numeric',
                   });
                 }}
                 type="category"
               />
               <YAxis
                 stroke="#10B981"
-                tick={{ fill: '#10B981', fontSize: 10 }}
+                tick={{ fill: '#868898', fontSize: 10 }}
+                tickMargin={14}
                 ticks={generateTicks(yAxisDomain)}
                 tickFormatter={formatYAxis}
                 domain={yAxisDomain}
@@ -161,7 +171,15 @@ const renderAPYHistoryChart = () => {
 };
 
 function APYHistory() {
-  return <>{renderAPYHistoryChart()}</>;
+  const [selectedRange, setSelectedRange] = useState<TimeRange>('all');
+  const days = timeRangeToDays[selectedRange];
+  const filteredData = useMemo(
+    () => dummyAPYHistory.slice(-days),
+    [selectedRange],
+  );
+  return (
+    <>{renderAPYHistoryChart(selectedRange, setSelectedRange, filteredData)}</>
+  );
 }
 
 export function APYHistoryTab() {

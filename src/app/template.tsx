@@ -63,6 +63,9 @@ const theme = extendTheme({
     input_light: '#37373780',
     list_item_bg: '#37373766',
 
+    text_grey: '#868898',
+    text_grey_60p: '#86889899',
+    text_grey_90p: '#868898E5',
     grey_text: '#B6B6B6',
     grey_text_2: '#909090',
     text_primary: 'white',
@@ -92,6 +95,7 @@ const theme = extendTheme({
     dark_bg: '#111119',
     purple_tint: '#CFCFEA',
     lavender_gray: '#B4B1BD',
+    border_grey: '#B3B3B326',
 
     text_subtle: '#a0a2b0',
     text_subtle_50p: '#a0a2b080',
