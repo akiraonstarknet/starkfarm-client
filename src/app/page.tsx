@@ -159,7 +159,6 @@ export default function Home() {
           bg="purple"
           color="color1"
           borderRadius="1px"
-          boxShadow={'0px 0px 8px 0px var(--chakra-colors-purple)'}
         />
         <TabPanels>
           <TabPanel
