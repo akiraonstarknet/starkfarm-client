@@ -16,7 +16,16 @@ const provider = new RpcProvider({
 async function getStrategyInfo(
   strategy: IStrategy<any>,
 ): Promise<STRKFarmStrategyAPIResult> {
-  const tvl = await strategy.getTVL();
+  let tvl;
+  try {
+    tvl = await strategy.getTVL();
+  } catch (error) {
+    console.warn(
+      `Failed to get TVL for ${strategy.name}:`,
+      error instanceof Error ? error.message : String(error),
+    );
+    tvl = { usdValue: 0 }; // fallback value
+  }
 
   const data = {
     name: strategy.name,
@@ -104,10 +113,21 @@ export async function GET(req: Request) {
 
   const proms = strategies.map((strategy) => {
     if (!strategy.isLive()) return;
-    return strategy.solve([], '1000');
+    return strategy.solve([], '1000').catch((error) => {
+      console.warn(
+        `Strategy ${strategy.name} failed to solve:`,
+        error instanceof Error ? error.message : String(error),
+      );
+      return null;
+    });
   });
 
-  await Promise.all(proms);
+  try {
+    await Promise.all(proms);
+  } catch (error) {
+    console.error('Error resolving strategies:', error);
+    // Continue with existing strategies data even if some failed
+  }
   // strategies.forEach((strategy) => {
   //   try {
   //     strategy.solve(allPools, '1000');
@@ -118,7 +138,32 @@ export async function GET(req: Request) {
 
   const stratsDataProms: Promise<STRKFarmStrategyAPIResult>[] = [];
   for (let i = 0; i < strategies.length; i++) {
-    stratsDataProms.push(getStrategyInfo(strategies[i]));
+    stratsDataProms.push(
+      getStrategyInfo(strategies[i]).catch((error) => {
+        console.warn(
+          `Failed to get strategy info for ${strategies[i].name}:`,
+          error instanceof Error ? error.message : String(error),
+        );
+        // Return a basic strategy object with fallback data
+        return {
+          name: strategies[i].name,
+          id: strategies[i].id,
+          apy: 0,
+          apySplit: { baseApy: 0, rewardsApy: 0 },
+          depositToken: [],
+          leverage: strategies[i].leverage,
+          contract: [],
+          tvlUsd: 0,
+          status: { number: 0, value: strategies[i].liveStatus },
+          riskFactor: strategies[i].riskFactor,
+          logos: strategies[i].metadata.depositTokens.map((t) => t.logo),
+          isAudited: false,
+          auditUrl: '',
+          actions: [],
+          investmentFlows: [],
+        } as STRKFarmStrategyAPIResult;
+      }),
+    );
   }
   const stratsData = await Promise.all(stratsDataProms);
 

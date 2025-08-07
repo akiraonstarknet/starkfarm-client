@@ -1,10 +1,10 @@
-datasource db {
-  url      = env("DATABASE_URL")
-  provider = "postgresql"
-}
-
 generator client {
   provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -14,45 +14,41 @@ model User {
   message       String?
   tncDocVersion String?       @default("1.0")
   referralCode  String        @unique
-  referrals     Referral[]
   referralCount Int?          @default(0)
-  Raffles       Raffle[]
-  og_nft_users  og_nft_users?
-  Signatures    Signatures[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @default(now()) @updatedAt
   LuckyWinner   LuckyWinner[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
+  Raffles       Raffle[]
+  referrals     Referral[]
+  Signatures    Signatures[]
+  og_nft_users  og_nft_users?
 }
 
 model Raffle {
-  raffleId Int @id @default(autoincrement())
+  raffleId            Int           @id @default(autoincrement())
+  isRaffleParticipant Boolean?      @default(false)
+  sharedOnX           Boolean?      @default(false)
+  activeDeposits      Boolean?      @default(false)
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @default(now()) @updatedAt
+  userId              Int
+  LuckyWinner         LuckyWinner[]
+  User                User          @relation(fields: [userId], references: [id])
 
-  isRaffleParticipant Boolean? @default(false)
-  sharedOnX           Boolean? @default(false)
-  activeDeposits      Boolean? @default(false)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
-
-  User   User @relation(fields: [userId], references: [id])
-  userId Int  @unique
-
-  LuckyWinner LuckyWinner[]
+  @@unique([userId, raffleId])
 }
 
 model LuckyWinner {
-  winnerId Int @id @default(autoincrement())
-  roundId  Int @default(autoincrement())
-
   updatedAt DateTime @updatedAt
   createdAt DateTime @default(now())
+  raffleId  Int
+  userId    Int
+  winnerId  Int      @id @default(autoincrement())
+  roundId   Int      @default(autoincrement())
+  Raffle    Raffle   @relation(fields: [raffleId], references: [raffleId])
+  User      User     @relation(fields: [userId], references: [id])
 
-  Raffle   Raffle @relation(fields: [raffleId], references: [raffleId])
-  raffleId Int
-
-  User   User @relation(fields: [userId], references: [id])
-  userId Int  @unique
+  @@unique([userId, winnerId])
 }
 
 model Signatures {
@@ -60,9 +56,8 @@ model Signatures {
   signature     String
   tncDocVersion String
   createdAt     DateTime @default(now())
-
-  userId Int
-  User   User @relation(fields: [userId], references: [id])
+  userId        Int
+  User          User     @relation(fields: [userId], references: [id])
 
   @@unique([userId, tncDocVersion], name: "unique_signature")
 }
@@ -71,18 +66,16 @@ model Referral {
   referralId    Int      @id @default(autoincrement())
   refreeAddress String   @unique
   createdAt     DateTime @default(now())
-
-  User   User @relation(fields: [userId], references: [id])
-  userId Int
+  userId        Int
+  User          User     @relation(fields: [userId], references: [id])
 
   @@unique([userId, refreeAddress], name: "unique_referral")
 }
 
 model og_nft_users {
-  id     Int  @id @default(autoincrement())
-  userId Int  @unique
-  User   User @relation(fields: [userId], references: [id])
-
+  id        Int      @id @default(autoincrement())
+  userId    Int      @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  User      User     @relation(fields: [userId], references: [id])
 }

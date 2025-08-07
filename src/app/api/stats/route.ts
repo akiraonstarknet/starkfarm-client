@@ -2,7 +2,7 @@ import { getStrategies } from '@/store/strategies.atoms';
 import { NextResponse } from 'next/server';
 import { getDataFromRedis } from '../lib';
 
-export const revalidate = 1800;
+export const revalidate = 1800; // 30 minutes
 export const dynamic = 'force-dynamic';
 
 const REDIS_KEY = `${process.env.VK_REDIS_PREFIX}::stats`;
@@ -42,7 +42,10 @@ export async function GET(_req: Request) {
       return 0;
     }
 
-    throw new Error('Failed to fetch data');
+    console.warn(
+      `Failed to fetch TVL for strategy ${strategy.name} after 3 retries`,
+    );
+    return 0; // Return 0 instead of throwing
   });
 
   const result = await Promise.all(values);

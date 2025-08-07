@@ -21,39 +21,51 @@ export async function GET(_req: Request, context: any) {
   const strategies = getStrategies();
   const values: Promise<StrategyWise>[] = strategies.map(async (strategy) => {
     if (strategy.isLive()) {
-      const balanceInfo: AmountsInfo = await strategy.getUserTVL(pAddr);
-      if (balanceInfo.amounts.length == 1) {
+      try {
+        const balanceInfo: AmountsInfo = await strategy.getUserTVL(pAddr);
+        if (balanceInfo.amounts.length == 1) {
+          return {
+            id: strategy.id,
+            usdValue: balanceInfo.usdValue,
+            holdings: [
+              {
+                tokenInfo: balanceInfo.amounts[0].tokenInfo,
+                amount: balanceInfo.amounts[0].amount,
+                usdValue: balanceInfo.amounts[0].usdValue,
+              },
+            ],
+          };
+        }
+        const summary = await strategy.computeSummaryValue(
+          balanceInfo.amounts.map((a) => ({
+            tokenInfo: a.tokenInfo,
+            amount: a.amount,
+          })),
+          strategy.settings.quoteToken,
+          'stats[address]',
+        );
         return {
           id: strategy.id,
           usdValue: balanceInfo.usdValue,
           holdings: [
             {
-              tokenInfo: balanceInfo.amounts[0].tokenInfo,
-              amount: balanceInfo.amounts[0].amount,
-              usdValue: balanceInfo.amounts[0].usdValue,
+              tokenInfo: strategy.settings.quoteToken,
+              amount: summary,
+              usdValue: balanceInfo.usdValue,
             },
           ],
         };
+      } catch (error) {
+        console.warn(
+          `Failed to get user TVL for strategy ${strategy.name}:`,
+          error instanceof Error ? error.message : String(error),
+        );
+        return {
+          id: strategy.id,
+          usdValue: 0,
+          holdings: [],
+        };
       }
-      const summary = await strategy.computeSummaryValue(
-        balanceInfo.amounts.map((a) => ({
-          tokenInfo: a.tokenInfo,
-          amount: a.amount,
-        })),
-        strategy.settings.quoteToken,
-        'stats[address]',
-      );
-      return {
-        id: strategy.id,
-        usdValue: balanceInfo.usdValue,
-        holdings: [
-          {
-            tokenInfo: strategy.settings.quoteToken,
-            amount: summary,
-            usdValue: balanceInfo.usdValue,
-          },
-        ],
-      };
     }
 
     return {
