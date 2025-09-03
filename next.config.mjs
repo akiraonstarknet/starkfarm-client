@@ -6,9 +6,9 @@ const nextConfig = {
     process.env.NODE_ENV == 'development'
       ? {}
       : {
-          removeConsole: {
-            exclude: ['error'],
-          },
+          // removeConsole: {
+          //   exclude: ['error'],
+          // },
         },
   async rewrites() {
     return [
