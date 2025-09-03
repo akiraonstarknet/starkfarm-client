@@ -169,7 +169,7 @@ interface NavbarProps {
 }
 
 export default function Navbar(props: NavbarProps) {
-  const { address, connector, account } = useAccount();
+  const { address, connector } = useAccount();
   const { disconnectAsync } = useDisconnect();
   const setAddress = useSetAtom(addressAtom);
   const { data: starkProfile } = useStarkProfile({
@@ -190,8 +190,6 @@ export default function Navbar(props: NavbarProps) {
 
     return balance.amount.toEtherToFixedDecimals(6);
   };
-
-  console.log(account, 'account');
 
   const connectorConfig: ConnectOptionsWithConnectors = useMemo(() => {
     return {

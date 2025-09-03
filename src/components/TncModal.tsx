@@ -47,7 +47,7 @@ export const UserTnCAtom = atomWithQuery((get) => {
 });
 
 const TncModal: React.FC<TncModalProps> = (props) => {
-  const { address, account } = useAccount();
+  const { address } = useAccount();
   const [refCode, setReferralCode] = useAtom(referralCodeAtom);
   const searchParams = useSearchParams();
   const userTncInfoRes = useAtomValue(UserTnCAtom);
