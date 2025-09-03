@@ -11,6 +11,15 @@ const mixpanel = Mixpanel.init('118f29da6a372f0ccb6f541079cad56b');
 export async function POST(req: Request) {
   const { address, signature } = await req.json();
 
+  if (process.env.NEXT_PUBLIC_IGNORE_SIGNING === 'true') {
+    console.warn('Signing is ignored in this environment');
+    return NextResponse.json({
+      success: true,
+      message: 'Signing is ignored in this environment',
+      user: null,
+    });
+  }
+
   console.debug('address', address, 'signature', signature);
   if (!address || !signature) {
     return NextResponse.json({
@@ -43,7 +52,7 @@ export async function POST(req: Request) {
     nodeUrl: process.env.NEXT_PUBLIC_RPC_URL!,
   });
 
-  const myAccount = new Account(provider, address, '');
+  const myAccount = new Account({ provider, address, signer: '' });
 
   let isValid = false;
 
@@ -94,7 +103,7 @@ export async function POST(req: Request) {
 
   if (!isValid) {
     try {
-      const cls = await provider.getClassAt(address, 'pending');
+      const cls = await provider.getClassAt(address, 'latest');
       // means account is deployed
       return NextResponse.json({
         success: false,

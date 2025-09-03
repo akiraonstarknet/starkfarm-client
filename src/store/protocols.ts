@@ -10,6 +10,7 @@ import { Category, isPoolRetired, PoolInfo, PoolType } from './pools';
 import { getLiveStatusEnum } from '@/utils/strategyStatus';
 import TrovesAtoms, { troves, TrovesStrategyAPIResult } from './troves.atoms';
 import VesuAtoms, { vesu } from './vesu.store';
+import CONSTANTS from '@/constants';
 
 export const getProtocols = () => [
   {
@@ -160,7 +161,7 @@ export function getPoolInfoFromStrategy(
   } else if (strat.name.includes('ETH')) {
     category.push(Category.ETH);
   }
-  const item = {
+  const item: PoolInfo = {
     pool: {
       id: strat.id,
       name: strat.name,
@@ -180,6 +181,7 @@ export function getPoolInfoFromStrategy(
         description: 'Includes fees & Defi spring rewards',
       },
     ],
+    apyMethodology: strat.apyMethodology,
     category,
     type: PoolType.Derivatives,
     borrow: {
@@ -203,7 +205,7 @@ export function getPoolInfoFromStrategy(
     item.aprSplits.push({
       apr: strat.apySplit.rewardsApy,
       title: 'Rewards APY',
-      description: 'Additional incentives by Troves',
+      description: CONSTANTS.BOOSTED_YIELD_TOOLTIP_TEXT,
     });
   }
   return item;

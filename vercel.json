@@ -1,3 +1,8 @@
 {
-  "crons": []
+  "crons": [
+    {
+      "path": "/api/strategies",
+      "schedule": "*/10 * * * *"
+    }
+  ]
 }

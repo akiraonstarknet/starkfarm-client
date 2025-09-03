@@ -10,6 +10,7 @@ import { MY_STORE } from '@/store';
 import VesuAtoms, { vesu } from '@/store/vesu.store';
 import EndurAtoms, { endur } from '@/store/endur.store';
 import { setDataToRedis, getDataFromRedis, getRewardsInfo } from '../lib';
+import { DEFAULT_APY_METHODLOGY } from '@/constants';
 
 export const revalidate = 1800; // 30 minutes
 export const dynamic = 'force-dynamic';
@@ -59,7 +60,8 @@ async function getStrategyInfo(
 ): Promise<TrovesStrategyAPIResult> {
   const tvl = await strategy.getTVL();
 
-  const data = {
+  const defaultAPYMethodology = DEFAULT_APY_METHODLOGY;
+  const data: TrovesStrategyAPIResult = {
     name: strategy.name,
     id: strategy.id,
     apy: strategy.netYield,
@@ -67,6 +69,7 @@ async function getStrategyInfo(
       baseApy: strategy.netYield,
       rewardsApy: 0,
     },
+    apyMethodology: strategy.metadata.apyMethodology || defaultAPYMethodology,
     depositToken: (
       await strategy.depositMethods({
         amount: MyNumber.fromZero(),

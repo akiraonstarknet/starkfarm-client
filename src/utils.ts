@@ -303,9 +303,6 @@ export function convertToV1TokenInfo(
     displayDecimals: v2Token.displayDecimals,
     token: v2Token.address.address,
     isERC4626,
-    minAmount: MyNumber.fromEther('0', v2Token.decimals),
-    maxAmount: MyNumber.fromEther('0', v2Token.decimals),
-    stepAmount: new MyNumber('1', v2Token.decimals),
   };
 }
 

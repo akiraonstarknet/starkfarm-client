@@ -7,17 +7,17 @@ import {
   ChakraBaseProvider,
   Container,
   Flex,
+  Spinner,
   extendTheme,
 } from '@chakra-ui/react';
 import { mainnet } from '@starknet-react/chains';
-import { StarknetConfig, jsonRpcProvider } from '@starknet-react/core';
+import { StarknetConfig, jsonRpcProvider, voyager } from '@starknet-react/core';
 import { Provider as JotaiProvider } from 'jotai';
 import mixpanel from 'mixpanel-browser';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import * as React from 'react';
 import { Toaster } from 'react-hot-toast';
-import { RpcProviderOptions, constants } from 'starknet';
 
 import Footer from '@/components/Footer';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -138,17 +138,12 @@ export const CONNECTOR_NAMES = ['Braavos', 'Argent X', 'Argent (mobile)']; // 'A
 
 export default function Template({ children }: { children: React.ReactNode }) {
   const chains = [mainnet];
+  const pathname = usePathname();
   const provider = jsonRpcProvider({
     rpc: (chain) => {
-      const args: RpcProviderOptions = {
-        nodeUrl:
-          'https://rpc.nethermind.io/mainnet-juno?apikey=t1HPjhplOyEQpxqVMhpwLGuwmOlbXN0XivWUiPAxIBs0kHVK',
-        chainId: constants.StarknetChainId.SN_MAIN,
-      };
-      return args;
+      return { nodeUrl: process.env.NEXT_PUBLIC_RPC_URL! };
     },
   });
-  const pathname = usePathname();
 
   function getIconNode(icon: typeof import('*.svg'), alt: string) {
     return (
@@ -160,16 +155,38 @@ export default function Template({ children }: { children: React.ReactNode }) {
 
   const isMobile = useIsMobile();
 
+  function Loading() {
+    return (
+      <Flex
+        height="100vh"
+        width="100vw"
+        justify="center"
+        align="center"
+        bg="black" // optional, so white spinner is visible
+      >
+        <Spinner
+          thickness="4px"
+          speed="0.65s"
+          emptyColor="gray.700"
+          color="white"
+          size="xl"
+        />
+      </Flex>
+    );
+  }
+
   return (
     <JotaiProvider store={MY_STORE}>
       <StarknetConfig
         chains={chains}
         provider={provider}
         connectors={getConnectors(isMobile)}
+        explorer={voyager}
+        autoConnect={true}
       >
         <ChakraBaseProvider theme={theme}>
           <Flex minHeight={'100vh'} bgColor={'mybg'}>
-            <React.Suspense>
+            <React.Suspense fallback={<Loading />}>
               <Container
                 display={'flex'}
                 flexDirection={'column'}

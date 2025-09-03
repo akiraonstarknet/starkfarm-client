@@ -1,6 +1,7 @@
 import { TrovesStrategyAPIResult } from '@/store/troves.atoms';
+import { UniversalStrategies } from '@strkfarm/sdk';
 import { Redis } from '@upstash/redis';
-import { Contract, RpcProvider, uint256 } from 'starknet';
+import { Contract, RpcProvider } from 'starknet';
 
 const kvRedis = new Redis({
   url: process.env.VK_REDIS_KV_REST_API_URL,
@@ -47,19 +48,53 @@ export const getRewardsInfo = async (
   strategies: Pick<TrovesStrategyAPIResult, 'id' | 'tvlUsd' | 'contract'>[],
 ) => {
   const funder =
-    '0x02D6cf6182259ee62A001EfC67e62C1fbc0dF109D2AA4163EB70D6d1074F0173';
-  const allowedStrats = [
+    '0x0291816c46b4fb9db4d544bac7feb651ab1ae2de3b52e133c0ad23a87dd7c17d';
+
+  const tokenWiseConfig = [
     {
-      id: 'vesu_fusion_eth',
-      // ! consider exchange rate of vToken
-      maxRewardsPerDay: 0.047, // in token units
-      maxAPY: 200, // in percent
-      underlyingTokenName: 'ETH',
-      decimals: 18,
-      rewardToken:
-        '0x021fe2ca1b7e731e4a5ef7df2881356070c5d72db4b2d19f9195f6b641f75df0',
+      token: 'ETH',
+      maxAPY: 100, // in %
+      maxRewardsPerDay: 0.538755 / 15, // tokem amount / days
+    },
+    {
+      token: 'WBTC',
+      maxAPY: 100, // in %
+      maxRewardsPerDay: 0.02191182 / 15, // tokem amount / days
+    },
+    {
+      token: 'USDC',
+      maxAPY: 100, // in %
+      maxRewardsPerDay: 2306 / 15, // tokem amount / days
+    },
+    {
+      token: 'USDT',
+      maxAPY: 75, // in %
+      maxRewardsPerDay: 1349 / 15, // tokem amount / days
+    },
+    {
+      token: 'STRK',
+      maxAPY: 75, // in %
+      maxRewardsPerDay: 10500 / 15, // tokem amount / days
     },
   ];
+  const allowedStrats = UniversalStrategies.map((u) => {
+    const tokenWiseInfo = tokenWiseConfig.find(
+      (t) => t.token === u.depositTokens[0].symbol,
+    );
+    if (!tokenWiseInfo) {
+      throw new Error(`No token config found for ${u.depositTokens[0].symbol}`);
+    }
+    return {
+      id: `evergreen_${u.depositTokens[0].symbol.toLowerCase()}`,
+      // ! consider exchange rate of vToken
+      maxRewardsPerDay: tokenWiseInfo.maxRewardsPerDay || 0,
+      maxAPY: tokenWiseInfo.maxAPY || 0,
+      underlyingTokenName: u.depositTokens[0].symbol,
+      decimals: u.depositTokens[0].decimals,
+      rewardToken: u.depositTokens[0].address.address,
+      rewardReceiver: u.additionalInfo.vaultAllocator.address,
+    };
+  });
 
   const provider = new RpcProvider({
     nodeUrl: process.env.RPC_URL!,
@@ -88,23 +123,25 @@ export const getRewardsInfo = async (
       );
       const priceData = await priceResponse.json();
       // consider token price of vToken
-      const clsVToken = await provider.getClassAt(stratAllowed.rewardToken);
-      const tokenContractVToken = new Contract(
-        clsVToken.abi,
-        stratAllowed.rewardToken,
-        provider,
-      );
-      const shareValue = await tokenContractVToken.call('convert_to_assets', [
-        uint256.bnToUint256((1e18).toString()),
-      ]);
-      console.log(`shareValue::${stratId}::${shareValue}`);
-      const tokenPrice =
-        (priceData.price *
-          Number(
-            (BigInt(shareValue.toString()) * BigInt(10000)) /
-              BigInt((1e18).toString()),
-          )) /
-        10000;
+      // const clsVToken = await provider.getClassAt(stratAllowed.rewardToken);
+
+      // useful math when reward token is a ERC4626 token
+      // const tokenContractVToken = new Contract(
+      //   clsVToken.abi,
+      //   stratAllowed.rewardToken,
+      //   provider,
+      // );
+      // const shareValue = await tokenContractVToken.call('convert_to_assets', [
+      //   uint256.bnToUint256((1e18).toString()),
+      // ]);
+      // console.log(`shareValue::${stratId}::${shareValue}`);
+      const tokenPrice = priceData.price;
+      // (priceData.price *
+      //   Number(
+      //     (BigInt(shareValue.toString()) * BigInt(10000)) /
+      //       BigInt((1e18).toString()),
+      //   )) /
+      // 10000;
       console.log(
         `RewardCalc::${stratId}::tokenPrice::${tokenPrice}, underlyingTokenPrice::${priceData.price}`,
       );
@@ -130,7 +167,11 @@ export const getRewardsInfo = async (
       // if less bal available, use the available balance
       const rewardToken = stratAllowed.rewardToken;
       const cls = await provider.getClassAt(rewardToken);
-      const tokenContract = new Contract(cls.abi, rewardToken, provider);
+      const tokenContract = new Contract({
+        abi: cls.abi,
+        address: rewardToken,
+        providerOrAccount: provider,
+      });
       const available = await tokenContract.balanceOf(funder);
       const availableBal =
         Number(
@@ -154,7 +195,7 @@ export const getRewardsInfo = async (
         maxRewardsPerDay: stratAllowed.maxRewardsPerDay,
         rewardToken: stratAllowed.rewardToken,
         funder,
-        receiver: strat.contract[0].address,
+        receiver: stratAllowed.rewardReceiver,
       });
     }
   }

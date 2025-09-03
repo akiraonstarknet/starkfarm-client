@@ -18,7 +18,7 @@ export default class MyNumber {
   static fromEther(num: string, decimals: number) {
     try {
       return new MyNumber(
-        Number(ethers.parseUnits(num, decimals)).toFixed(6),
+        Number(ethers.parseUnits(Number(num).toFixed(10), decimals)).toFixed(6),
         decimals,
       );
     } catch (e) {
@@ -45,6 +45,9 @@ export default class MyNumber {
 
   toEtherToFixedDecimals(decimals: number) {
     // rounding down
+    if (this.bigNumber.isNaN()) {
+      return 'NaN';
+    }
     return (
       Math.floor(parseFloat(this.toEtherStr()) * 10 ** decimals) /
       10 ** decimals

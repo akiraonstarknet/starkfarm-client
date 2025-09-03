@@ -74,16 +74,16 @@ const AUTO_COMPOUNDING = {
   },
 };
 
-const BATCH_ID = 1;
-
-export default function ZklendRecoveryComp() {
+export default function ZklendRecoveryComp(props: { BATCH_ID: number }) {
   const _address = useAtomValue(addressAtom);
   const address = useMemo(() => {
     return _address || '';
   }, [_address]);
 
   const ALL_STRATS: Record<STRATEGY_KEY, StratInfo> = {
-    ...AUTO_COMPOUNDING,
+    ...(props.BATCH_ID == 1
+      ? AUTO_COMPOUNDING
+      : ({} as Record<STRATEGY_KEY, StratInfo>)),
     ...STRATEGY_ADDRESSES,
   };
 
@@ -105,14 +105,14 @@ export default function ZklendRecoveryComp() {
 
         const contractCalls = Object.entries(ALL_STRATS).map(
           async ([key, strategyInfo]) => {
-            const contract = new Contract(
-              strategyAbi,
-              strategyInfo.address,
-              provider,
-            );
+            const contract = new Contract({
+              abi: strategyAbi,
+              address: strategyInfo.address,
+              providerOrAccount: provider,
+            });
             const res: any = await contract.call('zklend_position', [
               address,
-              uint256.bnToUint256(BATCH_ID),
+              uint256.bnToUint256(props.BATCH_ID),
             ]);
             const token = num.getHexString(res[0].toString());
             const tokenInfo = TOKENS.find(
@@ -143,7 +143,7 @@ export default function ZklendRecoveryComp() {
           }),
           { ...balances },
         );
-        console.log('revoery2', updatedBalances);
+        console.log('revoery2', updatedBalances, props);
         setBalances(updatedBalances);
       } catch (error) {
         setIsLoading(false);
@@ -161,7 +161,7 @@ export default function ZklendRecoveryComp() {
       (acc, [key, value]) => {
         const tokenName: 'ETH' | 'USDC' | 'STRK' = value.token as any;
         if (!['ETH', 'USDC', 'STRK'].includes(tokenName)) {
-          console.error('Invalid token name:', tokenName);
+          console.error('Invalid token name:', tokenName, balances);
           throw new Error('Invalid token name');
         }
         acc[tokenName] += Number(value.balance);
@@ -174,11 +174,11 @@ export default function ZklendRecoveryComp() {
 
   const calls = useMemo(() => {
     const contracts = Object.entries(ALL_STRATS).map(([key, strategyInfo]) => {
-      const contract = new Contract(
-        strategyAbi,
-        strategyInfo.address,
-        provider,
-      );
+      const contract = new Contract({
+        abi: strategyAbi,
+        address: strategyInfo.address,
+        providerOrAccount: provider,
+      });
       return contract;
     });
     const calls = contracts
@@ -193,7 +193,7 @@ export default function ZklendRecoveryComp() {
         const amount = balances[strategy_key].balance;
         if (amount && Number(amount) > 0)
           return contract.populate('withdraw_zklend', [
-            uint256.bnToUint256(BATCH_ID),
+            uint256.bnToUint256(props.BATCH_ID),
             address,
           ]);
         return null;
@@ -241,7 +241,7 @@ export default function ZklendRecoveryComp() {
           marginBottom={{ base: '20px', md: '0' }}
         >
           <Text as="h3" color="white">
-            Recovery from zkLend:
+            Recovery from zkLend: Batch {props.BATCH_ID}
           </Text>
           <Box
             alignItems={'center'}
@@ -286,19 +286,7 @@ export default function ZklendRecoveryComp() {
           px={'16px'}
         >
           <span>
-            1. Check your eligible claims by connecting your wallet. Please note
-            that approximately 1-5% of your original funds are expected to be
-            available. Please let us know of any descrepresies before 28th March
-            on our{' '}
-            <a
-              href={CONSTANTS.COMMUNITY_TG}
-              style={{ textDecoration: 'underline' }}
-            >
-              Telegram
-            </a>
-            .
-            <br />
-            2. Any newly recovered funds from{' '}
+            1. Any newly recovered funds from{' '}
             <a
               href="https://x.com/zkLend/status/1892459438881329660"
               style={{ textDecoration: 'underline' }}

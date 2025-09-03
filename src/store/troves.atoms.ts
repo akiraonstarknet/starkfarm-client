@@ -29,6 +29,7 @@ export interface TrovesStrategyAPIResult {
     symbol: string;
     decimals: number;
   }[];
+  apyMethodology: string;
   leverage: number;
   contract: { name: string; address: string }[];
   tvlUsd: number;
@@ -77,7 +78,7 @@ export class Troves extends IDapp<TrovesStrategyAPIResult> {
         rewardsApy.push({
           apr: rawPool.apySplit.rewardsApy,
           title: 'Rewards APY',
-          description: 'Incentives by Troves',
+          description: CONSTANTS.BOOSTED_YIELD_TOOLTIP_TEXT,
         });
       }
 
@@ -98,6 +99,7 @@ export class Troves extends IDapp<TrovesStrategyAPIResult> {
             : 0,
         tvl: rawPool.tvlUsd,
         aprSplits: [...rewardsApy],
+        apyMethodology: rawPool.apyMethodology,
         category: categories,
         type: PoolType.Derivatives,
         lending: {

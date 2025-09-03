@@ -1,7 +1,7 @@
 import { constants, RpcProvider } from 'starknet';
 import { NFTInfo, TokenInfo } from './strategies/IStrategy';
 import { getEndpoint, standariseAddress } from './utils';
-import MyNumber from './utils/MyNumber';
+import { Global } from '@strkfarm/sdk';
 
 const LOGOS = {
   USDT: 'https://assets.troves.fi/integrations/tokens/usdt.svg?w=20',
@@ -11,6 +11,7 @@ const LOGOS = {
   STRK: 'https://assets.troves.fi/integrations/tokens/strk.svg?w=20',
   DAI: 'https://assets.troves.fi/integrations/tokens/dai.svg?w=20',
   xSTRK: '/imagedelivery/c1f44170-c1b0-4531-3d3b-5f0bacfe1300/logo',
+  tBTC: 'https://assets.troves.fi/integrations/tokens/tbtc.svg?w=20',
 };
 
 export type TokenName =
@@ -24,12 +25,12 @@ export type TokenName =
 
 export const CONSTANTS = {
   DEX_INCENTIVE_URL:
-    'https://kx58j6x5me.execute-api.us-east-1.amazonaws.com/starknet/fetchFile?file=strk_grant.json',
+    'https://app.troves.fi/strk-incentives/fetchFile?file=strk_grant.json',
   NOSTRA_DEGEN_INCENTIVE_URL: 'https://api.nostra.finance/query/pool_aprs',
   CARMINE_INCENTIVES_URL: '/carmine/api/v1/mainnet/defispring',
   CARMINE_URL: '/carmine/api/v2/mainnet',
   LENDING_INCENTIVES_URL:
-    'https://kx58j6x5me.execute-api.us-east-1.amazonaws.com/starknet/fetchFile?file=prod-api/lending/lending_strk_grant.json',
+    'https://app.troves.fi/strk-incentives/fetchFile?file=prod-api/lending/lending_strk_grant.json',
   LOGOS,
   COMMUNITY_TG: 'https://troves.fi/tg',
   NOSTRA: {
@@ -54,8 +55,8 @@ export const CONSTANTS = {
     BASE_APR_API: '/haiko/markets?network=mainnet',
   },
   Troves: {
-    // BASE_APR_API: '/api/strategies',
-    BASE_APR_API: 'https://beta.troves.fi/api/strategies',
+    BASE_APR_API: '/api/strategies',
+    // BASE_APR_API: 'https://beta.troves.fi/api/strategies',
   },
   MY_SWAP: {
     POOLS_API: '/myswap/data/pools/all.json',
@@ -82,56 +83,27 @@ export const CONSTANTS = {
   },
   MOBILE_MSG: 'Desktop/Tablet only',
   BLOCK_EXPLORER: 'https://voyager.online',
+  BOOSTED_YIELD_TOOLTIP_TEXT: 'Starktember incentives by Starknet',
 };
 
+export const DEFAULT_APY_METHODLOGY =
+  'Current APY including any fees. Net returns subject to change based on market conditions.';
+
 export const TOKENS: TokenInfo[] = [
-  {
-    token: '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
-    name: 'ETH',
-    decimals: 18,
-    displayDecimals: 4,
-    logo: CONSTANTS.LOGOS.ETH,
-    minAmount: MyNumber.fromEther('10', 18),
-    maxAmount: MyNumber.fromEther('10000', 18),
-    stepAmount: MyNumber.fromEther('10', 18),
+  ...Global.getDefaultTokens().map((token) => ({
+    token: standariseAddress(token.address.address),
+    name: token.symbol,
+    decimals: token.decimals,
+    displayDecimals: token.displayDecimals,
     isERC4626: false,
-  },
-  {
-    token: standariseAddress(
-      '0x4718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d',
-    ),
-    name: 'STRK',
-    decimals: 18,
-    displayDecimals: 2,
-    logo: CONSTANTS.LOGOS.STRK,
-    minAmount: MyNumber.fromEther('10', 18),
-    maxAmount: MyNumber.fromEther('10000', 18),
-    stepAmount: MyNumber.fromEther('10', 18),
-    isERC4626: false,
-  },
-  // ! todo change this
-  {
-    token: standariseAddress(
-      '0x28d709c875c0ceac3dce7065bec5328186dc89fe254527084d1689910954b0a',
-    ),
-    name: 'xSTRK',
-    decimals: 18,
-    displayDecimals: 2,
-    logo: CONSTANTS.LOGOS.xSTRK,
-    minAmount: MyNumber.fromEther('10', 18),
-    maxAmount: MyNumber.fromEther('10000', 18),
-    stepAmount: MyNumber.fromEther('10', 18),
-    isERC4626: false,
-  },
+    logo: token.logo,
+  })),
   {
     token: '0x06d8fa671ef84f791b7f601fa79fea8f6ceb70b5fa84189e3159d532162efc21',
     name: 'zSTRK',
     decimals: 18,
     displayDecimals: 2,
     logo: CONSTANTS.LOGOS.STRK,
-    minAmount: MyNumber.fromEther('10', 18),
-    maxAmount: MyNumber.fromEther('10000', 18),
-    stepAmount: MyNumber.fromEther('10', 18),
     isERC4626: false,
   },
   {
@@ -140,9 +112,6 @@ export const TOKENS: TokenInfo[] = [
     decimals: 18,
     displayDecimals: 2,
     logo: CONSTANTS.LOGOS.ETH,
-    minAmount: MyNumber.fromEther('10', 18),
-    maxAmount: MyNumber.fromEther('10000', 18),
-    stepAmount: MyNumber.fromEther('10', 18),
     isERC4626: false,
   },
   {
@@ -151,9 +120,6 @@ export const TOKENS: TokenInfo[] = [
     decimals: 18,
     displayDecimals: 4,
     logo: CONSTANTS.LOGOS.ETH,
-    minAmount: MyNumber.fromEther('0.001', 18),
-    maxAmount: MyNumber.fromEther('10000', 18),
-    stepAmount: MyNumber.fromEther('0.0001', 18),
     isERC4626: false,
   },
   {
@@ -162,32 +128,7 @@ export const TOKENS: TokenInfo[] = [
     decimals: 18,
     displayDecimals: 2,
     logo: CONSTANTS.LOGOS.STRK,
-    minAmount: MyNumber.fromEther('10', 18),
-    maxAmount: MyNumber.fromEther('10000', 18),
-    stepAmount: MyNumber.fromEther('10', 18),
     isERC4626: true,
-  },
-  {
-    token: '0x053c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8',
-    name: 'USDC',
-    decimals: 6,
-    displayDecimals: 2,
-    logo: CONSTANTS.LOGOS.USDC,
-    minAmount: MyNumber.fromEther('10', 6),
-    maxAmount: MyNumber.fromEther('10000', 6),
-    stepAmount: MyNumber.fromEther('10', 6),
-    isERC4626: false,
-  },
-  {
-    token: '0x068f5c6a61780768455de69077e07e89787839bf8166decfbf92b645209c0fb8',
-    name: 'USDT',
-    decimals: 6,
-    displayDecimals: 2,
-    logo: CONSTANTS.LOGOS.USDT,
-    minAmount: MyNumber.fromEther('10', 6),
-    maxAmount: MyNumber.fromEther('10000', 6),
-    stepAmount: MyNumber.fromEther('10', 6),
-    isERC4626: false,
   },
   {
     token: '0x047ad51726d891f972e74e4ad858a261b43869f7126ce7436ee0b2529a98f486',
@@ -195,9 +136,6 @@ export const TOKENS: TokenInfo[] = [
     decimals: 6,
     displayDecimals: 2,
     logo: CONSTANTS.LOGOS.USDC,
-    minAmount: MyNumber.fromEther('10', 6),
-    maxAmount: MyNumber.fromEther('10000', 6),
-    stepAmount: MyNumber.fromEther('10', 6),
     isERC4626: false,
   },
   {
@@ -206,9 +144,6 @@ export const TOKENS: TokenInfo[] = [
     decimals: 6,
     displayDecimals: 2,
     logo: CONSTANTS.LOGOS.USDC,
-    minAmount: MyNumber.fromEther('10', 6),
-    maxAmount: MyNumber.fromEther('10000', 6),
-    stepAmount: MyNumber.fromEther('10', 6),
     isERC4626: true,
   },
   {
@@ -217,9 +152,6 @@ export const TOKENS: TokenInfo[] = [
     decimals: 18,
     displayDecimals: 2,
     logo: CONSTANTS.LOGOS.xSTRK,
-    minAmount: MyNumber.fromEther('0.01', 18),
-    maxAmount: MyNumber.fromEther('10000', 18),
-    stepAmount: MyNumber.fromEther('0.01', 18),
     isERC4626: true,
   },
 ];

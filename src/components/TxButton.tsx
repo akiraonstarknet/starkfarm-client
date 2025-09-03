@@ -23,9 +23,11 @@ import {
 import { useAccount, useSendTransaction } from '@starknet-react/core';
 import { useAtomValue, useSetAtom } from 'jotai';
 import mixpanel from 'mixpanel-browser';
-import { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { TwitterShareButton } from 'react-share';
 import { Call } from 'starknet';
+import ConfirmationDialog from './ConfirmationDialog';
+import MyNumber from '@/utils/MyNumber';
 
 interface TxButtonProps {
   txInfo: StrategyTxProps;
@@ -37,6 +39,9 @@ interface TxButtonProps {
   selectedMarket?: TokenInfo;
   strategy?: IStrategyProps<any>;
   resetDepositForm: () => void;
+  onClickConfirmationPopup?: (
+    amount: MyNumber,
+  ) => Promise<React.ReactNode | string[]>;
 }
 
 export default function TxButton(props: TxButtonProps) {
@@ -123,7 +128,36 @@ export default function TxButton(props: TxButtonProps) {
     return strategiesList.find((s: any) => s.id === props.strategy?.id);
   }, [strategiesInfo, props.strategy?.id]);
 
+  // Type the ref to match ConfirmationDialog's handleTrigger method
+  type ConfirmationDialogRef = { handleTrigger: () => void };
+  const buttonRef = useRef<ConfirmationDialogRef>(null);
+  const loading = (
+    <Box textAlign={'left'} fontSize={'1rem'}>
+      Loading...
+    </Box>
+  );
+  const [popupContent, setPopupContent] = useState<React.ReactNode | string[]>(
+    loading,
+  );
+
+  async function preHandleButton() {
+    if (props.onClickConfirmationPopup && buttonRef.current) {
+      buttonRef.current.handleTrigger();
+      try {
+        const res = await props.onClickConfirmationPopup(props.txInfo.amount);
+        setPopupContent(res);
+      } catch (error) {
+        setPopupContent(
+          <Box>Something went wrong. Please try again later.</Box>,
+        );
+      }
+    } else {
+      handleButton();
+    }
+  }
+
   async function handleButton() {
+    setPopupContent(loading);
     writeAsync().then((tx) => {
       if (props.buttonText === 'Deposit') onOpen();
       mixpanel.track('Submitted tx', {
@@ -229,6 +263,14 @@ export default function TxButton(props: TxButtonProps) {
         </ModalContent>
       </Modal>
 
+      <ConfirmationDialog
+        content={popupContent}
+        ref={buttonRef}
+        onConfirm={handleButton}
+        onCancel={() => {
+          setPopupContent(loading);
+        }}
+      />
       <Box width={'100%'} textAlign={'center'}>
         <Button
           color={'black'}
@@ -252,7 +294,7 @@ export default function TxButton(props: TxButtonProps) {
               address,
             });
 
-            handleButton();
+            preHandleButton();
           }}
           {...props.buttonProps}
         >

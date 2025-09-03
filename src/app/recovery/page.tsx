@@ -50,11 +50,11 @@ export default function Recovery() {
 
         const contractCalls = Object.entries(STRATEGY_ADDRESSES).map(
           async ([key, strategyInfo]) => {
-            const contract = new Contract(
-              strategyAbi,
-              strategyInfo.address,
-              provider,
-            );
+            const contract = new Contract({
+              abi: strategyAbi,
+              address: strategyInfo.address,
+              providerOrAccount: provider,
+            });
             const res = await contract.call('nostra_position', [address]);
             console.log(`revoery`, strategyInfo.address, address, res);
             return {
@@ -107,11 +107,11 @@ export default function Recovery() {
   const calls = useMemo(() => {
     const contracts = Object.entries(STRATEGY_ADDRESSES).map(
       ([key, strategyInfo]) => {
-        const contract = new Contract(
-          strategyAbi,
-          strategyInfo.address,
-          provider,
-        );
+        const contract = new Contract({
+          abi: strategyAbi,
+          address: strategyInfo.address,
+          providerOrAccount: provider,
+        });
         return contract;
       },
     );
@@ -159,11 +159,11 @@ export default function Recovery() {
 
     const contracts = Object.entries(STRATEGY_ADDRESSES).map(
       ([key, strategyInfo]) => {
-        const contract = new Contract(
-          strategyAbi,
-          strategyInfo.address,
-          provider,
-        );
+        const contract = new Contract({
+          abi: strategyAbi,
+          address: strategyInfo.address,
+          providerOrAccount: provider,
+        });
         return contract;
       },
     );
@@ -403,7 +403,9 @@ export default function Recovery() {
       </Container>
 
       <hr style={{ float: 'left', width: '100%', margin: '50px 0' }} />
-      <ZklendRecoveryComp />
+      <ZklendRecoveryComp BATCH_ID={1} />
+      <hr style={{ float: 'left', width: '100%', margin: '50px 0' }} />
+      <ZklendRecoveryComp BATCH_ID={2} />
     </Container>
   );
 }

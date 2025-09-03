@@ -22,8 +22,8 @@ import {
   getTokenInfoFromName,
   ZeroAmountsInfo,
 } from '@/utils';
-import { zkLend } from '@/store/zklend.store';
 import { ContractAddr, IStrategyMetadata, Web3Number } from '@strkfarm/sdk';
+import React from 'react';
 
 interface Step {
   name: string;
@@ -48,7 +48,7 @@ export class AutoTokenStrategy extends IStrategy<void> {
   constructor(
     token: TokenName,
     name: string,
-    description: string,
+    description: string | React.ReactNode,
     lpTokenName: string,
     strategyAddress: string,
     settings: IStrategySettings,
@@ -101,18 +101,7 @@ export class AutoTokenStrategy extends IStrategy<void> {
     );
     this.token = tokenInfo;
 
-    this.steps = [
-      {
-        name: `Supplies your ${token} to zkLend`,
-        optimizer: this.optimizer,
-        filter: [this.filterTokenByProtocol(this.token.name, zkLend)],
-      },
-      {
-        name: `Re-invest your STRK Rewards every 7 days`,
-        optimizer: this.compounder,
-        filter: [this.filterTokenByProtocol('STRK', zkLend)],
-      },
-    ];
+    this.steps = [];
     const _risks = [...this.risks];
     this.risks = [
       this.getSafetyFactorLine(),
@@ -220,22 +209,26 @@ export class AutoTokenStrategy extends IStrategy<void> {
       ];
     }
 
-    const baseTokenContract = new Contract(
-      ERC20Abi,
-      baseTokenInfo.token,
-      provider,
-    );
-    const zTokenContract = new Contract(ERC20Abi, zTokenInfo.token, provider);
-    const masterContract = new Contract(
-      MasterAbi,
-      CONSTANTS.CONTRACTS.Master,
-      provider,
-    );
-    const strategyContract = new Contract(
-      AutoStrkAbi,
-      this.strategyAddress,
-      provider,
-    );
+    const baseTokenContract = new Contract({
+      abi: ERC20Abi,
+      address: baseTokenInfo.token,
+      providerOrAccount: provider,
+    });
+    const zTokenContract = new Contract({
+      abi: ERC20Abi,
+      address: zTokenInfo.token,
+      providerOrAccount: provider,
+    });
+    const masterContract = new Contract({
+      abi: MasterAbi,
+      address: CONSTANTS.CONTRACTS.Master,
+      providerOrAccount: provider,
+    });
+    const strategyContract = new Contract({
+      abi: AutoStrkAbi,
+      address: this.strategyAddress,
+      providerOrAccount: provider,
+    });
 
     // base token
     const call11 = baseTokenContract.populate('approve', [
@@ -278,13 +271,17 @@ export class AutoTokenStrategy extends IStrategy<void> {
     }
 
     // const baseTokenContract = new Contract(ERC20Abi, baseTokenInfo.token, provider);
-    const frmTokenContract = new Contract(ERC20Abi, frmToken.token, provider);
+    const frmTokenContract = new Contract({
+      abi: ERC20Abi,
+      address: frmToken.token,
+      providerOrAccount: provider,
+    });
     // const masterContract = new Contract(MasterAbi, CONSTANTS.CONTRACTS.Master, provider);
-    const strategyContract = new Contract(
-      AutoStrkAbi,
-      this.strategyAddress,
-      provider,
-    );
+    const strategyContract = new Contract({
+      abi: AutoStrkAbi,
+      address: this.strategyAddress,
+      providerOrAccount: provider,
+    });
 
     // base token
     // const call11 = baseTokenContract.populate("approve", [masterContract.address, uint256.bnToUint256(amount.toString())])

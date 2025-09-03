@@ -6,8 +6,6 @@ import {
   StrategyLiveStatus,
   TokenInfo,
 } from './IStrategy';
-import { nostraLending } from '@/store/nostralending.store';
-import { zkLend } from '@/store/zklend.store';
 import {
   convertToV2TokenInfo,
   getPrice,
@@ -38,8 +36,6 @@ export class DeltaNeutralMM2 extends DeltaNeutralMM {
       stepAmountFactors,
       liveStatus,
       settings,
-      nostraLending,
-      zkLend,
     );
   }
 

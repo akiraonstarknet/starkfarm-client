@@ -7,7 +7,6 @@ import {
 import { IndexedPoolData } from '@/store/endur.store';
 import { LendingSpace } from '@/store/lending.base';
 import { Category, PoolInfo } from '@/store/pools';
-import { zkLend } from '@/store/zklend.store';
 import {
   convertToV2TokenInfo,
   convertToV2Web3Number,
@@ -49,9 +48,6 @@ export interface TokenInfo {
   address?: string;
   name: string;
   logo: any;
-  minAmount: MyNumber;
-  maxAmount: MyNumber;
-  stepAmount: MyNumber;
   ekuboPriceKey?: string;
   isERC4626: boolean;
 }
@@ -104,6 +100,7 @@ export interface IStrategyActionHook {
   // if strategy wants to relate different input amounts,
   // config this fn
   onAmountsChange?: onStratAmountsChangeFn;
+  onClickButton?: (amount: MyNumber) => Promise<ReactNode | string[]>;
 }
 
 export interface IStrategySettings {
@@ -119,6 +116,7 @@ export interface IStrategySettings {
   auditUrl?: string;
   isPaused?: boolean;
   isInMaintenance?: boolean;
+  isInstantWithdrawal?: boolean;
   quoteToken: TokenInfoV2; // used to show the holdings in this token,
   isTransactionHistDisabled?: boolean;
 }
@@ -202,7 +200,7 @@ export class IStrategyProps<T> {
   ];
 
   getSafetyFactorLine() {
-    return `Risk factor: ${this.riskFactor}/5`;
+    return `Risk factor: ${this.riskFactor.toFixed(2)}/5`;
   }
 
   depositMethods = async (
@@ -344,6 +342,8 @@ export class IStrategyProps<T> {
 export class IStrategy<T> extends IStrategyProps<T> {
   readonly tag: string;
 
+  cache: { [key: string]: { value: any; time: number; ttl: number } } = {}; // to avoid multiple calls to the same function
+
   constructor(
     id: string,
     tag: string,
@@ -424,9 +424,7 @@ export class IStrategy<T> extends IStrategyProps<T> {
 
   filterTokenByProtocol(
     tokenName: string,
-    protocol:
-      | IDapp<LendingSpace.MyBaseAprDoc[]>
-      | IDapp<IndexedPoolData> = zkLend,
+    protocol: IDapp<LendingSpace.MyBaseAprDoc[]> | IDapp<IndexedPoolData>,
   ) {
     return (
       pools: PoolInfo[],
@@ -496,7 +494,7 @@ export class IStrategy<T> extends IStrategyProps<T> {
         }
       }
     } catch (err) {
-      console.warn(`${this.tag} - unsolved`, err);
+      console.warn(`${this.tag} - unsolved`, this.name, err);
       return;
     }
 
@@ -505,7 +503,12 @@ export class IStrategy<T> extends IStrategyProps<T> {
       const sign = action.isDeposit ? 1 : -1;
       const apr = action.isDeposit ? action.pool.apr : action.pool.borrow.apr;
       netYield += sign * apr * Number(action.amount);
-      console.log('netYield1', sign, apr, action.amount, netYield);
+      console.log('netYield1', {
+        sign,
+        apr,
+        amount: action.amount,
+        netYield,
+      });
     });
     this.netYield = netYield / Number(amount);
     console.log('netYield2', netYield, this.netYield, Number(amount));
@@ -524,6 +527,34 @@ export class IStrategy<T> extends IStrategyProps<T> {
 
   isSolving() {
     return this.status === StrategyStatus.SOLVING;
+  }
+
+  setCache(
+    key: string,
+    value: any,
+    ttl: number = 60000, // default 1 minute
+  ) {
+    this.cache[key] = {
+      value,
+      time: Date.now(),
+      ttl,
+    };
+  }
+
+  getCache(key: string): any | null {
+    const cached = this.cache[key];
+    if (!cached) return null;
+    if (Date.now() - cached.time > cached.ttl) {
+      delete this.cache[key];
+      return null;
+    }
+    return cached.value;
+  }
+
+  isCacheValid(key: string): boolean {
+    const cached = this.cache[key];
+    if (!cached) return false;
+    return Date.now() - cached.time <= cached.ttl;
   }
 }
 

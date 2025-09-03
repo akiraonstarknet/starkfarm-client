@@ -132,7 +132,7 @@ const AmountInput = forwardRef(
       const maxAllowed =
         props.isDeposit && props.strategy.settings.maxTVL !== 0
           ? props.strategy.settings.maxTVL - currentTVL
-          : Number(balance.toEtherToFixedDecimals(8));
+          : Number(balance.operate('mul', '0.9999').toEtherToFixedDecimals(8));
 
       const adjustedMaxAllowed = MyNumber.fromEther(
         maxAllowed.toFixed(6),
@@ -335,7 +335,9 @@ const AmountInput = forwardRef(
                     color="text_primary"
                     fontWeight={'600'}
                   >
-                    {balance.toEtherToFixedDecimals(4)}
+                    {balance.toEtherToFixedDecimals(
+                      selectedMarket.displayDecimals || 4,
+                    )}
                   </Text>
                 </Tooltip>
                 <Button

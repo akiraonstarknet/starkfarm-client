@@ -270,19 +270,27 @@ function InternalDeposit(props: DepositProps) {
   const txInfo: StrategyTxProps = useMemo(() => {
     return {
       strategyId: props.strategy.id,
-      actionType: isDeposit ? 'deposit' : 'withdraw',
+      actionType: isDeposit
+        ? 'deposit'
+        : props.strategy.settings.isInstantWithdrawal
+          ? 'withdraw'
+          : 'redeem',
       amount: investedSummary
         ? convertToMyNumber(investedSummary)
         : MyNumber.fromZero(),
       tokenAddr: props.strategy.settings.quoteToken.address.address,
+      request_id: `req_${new Date().getTime()}`,
+      block_number: 0,
+      txIndex: 0,
+      eventIndex: 0,
     };
-  }, [props]);
+  }, [props, investedSummary, isDeposit]);
 
   // constructs tx calls
-  const { calls } = useMemo(() => {
+  const { calls, onClickConfirmationPopup } = useMemo(() => {
     const hook = callsInfo[depositInfo.actionIndex];
     if (!hook) return { calls: [] };
-    return { calls: hook.calls };
+    return { calls: hook.calls, onClickConfirmationPopup: hook.onClickButton };
   }, [address, provider, isMaxClicked, callsInfo, depositInfo]);
 
   const tvlInfo = useAtomValue(props.strategy.tvlAtom);
@@ -305,9 +313,9 @@ function InternalDeposit(props: DepositProps) {
       return false;
     }
 
-    // if (!investedSummary || loadingInvestmentSummary) {
-    //   return false;
-    // }
+    if (txInfo.amount.isZero()) {
+      return false;
+    }
     // todo consider max cap of each token as well
     return inputsInfo.some((a) => a.amount.greaterThan(0));
   }, [
@@ -369,6 +377,7 @@ function InternalDeposit(props: DepositProps) {
               }
             });
           }}
+          onClickConfirmationPopup={onClickConfirmationPopup}
         />
       </Center>
 

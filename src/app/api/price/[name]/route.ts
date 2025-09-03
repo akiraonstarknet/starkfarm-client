@@ -9,7 +9,7 @@ async function initRedis() {
   try {
     console.log('initRedis server');
     // eslint-disable-next-line
-    const config = getMainnetConfig();
+    const config = getMainnetConfig(process.env.RPC_URL!, 'latest');
     const pricer = new PricerRedis(config, []);
     if (!process.env.REDIS_URL) {
       console.warn('REDIS_URL not set');

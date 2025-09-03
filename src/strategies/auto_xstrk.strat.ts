@@ -200,11 +200,11 @@ export class AutoXSTRKStrategy extends IStrategy<void> {
   getTVL = async (): Promise<AmountsInfo> => {
     if (!this.isLive()) return ZeroAmountsInfo([this.token]);
 
-    const strategyContract = new Contract(
-      AutoStrkAbi,
-      this.strategyAddress,
-      provider,
-    );
+    const strategyContract = new Contract({
+      abi: AutoStrkAbi,
+      address: this.strategyAddress,
+      providerOrAccount: provider,
+    });
     const asset = num.getHexString(
       (await strategyContract.call('asset', [])).toString(),
     );
@@ -239,11 +239,11 @@ export class AutoXSTRKStrategy extends IStrategy<void> {
         (await strategyContract.call('total_assets', [])).toString(),
         xSTRKInfo.decimals,
       );
-      const xSTRKContract = new Contract(
-        AutoStrkAbi,
-        xSTRKInfo.token,
-        provider,
-      );
+      const xSTRKContract = new Contract({
+        abi: AutoStrkAbi,
+        address: xSTRKInfo.token,
+        providerOrAccount: provider,
+      });
       const strkAmount = new MyNumber(
         (
           await xSTRKContract.call('convert_to_assets', [
@@ -287,22 +287,26 @@ export class AutoXSTRKStrategy extends IStrategy<void> {
       ];
     }
 
-    const baseTokenContract = new Contract(
-      ERC20Abi,
-      baseTokenInfo.token,
-      provider,
-    );
-    const xTokenContract = new Contract(ERC20Abi, xTokenInfo.token, provider);
-    const masterContract = new Contract(
-      MasterAbi,
-      CONSTANTS.CONTRACTS.Master,
-      provider,
-    );
-    const strategyContract = new Contract(
-      AutoStrkAbi,
-      this.strategyAddress,
-      provider,
-    );
+    const baseTokenContract = new Contract({
+      abi: ERC20Abi,
+      address: baseTokenInfo.token,
+      providerOrAccount: provider,
+    });
+    const xTokenContract = new Contract({
+      abi: ERC20Abi,
+      address: xTokenInfo.token,
+      providerOrAccount: provider,
+    });
+    const masterContract = new Contract({
+      abi: MasterAbi,
+      address: CONSTANTS.CONTRACTS.Master,
+      providerOrAccount: provider,
+    });
+    const strategyContract = new Contract({
+      abi: AutoStrkAbi,
+      address: this.strategyAddress,
+      providerOrAccount: provider,
+    });
 
     // base token
     const call11 = baseTokenContract.populate('approve', [
@@ -346,13 +350,17 @@ export class AutoXSTRKStrategy extends IStrategy<void> {
     }
 
     // const baseTokenContract = new Contract(ERC20Abi, baseTokenInfo.token, provider);
-    const frmTokenContract = new Contract(ERC20Abi, frmToken.token, provider);
+    const frmTokenContract = new Contract({
+      abi: ERC20Abi,
+      address: frmToken.token,
+      providerOrAccount: provider,
+    });
     // const masterContract = new Contract(MasterAbi, CONSTANTS.CONTRACTS.Master, provider);
-    const strategyContract = new Contract(
-      AutoStrkAbi,
-      this.strategyAddress,
-      provider,
-    );
+    const strategyContract = new Contract({
+      abi: AutoStrkAbi,
+      address: this.strategyAddress,
+      providerOrAccount: provider,
+    });
 
     // base token
     // const call11 = baseTokenContract.populate("approve", [masterContract.address, uint256.bnToUint256(amount.toString())])

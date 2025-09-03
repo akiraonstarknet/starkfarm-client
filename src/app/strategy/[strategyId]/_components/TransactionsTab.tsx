@@ -41,6 +41,55 @@ interface TransactionsTabProps {
   isMobile?: boolean;
 }
 
+function getTransactionIcon(type: string) {
+  if (type == 'deposit') {
+    return (
+      <Flex alignItems={'center'} gap={'8px'}>
+        <Box
+          bg={'light_green'}
+          padding={'4px'}
+          borderRadius={'50%'}
+          width={'24px'}
+          height={'24px'}
+          display={'flex'}
+          alignItems={'center'}
+          justifyContent={'center'}
+        >
+          <ArrowDownIcon color={'black'} />
+        </Box>
+        <Text>{capitalize(type)}</Text>
+      </Flex>
+    );
+  }
+
+  const bgColor = type == 'withdraw' || type == 'claim' ? 'red_2' : 'yellow_2';
+  let text = 'Withdrawn';
+  if (type == 'redeem') {
+    text = 'Withdraw in progress';
+  } else if (type == 'claim' || type == 'withdraw') {
+    text = 'Withdrawn';
+  } else {
+    throw new Error(`Unknown transaction type: ${type}`);
+  }
+  return (
+    <Flex alignItems={'center'} gap={'8px'}>
+      <Box
+        bg={bgColor}
+        padding={'4px'}
+        borderRadius={'50%'}
+        width={'24px'}
+        height={'24px'}
+        display={'flex'}
+        alignItems={'center'}
+        justifyContent={'center'}
+      >
+        <ArrowUpIcon color={'black'} />
+      </Box>
+      <Text>{text}</Text>
+    </Flex>
+  );
+}
+
 function DesktopTransactionHistory(props: { transactions: ITransaction[] }) {
   const { transactions } = props;
   return (
@@ -135,46 +184,14 @@ function DesktopTransactionHistory(props: { transactions: ITransaction[] }) {
                       {index + 1}.
                     </Td>
                     <Td color={'text_secondary'} fontSize={'14px'}>
-                      {Number(
-                        new MyNumber(
-                          tx.amount,
-                          decimals!,
-                        ).toEtherToFixedDecimals(token.displayDecimals),
-                      ).toLocaleString()}{' '}
+                      {new MyNumber(
+                        tx.amount,
+                        decimals!,
+                      ).toEtherToFixedDecimals(token.displayDecimals)}{' '}
                       {token?.name}
                     </Td>
                     <Td color={'text_secondary'} fontSize={'14px'}>
-                      <Flex alignItems={'center'} gap={'8px'}>
-                        {tx.type === 'deposit' ? (
-                          <Box
-                            bg={'light_green'}
-                            padding={'4px'}
-                            borderRadius={'50%'}
-                            width={'24px'}
-                            height={'24px'}
-                            display={'flex'}
-                            alignItems={'center'}
-                            justifyContent={'center'}
-                          >
-                            <ArrowDownIcon color={'black'} />
-                          </Box>
-                        ) : (
-                          <Box
-                            bg={'red_2'}
-                            padding={'4px'}
-                            borderRadius={'50%'}
-                            width={'24px'}
-                            height={'24px'}
-                            display={'flex'}
-                            alignItems={'center'}
-                            justifyContent={'center'}
-                          >
-                            <ArrowUpIcon color={'black'} />
-                          </Box>
-                        )}
-
-                        {capitalize(tx.type)}
-                      </Flex>
+                      {getTransactionIcon(tx.type)}
                     </Td>
                     <Td color={'text_secondary'} fontSize={'14px'}>
                       <Text
@@ -220,6 +237,27 @@ function MobileTransactionHistory(props: { transactions: ITransaction[] }) {
         const token = getTokenInfoFromAddr(tx.asset);
         const decimals = token?.decimals;
         const isDeposit = tx.type === 'deposit';
+        let displayText = 'Deposit';
+        let iconColor = 'light_green';
+        switch (tx.type) {
+          case 'deposit':
+            displayText = 'Deposited';
+            break;
+          case 'withdraw':
+            displayText = 'Withdrawn';
+            iconColor = 'red_2';
+            break;
+          case 'redeem':
+            iconColor = 'yellow_2';
+            displayText = 'Withdraw in progress';
+            break;
+          case 'claim':
+            iconColor = 'red_2';
+            displayText = 'Withdrawn';
+            break;
+          default:
+            throw new Error(`Unknown transaction type: ${tx.type}`);
+        }
 
         return (
           <Box
@@ -233,7 +271,7 @@ function MobileTransactionHistory(props: { transactions: ITransaction[] }) {
           >
             <Flex alignItems="center" gap={2} mb={1}>
               <Box
-                bg={isDeposit ? 'light_green' : 'red_2'}
+                bg={iconColor}
                 padding="4px"
                 borderRadius="50%"
                 width="24px"
@@ -248,12 +286,8 @@ function MobileTransactionHistory(props: { transactions: ITransaction[] }) {
                   <ArrowUpIcon color={'black'} />
                 )}
               </Box>
-              <Text
-                fontWeight="bold"
-                color={isDeposit ? 'light_green' : 'red_2'}
-                fontSize="15px"
-              >
-                {isDeposit ? 'Deposited' : 'Withdrawn'}
+              <Text fontWeight="bold" color={iconColor} fontSize="15px">
+                {displayText}
               </Text>
             </Flex>
             <Text color="white" fontSize="15px">

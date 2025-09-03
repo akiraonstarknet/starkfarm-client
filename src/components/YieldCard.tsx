@@ -1,11 +1,13 @@
 import ShieldIcon from '@/assets/shield.svg';
+import CONSTANTS, { DEFAULT_APY_METHODLOGY } from '@/constants';
 import { addressAtom } from '@/store/claims.atoms';
-import { isPoolRetired, PoolInfo } from '@/store/pools';
+import { APRSplit, isPoolRetired, PoolInfo } from '@/store/pools';
 import { getPoolInfoFromStrategy, sortAtom } from '@/store/protocols';
 import { strategiesAtom } from '@/store/strategies.atoms';
 import { TrovesStrategyAPIResult } from '@/store/troves.atoms';
 import { UserStats, userStatsAtom } from '@/store/utils.atoms';
 import { isLive, StrategyLiveStatus } from '@/strategies/IStrategy';
+import { MYSTYLES } from '@/style';
 import { getDisplayCurrencyAmount } from '@/utils';
 import { ArrowDownIcon, ArrowUpIcon } from '@chakra-ui/icons';
 import {
@@ -94,7 +96,10 @@ export function StrategyInfo(props: YieldCardProps) {
                 {pool.pool.name}
               </Heading>
               {pool.additional && pool.additional.auditUrl && (
-                <Tooltip label="Audited smart contract. Click to view the audit report.">
+                <Tooltip
+                  label="Audited smart contract. Click to view the audit report."
+                  {...MYSTYLES.TOOLTIP.STANDARD}
+                >
                   <Link href={pool.additional.auditUrl} target="_blank">
                     <Box
                       width={'24px'}
@@ -153,24 +158,13 @@ export function StrategyInfo(props: YieldCardProps) {
 }
 
 function getAPRWithToolTip(pool: PoolInfo) {
-  const tip = (
-    <Box width={'300px'}>
-      {pool.aprSplits.map((split) => {
-        return (
-          <Flex width={'100%'} key={split.title}>
-            <Text key="1" width={'70%'}>
-              {split.title} {split.description ? `(${split.description})` : ''}
-            </Text>
-            <Text fontSize={'xs'} width={'30%'} textAlign={'left'} key="2">
-              {split.apr === 'Err' ? split.apr : (split.apr * 100).toFixed(2)}%
-            </Text>
-          </Flex>
-        );
-      })}
-    </Box>
-  );
+  const defaultAPYMethodology = DEFAULT_APY_METHODLOGY;
+  const tip = APYToolTip({
+    apyMethodology: pool.apyMethodology || defaultAPYMethodology,
+    apySplits: pool.aprSplits,
+  });
   return (
-    <Tooltip hasArrow label={tip} bg="gray.300" color="black">
+    <Tooltip hasArrow label={tip} {...MYSTYLES.TOOLTIP.STANDARD}>
       <Box
         width={'100%'}
         marginRight={'0px'}
@@ -205,7 +199,11 @@ function PointsMultiplier(props: {
       <Box padding={'2px 5px'} bg={'bg'} borderRadius={'15px'}>
         {points.map((point, index) => (
           <Box display={'flex'} justifyContent={'flex-end'} key={index}>
-            <Tooltip label={point.toolTip} fontSize={'13px'}>
+            <Tooltip
+              label={point.toolTip}
+              fontSize={'13px'}
+              {...MYSTYLES.TOOLTIP.STANDARD}
+            >
               <Box
                 display={'flex'}
                 gap={'5px'}
@@ -221,6 +219,42 @@ function PointsMultiplier(props: {
           </Box>
         ))}
       </Box>
+    </Box>
+  );
+}
+
+export function APYToolTip(props: {
+  apyMethodology: string;
+  apySplits: APRSplit[];
+}) {
+  return (
+    <Box fontSize={'13px'}>
+      <Text>{props.apyMethodology}</Text>
+      {props.apySplits.map((apySplit) => (
+        <Box
+          marginTop={'10px'}
+          justifyContent={'space-between'}
+          display={'flex'}
+          key={apySplit.title}
+        >
+          <Box>
+            <Text>{apySplit.title}:</Text>
+            {apySplit.description && (
+              <Text fontSize={'12px'} opacity={0.7}>
+                {apySplit.description}
+              </Text>
+            )}
+          </Box>
+          {apySplit.apr != 'Err' && (
+            <Text fontWeight={'bold'}>{(apySplit.apr * 100).toFixed(2)}%</Text>
+          )}
+          {apySplit.apr == 'Err' && (
+            <Text fontWeight={'bold'} color={'red'}>
+              Error
+            </Text>
+          )}
+        </Box>
+      ))}
     </Box>
   );
 }
@@ -250,9 +284,8 @@ function StrategyAPY(props: YieldCardProps) {
           {pool.aprSplits.length &&
             pool.aprSplits.some((a) => a.title == 'Rewards APY') && (
               <Tooltip
-                label="Boosted rewards from Troves"
-                bg="gray.300"
-                color="black"
+                label={CONSTANTS.BOOSTED_YIELD_TOOLTIP_TEXT}
+                {...MYSTYLES.TOOLTIP.STANDARD}
               >
                 <Box width={'100%'}>
                   <Box float={'right'} display={'flex'} fontSize={'13px'}>
@@ -359,7 +392,10 @@ export function StrategyBalance(props: YieldCardProps) {
     >
       {!isPoolLive && <Text>-</Text>}
       {address && isPoolLive && pool.protocol.name === 'Troves' && (
-        <Tooltip label="Your deposits in this Troves strategy">
+        <Tooltip
+          label="Your deposits in this Troves strategy"
+          {...MYSTYLES.TOOLTIP.STANDARD}
+        >
           <>
             <Text fontSize={'14px'} fontWeight={'600'} textAlign={'right'}>
               ${getDisplayCurrencyAmount(holdingsInfo.usdValue, 0)}
@@ -434,9 +470,16 @@ function GetRiskLevel(riskFactor: number) {
     >
       <Tooltip
         hasArrow
-        label={`${tooltipLabel}. We currently assess only impermanent loss risk: stable pairs/pools are low risk, volatile multi-token pools are medium risk. More factors will be added soon.`}
-        bg="gray.300"
-        color="black"
+        label={
+          <>
+            {tooltipLabel}{' '}
+            <Text fontSize={'12px'} opacity={0.7}>
+              For detailed risk analysis, check the Risks tab in the strategy
+              page.
+            </Text>
+          </>
+        }
+        {...MYSTYLES.TOOLTIP.STANDARD}
       >
         <Box
           position={'relative'}

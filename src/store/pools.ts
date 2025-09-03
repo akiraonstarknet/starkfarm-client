@@ -50,6 +50,7 @@ export interface PoolInfo extends PoolMetadata {
   };
   tvl: number;
   apr: number; // not in %
+  apyMethodology?: string;
   aprSplits: APRSplit[];
   category: Category[];
   type: PoolType;

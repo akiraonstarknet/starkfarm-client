@@ -29,6 +29,16 @@ export function DetailsTab(props: DetailsTabProps) {
     return [];
   }, [strategyAPIResult.actions, strategy.metadata.investmentSteps]);
 
+  function isDeposit(action: string) {
+    return (
+      action.toLowerCase().includes('stake') ||
+      action.toLowerCase().includes('supply') ||
+      action.toLowerCase().includes('deposit') ||
+      action.toLowerCase().includes('invest') ||
+      action.toLowerCase().includes('buy')
+    );
+  }
+
   return (
     <Box background="black">
       <Flex

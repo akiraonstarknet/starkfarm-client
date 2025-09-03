@@ -64,16 +64,10 @@ export class EkuboClStrategy extends IStrategy<CLVaultStrategySettings> {
         decimals: 18,
         displayDecimals: 2,
         logo: CONSTANTS.LOGOS.STRK, // todo make it to dual token
-        minAmount: MyNumber.fromEther('0.01', 18),
-        maxAmount: MyNumber.fromEther('10000000000000', 18),
-        stepAmount: MyNumber.fromEther('0.01', 18),
       },
     ];
 
-    const config = getMainnetConfig(
-      process.env.NEXT_PUBLIC_RPC_URL!,
-      'pending',
-    );
+    const config = getMainnetConfig(process.env.NEXT_PUBLIC_RPC_URL!, 'latest');
     const tokens = Global.getDefaultTokens();
     const pricer = new PricerFromApi(config, tokens);
     const clVault = new EkuboCLVault(config, pricer, strategy);
@@ -275,7 +269,7 @@ export class EkuboClStrategy extends IStrategy<CLVaultStrategySettings> {
   };
 
   async solve(pools: PoolInfo[], amount: string) {
-    const yieldInfo = await this.clVault.netAPY('pending', 16000);
+    const yieldInfo = await this.clVault.netAPY('latest', 16000);
     this.netYield = yieldInfo;
     this.leverage = 1;
 

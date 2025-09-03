@@ -1,301 +1,322 @@
-import { provider, TokenName } from '@/constants';
-import { DeltaNeutralMM } from './delta_neutral_mm';
+import CONSTANTS, { NFTS } from '@/constants';
 import {
   AmountsInfo,
+  DepositActionInputs,
+  IStrategy,
   IStrategySettings,
-  Step,
-  StrategyAction,
+  NFTInfo,
   StrategyLiveStatus,
+  StrategyStatus,
   TokenInfo,
+  WithdrawActionInputs,
 } from './IStrategy';
 import MyNumber from '@/utils/MyNumber';
 import {
-  convertToV2TokenInfo,
-  getEndpoint,
+  buildStrategyActionHook,
+  DummyStrategyActionHook,
+  getPrice,
   getTokenInfoFromName,
+  standariseAddress,
   ZeroAmountsInfo,
 } from '@/utils';
-import { vesu } from '@/store/vesu.store';
-import { endur } from '@/store/endur.store';
 import { PoolInfo } from '@/store/pools';
-import { Contract } from 'starknet';
-import { fetchQuotes, QuoteRequest } from '@avnu/avnu-sdk';
-import { Web3Number } from '@strkfarm/sdk';
+import { UINT_256_MAX } from 'starknet';
+import {
+  IStrategyMetadata,
+  Web3Number,
+  SenseiVaultSettings,
+  SenseiVault,
+  getMainnetConfig,
+  Global,
+  PricerFromApi,
+  ContractAddr,
+} from '@strkfarm/sdk';
+import axios from 'axios';
+import React from 'react';
+import { getBalanceAtom } from '@/store/balance.atoms';
+import { atom } from 'jotai';
 
-export class DeltaNeutralMMVesuEndur extends DeltaNeutralMM {
-  vesuPoolName = 'Re7 xSTRK';
-  fee_factor: number = 0.2;
+export class DeltaNeutralMMVesuEndur extends IStrategy<SenseiVaultSettings> {
+  senseiVault: SenseiVault;
   constructor(
-    token: TokenInfo,
-    name: string,
-    description: string,
-    secondaryTokenName: TokenName,
-    strategyAddress: string,
-    stepAmountFactors: number[],
+    id: string,
+    strategy: IStrategyMetadata<SenseiVaultSettings>,
     liveStatus: StrategyLiveStatus,
     settings: IStrategySettings,
   ) {
+    const rewardTokens = [{ logo: CONSTANTS.LOGOS.STRK }];
+    const holdingTokens: NFTInfo[] = [
+      {
+        name: strategy.depositTokens[0].symbol,
+        address: strategy.address.address,
+        logo: CONSTANTS.LOGOS.xSTRK,
+        config: {
+          mainTokenName: 'xSTRK',
+        },
+      },
+    ];
     super(
-      token,
-      name,
-      description,
-      secondaryTokenName,
-      strategyAddress,
-      stepAmountFactors,
+      id,
+      id, // tag
+      strategy.name,
+      strategy.description as any,
+      rewardTokens,
+      holdingTokens,
       liveStatus,
       settings,
-      endur,
-      vesu,
+      strategy,
     );
 
+    this.riskFactor = strategy.risk.netRisk;
+    this.setMetadataPoints(4); // default
+    const risks = [
+      this.getSafetyFactorLine(),
+      this.risks[0],
+      'If xSTRK price on DEXes deviates from expected price, you may lose money or may have to wait for the price to recover.',
+      'APYs shown are just indicative and do not promise exact returns',
+    ];
+    this.risks = risks;
+
+    const config = getMainnetConfig(process.env.NEXT_PUBLIC_RPC_URL!, 'latest');
+    const tokens = Global.getDefaultTokens();
+    const pricer = new PricerFromApi(config, tokens);
+    this.senseiVault = new SenseiVault(config, pricer, strategy);
+    this.fee_factor = this.metadata.additionalInfo.feeBps / 10000; // convert bps to decimal
+  }
+
+  setMetadataPoints(multiplier: number) {
     this.metadata.points = [
       {
-        multiplier: 3,
-        toolTip:
-          'Earn ~3x Endur points on this leveraged strategy. Points can be found on endur.fi.',
+        multiplier,
+        toolTip: `Earn ~${multiplier.toFixed(0)}x Endur points on this leveraged strategy. Points can be found on endur.fi.`,
         logo: 'https://endur.fi/favicon.ico',
       },
     ];
-    this.metadata.risk.netRisk = 0.75;
-    const risks = [this.risks[0], this.risks[2]];
-    if (this.settings.alerts && this.settings.alerts.length > 0) {
-      risks.push(
-        'If xSTRK price on DEXes deviates from expected price, you may lose money or may have to wait for the price to recover.',
+  }
+
+  async solve(pools: PoolInfo[], amount: string) {
+    this.status = StrategyStatus.SOLVING;
+    const re7PoolID =
+      '2345856225134458665876812536882617294246962319062565703131100435311373119841';
+    const xSTRKPool = pools.find((p) => p.pool.id == `Vesu_${re7PoolID}_xSTRK`);
+    const STRKPool = pools.find((p) => p.pool.id == `Vesu_${re7PoolID}_STRK`);
+    const endurXSTRK = pools.find((p) => p.pool.id == 'endur_strk');
+
+    // get Rewards APR and offset my fee
+    const STRKRewardsAPR =
+      xSTRKPool?.aprSplits.find((a) => a.title == 'STRK rewards')?.apr || 0;
+    if (STRKRewardsAPR == 'Err' || STRKRewardsAPR == 0) {
+      throw new Error(
+        'Failed to fetch STRK rewards APR. Please try again later.',
       );
     }
-    risks.push(...this.risks.slice(3));
-    this.risks = risks;
+    const collateralAPY = (xSTRKPool?.apr || 0) + (endurXSTRK?.apr || 0);
+    const feeAdjustedColAPY = collateralAPY - STRKRewardsAPR * this.fee_factor;
+    const borrowAPY = STRKPool?.borrow.apr || 0;
+
+    const { collateralUSDValue, debtUSDValue } =
+      await this.senseiVault.getPositionInfo();
+
+    const expectedLeverage = await this.expectedLeverage();
+    if (expectedLeverage <= 0) {
+      this.status = StrategyStatus.UNINTIALISED;
+      throw new Error(
+        'Strategy is not solvable at the moment: expectedLeverage <= 0',
+      );
+    }
+    this.setMetadataPoints(Number(expectedLeverage.toFixed(1)));
+
+    const PAYOFF =
+      Number(collateralUSDValue.toFixed(6)) * feeAdjustedColAPY -
+      Number(debtUSDValue.toFixed(6)) * borrowAPY;
+    const investment =
+      Number(collateralUSDValue.toFixed(6)) - Number(debtUSDValue.toFixed(6));
+    this.netYield = investment == 0 ? 0 : PAYOFF / investment;
   }
 
-  filterMainToken(
-    pools: PoolInfo[],
-    amount: string,
-    prevActions: StrategyAction[],
-  ) {
-    const dapp = prevActions.length == 0 ? this.protocol1 : this.protocol2;
-    const tokenName =
-      prevActions.length == 0
-        ? this.token.name
-        : `${this.token.name} (${this.vesuPoolName})`;
-    return pools.filter(
-      (p) => p.pool.name == tokenName && p.protocol.name == dapp.name,
-    );
-  }
-
-  filtetVesuToken(
-    pools: PoolInfo[],
-    amount: string,
-    prevActions: StrategyAction[],
-    tokenName: string,
-  ) {
-    const dapp = this.protocol2;
-    console.log(
-      'filterSecondaryToken',
-      pools.filter((p) => p.protocol.name == dapp.name),
-      tokenName,
-      `${tokenName} (${this.vesuPoolName})`,
-    );
-    return pools.filter(
-      (p) =>
-        p.pool.name == `${tokenName} (${this.vesuPoolName})` &&
-        p.protocol.name == dapp.name,
-    );
-  }
-
-  optimizer(
-    eligiblePools: PoolInfo[],
-    amount: string,
-    actions: StrategyAction[],
-  ): StrategyAction[] {
-    console.log('optimizer', actions.length, this.stepAmountFactors);
-    const _amount = (
-      Number(amount) * this.stepAmountFactors[actions.length]
-    ).toFixed(2);
-    const pool = { ...eligiblePools[0] };
-    const isDeposit = actions.length == 0 || actions.length == 1;
-    const effectiveAPR = pool.aprSplits.reduce((a, b) => {
-      if (b.apr == 'Err') return a;
-      if (!isDeposit) return a + Number(b.apr);
-      if (b.title.includes('STRK rewards')) {
-        return a + Number(b.apr) * (1 - this.fee_factor);
-      }
-      return a + Number(b.apr);
-    }, 0);
-    console.log('optimizer2', isDeposit, pool, effectiveAPR);
-    pool.apr = isDeposit ? effectiveAPR : pool.borrow.apr;
-    return [
-      ...actions,
-      {
-        pool,
-        amount: _amount,
-        isDeposit,
-      },
-    ];
-  }
-
-  getSteps(): Step[] {
-    return [
-      {
-        name: `Stake ${this.token.name} to ${this.protocol1.name}`,
-        optimizer: this.optimizer,
-        filter: [this.filterMainToken],
-      },
-      {
-        name: `Supply's your ${this.secondaryToken} to ${this.protocol2.name}`,
-        optimizer: this.optimizer,
-        filter: [
-          (...args) => {
-            return this.filtetVesuToken(...args, this.secondaryToken);
-          },
-        ],
-      },
-      {
-        name: `Borrow ${this.token.name} from ${this.protocol2.name}`,
-        optimizer: this.optimizer,
-        filter: [
-          (...args) => {
-            return this.filtetVesuToken(...args, this.token.name);
-          },
-        ],
-      },
-      {
-        name: `Loop back to step 1, repeat 3 more times`,
-        optimizer: this.getLookRepeatYieldAmount,
-        filter: [this.filterMainToken],
-      },
-      {
-        name: `Re-invest your STRK Rewards every 7 days (Compound)`,
-        optimizer: this.compounder,
-        filter: [this.filterTokenByProtocol('STRK', this.protocol1)],
-      },
-    ];
-  }
-
-  getLookRepeatYieldAmount(
-    eligiblePools: PoolInfo[],
-    amount: string,
-    actions: StrategyAction[],
-  ) {
-    console.log('getLookRepeatYieldAmount', amount, actions);
-    let full_amount = Number(amount);
-    this.stepAmountFactors.slice(0, actions.length).forEach((factor, i) => {
-      full_amount /= factor;
-    });
-    const excessFactor = this.stepAmountFactors[actions.length];
-    const amount1 = excessFactor * full_amount;
-    const exp1 = amount1 * this.actions[0].pool.apr;
-    const amount2 = this.stepAmountFactors[1] * amount1;
-    const exp2 = amount2 * this.actions[1].pool.apr;
-    const amount3 = this.stepAmountFactors[2] * amount2;
-    const exp3 = -amount3 * this.actions[2].pool.borrow.apr;
-    const effecitveAmount = amount1 - amount3;
-    const effectiveAPR = (exp1 + exp2 + exp3) / effecitveAmount;
-    const pool: PoolInfo = { ...eligiblePools[0] };
-    pool.apr = effectiveAPR;
-    const strategyAction: StrategyAction = {
-      pool,
-      amount: effecitveAmount.toString(),
-      isDeposit: true,
-    };
-    console.log(
-      'getLookRepeatYieldAmount exp1',
-      this.id,
-      exp1,
-      full_amount,
-      exp2,
-      amount2,
-      this.actions[2],
-      this.actions[1],
-      exp3,
-      amount1,
-      amount3,
-    );
-    return [...actions, strategyAction];
-  }
-
-  getTVL = async (): Promise<AmountsInfo> => {
-    if (!this.isLive()) return ZeroAmountsInfo([this.token]);
-
+  getUserTVL = async (user: string): Promise<AmountsInfo> => {
+    if (!this.isLive()) {
+      return ZeroAmountsInfo([this.metadata.depositTokens[0]]);
+    }
     try {
-      const resp = await fetch(
-        `${getEndpoint()}/vesu/positions?walletAddress=${this.strategyAddress}`,
-      );
-      const data = await resp.json();
-      if (!data.data || data.data.length == 0) {
-        throw new Error('No positions found');
-      }
-      const collateralXSTRK = new MyNumber(
-        data.data[0].collateral.value,
-        data.data[0].collateral.decimals,
-      );
-      const collateralUSDValue = new MyNumber(
-        data.data[0].collateral.usdPrice.value,
-        data.data[0].collateral.usdPrice.decimals,
-      );
-      const debtSTRK = new MyNumber(
-        data.data[0].debt.value,
-        data.data[0].debt.decimals,
-      );
-      const debtUSDValue = new MyNumber(
-        data.data[0].debt.usdPrice.value,
-        data.data[0].debt.usdPrice.decimals,
-      );
-      const xSTRKPrice = await this.getXSTRKPrice();
-      const collateralInSTRK =
-        Number(collateralXSTRK.toEtherToFixedDecimals(6)) * xSTRKPrice;
-      const usdValue =
-        Number(collateralUSDValue.toEtherStr()) -
-        Number(debtUSDValue.toEtherStr());
+      const res = await this.senseiVault.getUserTVL(ContractAddr.from(user));
       return {
-        usdValue,
-        amounts: [
-          {
-            amount: new Web3Number(
-              (
-                collateralInSTRK - Number(debtSTRK.toEtherToFixedDecimals(6))
-              ).toFixed(6),
-              data.data[0].collateral.decimals,
-            ),
-            usdValue,
-            tokenInfo: convertToV2TokenInfo(this.token),
-          },
-        ],
+        usdValue: res.usdValue,
+        amounts: [res],
       };
     } catch (error) {
-      console.error('Error fetching TVL:', error);
-      return ZeroAmountsInfo([this.token]);
+      console.error('Error fetching user TVL:', error);
+      return ZeroAmountsInfo([this.metadata.depositTokens[0]]);
     }
   };
 
-  async getXSTRKPrice(retry = 0): Promise<number> {
-    const params: QuoteRequest = {
-      sellTokenAddress: getTokenInfoFromName(this.secondaryToken).token || '',
-      buyTokenAddress: this.token.token,
-      sellAmount: BigInt(Number(MyNumber.fromEther('1', 18).toString())),
-      takerAddress: this.token.token,
+  getTVL = async (): Promise<AmountsInfo> => {
+    if (!this.isLive())
+      return ZeroAmountsInfo([this.metadata.depositTokens[0]]);
+    const output = await this.senseiVault.getTVL();
+    return {
+      usdValue: output.usdValue,
+      amounts: [output],
     };
-    console.log('getXSTRKPrice', params);
-    const quotes = await fetchQuotes(params);
-    console.log('fetchQuotes', quotes);
-    if (quotes.length == 0) {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      return await this.getXSTRKPrice(retry + 1);
-    }
+  };
 
-    const firstQuore = quotes[0];
-    const price = Number(
-      new MyNumber(firstQuore.buyAmount.toString(), 18).toEtherToFixedDecimals(
-        6,
-      ),
-    );
-    console.log('getXSTRKPrice', price);
-    return price;
+  async expectedLeverage() {
+    // target_hf = (1 + (x / endur_rate)) * 0.87 / x
+    // target_hf * x = 0.87 + 0.87 * (x / endur_rate)
+    // x (target_hf * endur_rate - 0.87) = 0.87 * endur_rate
+    // x = 0.87 * endur_rate / (target_hf * endur_rate - 0.87)
+    const targetHf = this.metadata.additionalInfo.targetHfBps / 10000; // convert bps to decimal
+    const xSTRKPrice =
+      await this.senseiVault.getSecondaryTokenPriceRelativeToMain();
+    const borrowedSTRK = (0.87 * xSTRKPrice) / (targetHf * xSTRKPrice - 0.87);
+    return 1 + borrowedSTRK; // leverage
   }
 
-  getSettings = async () => {
-    const cls = await provider.getClassAt(this.strategyAddress);
-    const contract = new Contract(cls.abi, this.strategyAddress, provider);
-    const settings = await contract.call('get_settings', []);
-    console.log('getSettings', settings);
+  async onDeposotButtonClick(
+    amount: MyNumber,
+  ): Promise<React.ReactNode | string[]> {
+    const STRKToken = getTokenInfoFromName('STRK');
+    const xSTRKToken = getTokenInfoFromName('xSTRK');
+
+    return this.onPositionButtonClick(
+      STRKToken,
+      xSTRKToken,
+      amount,
+      true, // isDeposit
+    );
+  }
+
+  async onWithdrawButtonClick(
+    amount: MyNumber,
+  ): Promise<React.ReactNode | string[]> {
+    const STRKToken = getTokenInfoFromName('STRK');
+    const xSTRKToken = getTokenInfoFromName('xSTRK');
+
+    const xSTRKPrice =
+      await this.senseiVault.getSecondaryTokenPriceRelativeToMain();
+    const amountInxSTRK = amount.operate('div', xSTRKPrice);
+    return this.onPositionButtonClick(
+      xSTRKToken,
+      STRKToken,
+      amountInxSTRK,
+      false, // isDeposit
+    );
+  }
+
+  async onPositionButtonClick(
+    fromToken: TokenInfo,
+    toToken: TokenInfo,
+    amount: MyNumber,
+    isDeposit: boolean,
+  ): Promise<React.ReactNode | string[]> {
+    try {
+      const expectedLeverage = await this.expectedLeverage();
+      if (expectedLeverage <= 0) {
+        alert(
+          'Strategy is not solvable at the moment. Please try again later.',
+        );
+        return ['Strategy execution failed. Please refresh and try again.'];
+      }
+      const STRKToBorrow = amount.operate('mul', expectedLeverage - 1);
+      const message1 = `Strategy will ${isDeposit ? 'borrow' : 'repay'} ${STRKToBorrow.toEtherToFixedDecimals(2)} STRK (Approx)`;
+      const totalSwapAmount = amount.operate('mul', expectedLeverage);
+      if (totalSwapAmount.isZero()) {
+        return ['Swap estimation Error: Received invalid amount'];
+      }
+      // todo ensure proper pool
+      const quote = await this.getEkuboQuote(
+        fromToken.token,
+        toToken.token,
+        totalSwapAmount,
+      );
+
+      const fromPrice = await getPrice(fromToken, 'vesuxstrk');
+      const toPrice = await getPrice(toToken, 'vesuxstrk');
+      const sellUSD = Number(totalSwapAmount.toEtherStr()) * fromPrice;
+      const buyUSD = Number(quote.buyAmount.toEtherStr()) * toPrice;
+      const buyAmount = new MyNumber(quote.buyAmount.toString(), 18);
+      const message2 = `A total of ${totalSwapAmount.toEtherToFixedDecimals(2)} ${fromToken.name} (${sellUSD.toFixed(2)} USD) will be swapped to ${buyAmount.toEtherToFixedDecimals(2)} ${toToken.name} (${buyUSD.toFixed(2)} USD).`;
+      const message3 = `You may see high slippage when closing position due to market and token liquidity, not due to strategy design itself. Try closing smaller amounts in such a case. Contact us on Telegram for any questions.`;
+      const messages = [message1, message2];
+      if (isDeposit) {
+        messages.push(message3);
+      }
+      return messages;
+    } catch (error) {
+      console.error('Error fetching quotes:', error);
+      return ['Error fetching quotes. Please try again later.'];
+    }
+  }
+
+  async getEkuboQuote(fromToken: string, toToken: string, amount: MyNumber) {
+    const URL = `https://starknet-mainnet-quoter-api.ekubo.org/${amount.toString()}/${fromToken}/${toToken}`;
+    const data = await axios.get(URL);
+    if (data.status !== 200) {
+      throw new Error(`Error fetching quote from Ekubo: ${data.statusText}`);
+    }
+
+    const quote = data.data;
+    const outputAmount = new MyNumber(quote.total_calculated, 18);
+    return {
+      buyAmount: outputAmount,
+    };
+  }
+
+  depositMethods = async (inputs: DepositActionInputs) => {
+    const { amount, address, provider } = inputs;
+    if (!address || address == '0x0') {
+      return [DummyStrategyActionHook([this.metadata.depositTokens[0]])];
+    }
+
+    const amt = Web3Number.fromWei(amount.toString(), amount.decimals);
+    const calls = await this.senseiVault.depositCall(
+      {
+        tokenInfo: this.metadata.depositTokens[0],
+        amount: amt,
+      },
+      ContractAddr.from(address),
+    );
+
+    const output = buildStrategyActionHook(calls, [
+      this.metadata.depositTokens[0],
+    ]);
+    output.onClickButton = this.onDeposotButtonClick.bind(this);
+    return [output];
+  };
+
+  withdrawMethods = async (inputs: WithdrawActionInputs) => {
+    const { amount, address, provider, isMax } = inputs;
+    if (!address || address == '0x0') {
+      const output = DummyStrategyActionHook([this.metadata.depositTokens[0]]);
+      return [output];
+    }
+
+    const finalAmount = isMax
+      ? new MyNumber(UINT_256_MAX.toString(), amount.decimals)
+      : amount;
+    const calls = await this.senseiVault.withdrawCall(
+      {
+        tokenInfo: this.metadata.depositTokens[0],
+        amount: Web3Number.fromWei(
+          finalAmount.toString(),
+          finalAmount.decimals,
+        ),
+      },
+      ContractAddr.from(address),
+      ContractAddr.from(address),
+    );
+
+    const nftInfo = NFTS.find(
+      (nft) =>
+        standariseAddress(nft.address) ==
+        standariseAddress(this.metadata.address.address),
+    );
+    const output = buildStrategyActionHook(
+      calls,
+      [this.metadata.depositTokens[0]],
+      [getBalanceAtom(nftInfo, atom(true))],
+    );
+    output.onClickButton = this.onWithdrawButtonClick.bind(this);
+    return [output];
   };
 }

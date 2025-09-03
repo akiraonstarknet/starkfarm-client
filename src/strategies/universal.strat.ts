@@ -15,10 +15,10 @@ import {
   getMainnetConfig,
   Global,
   IStrategyMetadata,
-  VesuRebalance,
   PricerFromApi,
   Web3Number,
-  VesuRebalanceSettings,
+  UniversalStrategySettings,
+  UniversalStrategy,
 } from '@strkfarm/sdk';
 import { PoolInfo } from '@/store/pools';
 import {
@@ -28,15 +28,18 @@ import {
 } from '@/utils';
 import { getBalanceAtom } from '@/store/balance.atoms';
 import { atom } from 'jotai';
+import { ReactNode } from 'react';
 
-export class VesuRebalanceStrategy extends IStrategy<VesuRebalanceSettings> {
-  vesuRebalance: VesuRebalance;
+export class UniversalStrategyClass extends IStrategy<UniversalStrategySettings> {
+  universalStrategy: UniversalStrategy<UniversalStrategySettings>;
   asset: TokenInfo;
+  fee_factor = 0.1; // 10%
   constructor(
+    id: string,
     token: TokenInfo,
     name: string,
-    description: string,
-    strategy: IStrategyMetadata<VesuRebalanceSettings>,
+    description: string | ReactNode,
+    strategy: IStrategyMetadata<UniversalStrategySettings>,
     liveStatus: StrategyLiveStatus,
     settings: IStrategySettings,
   ) {
@@ -54,10 +57,10 @@ export class VesuRebalanceStrategy extends IStrategy<VesuRebalanceSettings> {
     const config = getMainnetConfig(process.env.NEXT_PUBLIC_RPC_URL!, 'latest');
     const tokens = Global.getDefaultTokens();
     const pricer = new PricerFromApi(config, tokens);
-    const vesuRebalance = new VesuRebalance(config, pricer, strategy);
+    const universalStrategy = new UniversalStrategy(config, pricer, strategy);
 
     super(
-      `vesu_fusion_${holdingTokens[0].name.toLowerCase()}`,
+      id,
       name,
       name,
       description,
@@ -65,11 +68,11 @@ export class VesuRebalanceStrategy extends IStrategy<VesuRebalanceSettings> {
       holdingTokens,
       liveStatus,
       settings,
-      vesuRebalance.metadata,
+      universalStrategy.metadata,
     );
 
     this.asset = token;
-    this.vesuRebalance = vesuRebalance;
+    this.universalStrategy = universalStrategy;
     this.riskFactor = strategy.risk.netRisk;
 
     const risks = [...this.risks];
@@ -82,7 +85,7 @@ export class VesuRebalanceStrategy extends IStrategy<VesuRebalanceSettings> {
   }
 
   getTVL = async (): Promise<AmountsInfo> => {
-    const res = await this.vesuRebalance.getTVL();
+    const res = await this.universalStrategy.getTVL();
     return {
       usdValue: res.usdValue,
       amounts: [res],
@@ -91,7 +94,9 @@ export class VesuRebalanceStrategy extends IStrategy<VesuRebalanceSettings> {
 
   getUserTVL = async (user: string): Promise<AmountsInfo> => {
     try {
-      const res = await this.vesuRebalance.getUserTVL(ContractAddr.from(user));
+      const res = await this.universalStrategy.getUserTVL(
+        ContractAddr.from(user),
+      );
       return {
         usdValue: res.usdValue,
         amounts: [res],
@@ -109,9 +114,9 @@ export class VesuRebalanceStrategy extends IStrategy<VesuRebalanceSettings> {
     }
 
     const amt = Web3Number.fromWei(amount.toString(), amount.decimals);
-    const calls = await this.vesuRebalance.depositCall(
+    const calls = await this.universalStrategy.depositCall(
       {
-        tokenInfo: this.vesuRebalance.asset(),
+        tokenInfo: this.universalStrategy.asset(),
         amount: amt,
       },
       ContractAddr.from(address),
@@ -129,9 +134,9 @@ export class VesuRebalanceStrategy extends IStrategy<VesuRebalanceSettings> {
     }
 
     const amt = Web3Number.fromWei(amount.toString(), amount.decimals);
-    const calls = await this.vesuRebalance.withdrawCall(
+    const calls = await this.universalStrategy.withdrawCall(
       {
-        tokenInfo: this.vesuRebalance.asset(),
+        tokenInfo: this.universalStrategy.asset(),
         amount: amt,
       },
       ContractAddr.from(address),
@@ -144,7 +149,7 @@ export class VesuRebalanceStrategy extends IStrategy<VesuRebalanceSettings> {
         amounts: [
           {
             balanceAtom: getBalanceAtom(this.holdingTokens[0], atom(true)),
-            tokenInfo: this.vesuRebalance.asset(),
+            tokenInfo: this.universalStrategy.asset(),
           },
         ],
       },
@@ -152,19 +157,13 @@ export class VesuRebalanceStrategy extends IStrategy<VesuRebalanceSettings> {
   };
 
   async solve(pools: PoolInfo[], amount: string) {
-    const poolsInfo = await this.vesuRebalance.getPools();
-    if (poolsInfo.isError) {
-      throw new Error('Failed to fetch pools for Vesu rebalance');
-    }
-
-    const yieldInfo = await this.vesuRebalance.netAPYGivenPools(poolsInfo.data);
-    this.netYield = yieldInfo;
+    const yieldInfo = await this.universalStrategy.netAPY();
+    // todo to deduct fee
+    this.netYield = yieldInfo.net * (1 - this.fee_factor);
     console.log('netYield2', this.netYield, Number(amount));
     this.leverage = 1;
 
-    this.investmentFlows = await this.vesuRebalance.getInvestmentFlows(
-      poolsInfo.data,
-    );
+    this.investmentFlows = [];
 
     this.postSolve();
 

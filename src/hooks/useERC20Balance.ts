@@ -11,10 +11,10 @@ export function useERC20Balance(token: TokenInfo | undefined) {
   const { data, isError, isLoading, error } = useReadContract({
     functionName: 'balanceOf',
     args: [address || '0x0'],
-    abi: ERC20Abi,
+    abi: ERC20Abi as any,
     address: token?.token || ('0x0' as any),
     watch: true,
-    blockIdentifier: BlockTag.PENDING,
+    blockIdentifier: BlockTag.LATEST,
   });
 
   const result = useMemo(() => {
