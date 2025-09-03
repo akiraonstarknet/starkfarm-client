@@ -69,11 +69,11 @@ export function getConnectors(isMobile: boolean) {
       chainId: constants.NetworkName.SN_MAIN,
     },
     inAppBrowserOptions: {},
-  }) as StarknetkitConnector;
+  });
 
   const mobileBraavosConnector = BraavosMobileConnector.init({
     inAppBrowserOptions: {},
-  }) as StarknetkitConnector;
+  });
 
   const argentXConnector = new InjectedConnector({
     options: {
