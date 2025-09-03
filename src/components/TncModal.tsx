@@ -153,18 +153,17 @@ const TncModal: React.FC<TncModalProps> = (props) => {
     try {
       if (!address) {
         if (!address) {
-          toast.error('No Address to sing TnC');
+          toast.error('No Address to sign TnC');
         }
 
         return;
       }
       mixpanel.track('TnC agreed', { address });
 
-      toast.success('TnC Signing Started');
-
       setIsSigningPending(true);
       signTypedData();
     } catch (error) {
+      toast.error('TnC Signing Error');
       console.log('TnC Signing Error', error);
     }
   };
