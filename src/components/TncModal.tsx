@@ -150,13 +150,19 @@ const TncModal: React.FC<TncModalProps> = (props) => {
   }, [sigData, signingError]);
 
   const handleSign = async () => {
-    if (!address || !account) {
-      return;
-    }
-    mixpanel.track('TnC agreed', { address });
+    try {
+      console.log('TnC Signing Started');
+      if (!address || !account) {
+        console.log('No Address or Account to sing TnC');
+        return;
+      }
+      mixpanel.track('TnC agreed', { address });
 
-    setIsSigningPending(true);
-    signTypedData();
+      setIsSigningPending(true);
+      signTypedData();
+    } catch (error) {
+      console.log('TnC Signing Error', error);
+    }
   };
 
   return (
