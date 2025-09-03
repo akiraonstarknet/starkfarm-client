@@ -117,7 +117,7 @@ const TncModal: React.FC<TncModalProps> = (props) => {
       });
       setIsSigningPending(false);
     }
-    if (!address || !account || !sigData) {
+    if (!address || !sigData) {
       return;
     }
 
@@ -151,13 +151,9 @@ const TncModal: React.FC<TncModalProps> = (props) => {
 
   const handleSign = async () => {
     try {
-      if (!address || !account) {
+      if (!address) {
         if (!address) {
           toast.error('No Address to sing TnC');
-        }
-
-        if (!account) {
-          toast.error('No Account to sing TnC');
         }
 
         return;
