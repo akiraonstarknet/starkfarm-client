@@ -302,7 +302,7 @@ export function getStrategies() {
       return s.name != 'Ekubo tBTC/USDC'; // disable for now
     })
     .filter((s) => {
-      return !s.metadata.additionalInfo.lstContract;
+      return !['xwbtc', 'xtbtc', 'xsbtc', 'xlbtc'].includes(s.name);
     });
 
   const evergreenStrategies = UniversalStrategies.map((uni) => {
