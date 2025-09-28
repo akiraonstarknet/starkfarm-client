@@ -119,33 +119,6 @@ const AmountInput = forwardRef(
       }
       return true;
     }, [inputsInfo]);
-
-    const availableBalance = useMemo(() => {
-      // Reserve gas amounts for specific tokens
-      let reducedBalance = balance;
-      if (props.isDeposit) {
-        if (selectedMarket.name === 'STRK') {
-          reducedBalance = balance.subtract(
-            MyNumber.fromEther('1.5', selectedMarket.decimals),
-          );
-        } else if (selectedMarket.name === 'ETH') {
-          reducedBalance = balance.subtract(
-            MyNumber.fromEther('0.001', selectedMarket.decimals),
-          );
-        }
-      }
-      return reducedBalance;
-    }, [balance, selectedMarket, props.isDeposit]);
-
-    const isInsufficientBalance = useMemo(() => {
-      return inputInfo.amount.gt(
-        Web3Number.fromWei(
-          availableBalance.toString(),
-          selectedMarket.decimals,
-        ),
-      );
-    }, [inputInfo.amount, availableBalance, selectedMarket]);
-
     /**
      * Calculate maximum allowed amount based on:
      * - TVL limits for deposits
@@ -166,6 +139,20 @@ const AmountInput = forwardRef(
         selectedMarket.decimals,
       );
 
+      // Reserve gas amounts for specific tokens
+      let reducedBalance = balance;
+      if (props.isDeposit) {
+        if (selectedMarket.name === 'STRK') {
+          reducedBalance = balance.subtract(
+            MyNumber.fromEther('1.5', selectedMarket.decimals),
+          );
+        } else if (selectedMarket.name === 'ETH') {
+          reducedBalance = balance.subtract(
+            MyNumber.fromEther('0.001', selectedMarket.decimals),
+          );
+        }
+      }
+
       // simulation check
       const postSimulationMax = MyNumber.min(
         adjustedMaxAllowed,
@@ -175,7 +162,7 @@ const AmountInput = forwardRef(
         ),
       );
 
-      const min = MyNumber.min(availableBalance, postSimulationMax);
+      const min = MyNumber.min(reducedBalance, postSimulationMax);
       return MyNumber.max(
         min,
         MyNumber.fromEther('0', selectedMarket.decimals),
@@ -187,7 +174,6 @@ const AmountInput = forwardRef(
       props.isDeposit,
       tvlInfo,
       simulatedMaxAmount.amount,
-      availableBalance,
     ]);
 
     function onAmountChange(
@@ -677,38 +663,19 @@ const AmountInput = forwardRef(
             Amount must be greater than 0
           </Text>
         )}
-        <Text>
-          Avail: {availableBalance.toEtherToFixedDecimals(2)},{' '}
-          {isInsufficientBalance ? 'true' : 'false'},{' '}
-          {inputInfo.amount.toString()}
-        </Text>
-        {isInsufficientBalance && (
+        {inputInfo.amount.gt(maxAmount.toEtherStr()) && (
           <Text
             marginTop="2px"
             marginLeft={'7px'}
             color="red"
             fontSize={'13px'}
           >
-            Insufficient balance
+            Amount must be less than{' '}
+            {maxAmount.toEtherToFixedDecimals(
+              selectedMarket.displayDecimals || 2,
+            )}
           </Text>
         )}
-
-        {inputInfo.amount.gt(
-          maxAmount.toEtherToFixedDecimals(selectedMarket.displayDecimals || 2),
-        ) &&
-          !isInsufficientBalance && (
-            <Text
-              marginTop="2px"
-              marginLeft={'7px'}
-              color="red"
-              fontSize={'13px'}
-            >
-              Amount must be less than{' '}
-              {maxAmount.toEtherToFixedDecimals(
-                selectedMarket.displayDecimals || 2,
-              )}
-            </Text>
-          )}
       </Box>
     );
   },
