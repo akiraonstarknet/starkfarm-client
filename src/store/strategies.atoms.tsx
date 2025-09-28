@@ -297,9 +297,13 @@ export function getStrategies() {
         isTransactionHistDisabled: v.additionalInfo.lstContract ? true : false,
       },
     );
-  }).filter((s) => {
-    return s.name != 'Ekubo tBTC/USDC'; // disable for now
-  });
+  })
+    .filter((s) => {
+      return s.name != 'Ekubo tBTC/USDC'; // disable for now
+    })
+    .filter((s) => {
+      return !s.metadata.additionalInfo.lstContract;
+    });
 
   const evergreenStrategies = UniversalStrategies.map((uni) => {
     return new UniversalStrategyClass(
