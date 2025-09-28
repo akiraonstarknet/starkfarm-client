@@ -276,7 +276,7 @@ export class EkuboClStrategy extends IStrategy<CLVaultStrategySettings> {
     const blocksDiff = this.metadata.additionalInfo.lstContract
       ? 600000
       : 600000 / 4;
-    const yieldInfo = await this.clVault.netAPY('latest', blocksDiff);
+    const yieldInfo = await this.clVault.netAPY('latest', blocksDiff, '24h');
     this.netYield = yieldInfo;
     this.leverage = 1;
 

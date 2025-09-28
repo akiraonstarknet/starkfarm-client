@@ -150,39 +150,45 @@ function HoldingsAndEarnings({
           />
         </Text>
       </Box>
-      {!strategy.settings.isTransactionHistDisabled && (
-        <Tooltip
-          label={!strategy?.isRetired() && 'Life time earnings'}
-          {...MYSTYLES.TOOLTIP.STANDARD}
-        >
-          <Box padding={'16px'} bg="mycard" width={'100%'} borderRadius={'lg'}>
-            <Text
-              textAlign={'right'}
-              fontWeight={'none'}
-              color={'text_secondary'}
+      {!strategy.settings.isTransactionHistDisabled &&
+        !strategy.settings.hideNetEarnings && (
+          <Tooltip
+            label={!strategy?.isRetired() && 'Life time earnings'}
+            {...MYSTYLES.TOOLTIP.STANDARD}
+          >
+            <Box
+              padding={'16px'}
+              bg="mycard"
+              width={'100%'}
+              borderRadius={'lg'}
             >
-              <b>Net earnings</b>
-            </Text>
-            <Text
-              textAlign={'right'}
-              color={
-                profit == 0
-                  ? 'text_secondary'
-                  : profit > 0
-                    ? 'light_green_2'
-                    : 'red'
-              }
-            >
-              <NetEarningsText
-                strategy={strategy}
-                address={address}
-                profit={profit}
-                balData={balData}
-              />
-            </Text>
-          </Box>
-        </Tooltip>
-      )}
+              <Text
+                textAlign={'right'}
+                fontWeight={'none'}
+                color={'text_secondary'}
+              >
+                <b>Net earnings</b>
+              </Text>
+              <Text
+                textAlign={'right'}
+                color={
+                  profit == 0
+                    ? 'text_secondary'
+                    : profit > 0
+                      ? 'light_green_2'
+                      : 'red'
+                }
+              >
+                <NetEarningsText
+                  strategy={strategy}
+                  address={address}
+                  profit={profit}
+                  balData={balData}
+                />
+              </Text>
+            </Box>
+          </Tooltip>
+        )}
     </Flex>
   );
 }

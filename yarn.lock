@@ -20,7 +20,7 @@
     framer-motion "^6.3.11"
     lodash.union "^4.6.0"
 
-"@apollo/client@^3.11.8":
+"@apollo/client@3.11.8", "@apollo/client@^3.11.8":
   version "3.11.8"
   resolved "https://registry.yarnpkg.com/@apollo/client/-/client-3.11.8.tgz#f6bacdc7e1b243807c1387113e1d445a53471a9c"
   integrity sha512-CgG1wbtMjsV2pRGe/eYITmV5B8lXUCYljB2gB/6jWTFQcrvirUVvKg7qtFdjYkQSFbIffU1IDyxgeaN81eTjbA==
@@ -2064,12 +2064,19 @@
   dependencies:
     "@noble/hashes" "1.8.0"
 
-"@noble/curves@^2.0.0", "@noble/curves@~2.0.0":
+"@noble/curves@^2.0.0":
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/@noble/curves/-/curves-2.0.0.tgz#1b1d75b447e5ccfaa6a4a3c34280f0c02a763f57"
   integrity sha512-RiwZZeJnsTnhT+/gg2KvITJZhK5oagQrpZo+yQyd3mv3D5NAG2qEeEHpw7IkXRlpkoD45wl2o4ydHAvY9wyEfw==
   dependencies:
     "@noble/hashes" "2.0.0"
+
+"@noble/curves@~2.0.0":
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/@noble/curves/-/curves-2.0.1.tgz#64ba8bd5e8564a02942655602515646df1cdb3ad"
+  integrity sha512-vs1Az2OOTBiP4q0pwjW5aF0xp9n4MxVrmkFBxc6EKZc6ddYx5gaZiAsZoq0uRRXWbi3AT/sBqn05eRPtn1JCPw==
+  dependencies:
+    "@noble/hashes" "2.0.1"
 
 "@noble/hashes@1.3.2":
   version "1.3.2"
@@ -2101,10 +2108,15 @@
   resolved "https://registry.yarnpkg.com/@noble/hashes/-/hashes-1.8.0.tgz#cee43d801fcef9644b11b8194857695acd5f815a"
   integrity sha512-jCs9ldd7NwzpgXDIf6P3+NrHh9/sD6CQdxHyjQI+h/6rDNo88ypBxxz45UDuZHz9r3tNz7N/VInSVoVdtXEI4A==
 
-"@noble/hashes@2.0.0", "@noble/hashes@^2.0.0", "@noble/hashes@~2.0.0":
+"@noble/hashes@2.0.0", "@noble/hashes@^2.0.0":
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/@noble/hashes/-/hashes-2.0.0.tgz#5c39388259a0868cadb17d688cd8cf07eae344a4"
   integrity sha512-h8VUBlE8R42+XIDO229cgisD287im3kdY6nbNZJFjc6ZvKIXPYXe6Vc/t+kyjFdMFyt5JpapzTsEg8n63w5/lw==
+
+"@noble/hashes@2.0.1", "@noble/hashes@~2.0.0":
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/@noble/hashes/-/hashes-2.0.1.tgz#fc1a928061d1232b0a52bb754393c37a5216c89e"
+  integrity sha512-XlOlEbQcE9fmuXxrVTXCTlG2nlRXa9Rj3rr5Ue/+tX+nmkgbX720YHh0VR3hBF9xDvwnb8D2shVGOwNx+ulArw==
 
 "@noble/hashes@~1.6.0":
   version "1.6.1"
@@ -2688,27 +2700,34 @@
     viem "^2.21.1"
     zod "^3.22.4"
 
-"@strkfarm/sdk@1.1.7":
-  version "1.1.7"
-  resolved "https://registry.yarnpkg.com/@strkfarm/sdk/-/sdk-1.1.7.tgz#59263efdb60c391378a81dbe2bb8fa3b36274b22"
-  integrity sha512-n1a5B17SRHhUinHgN4kUV+Uk9XFdeiJGlWa+CJxYCrqCXvOGIYH/Bj8eN9fgIU9kSPn9EuYR0yHqAobzxsI/lw==
+"@strkfarm/sdk@1.1.23":
+  version "1.1.23"
+  resolved "https://registry.yarnpkg.com/@strkfarm/sdk/-/sdk-1.1.23.tgz#1068a3b6274969672977f43068f57678c15f89b6"
+  integrity sha512-6AQGkUQ4wCBjU81+vw3EI0bIdFs/xX0uWhYDRHMHjxC9sIVz2yX6N3VgHXDjkz3o6rZh1XPWJAIZq/7+2HtgtA==
   dependencies:
+    "@apollo/client" "3.11.8"
     "@avnu/avnu-sdk" "3.0.2"
     "@ericnordelo/strk-merkle-tree" "^1.0.0"
     "@noble/curves" "^1.9.7"
     "@noble/hashes" "^2.0.0"
     "@scure/starknet" "^2.0.0"
+    "@strkfarm/sdk" "link:../../Library/Caches/Yarn/v6/npm-@strkfarm-sdk-1.1.23-1068a3b6274969672977f43068f57678c15f89b6-integrity/node_modules/@strkfarm/sdk"
     bignumber.js "4.0.4"
     browser-assert "^1.2.1"
     chalk "^4.1.2"
     commander "^12.1.0"
     ethers "^6.13.5"
+    graphql "16.9.0"
     inquirer "^10.1.2"
     node-telegram-bot-api "^0.66.0"
     proxy-from-env "^1.1.0"
     redis "^4.7.0"
     stacktrace-js "^2.0.2"
     winston "^3.13.0"
+
+"@strkfarm/sdk@link:":
+  version "0.0.0"
+  uid ""
 
 "@swc/helpers@0.5.2":
   version "0.5.2"

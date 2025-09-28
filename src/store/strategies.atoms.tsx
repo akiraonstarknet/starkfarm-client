@@ -293,6 +293,8 @@ export function getStrategies() {
         tags: v.additionalInfo.lstContract
           ? [StrategyTag.EKUBO, StrategyTag.Endur]
           : [StrategyTag.EKUBO],
+        hideNetEarnings: true,
+        isTransactionHistDisabled: v.additionalInfo.lstContract ? true : false,
       },
     );
   }).filter((s) => {
