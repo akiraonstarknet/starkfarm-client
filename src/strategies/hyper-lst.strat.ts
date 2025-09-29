@@ -37,6 +37,15 @@ export class HyperLSTStrategy extends UniversalStrategyClass<
       settings,
       UniversalLstMultiplierStrategy,
     );
+
+    this.risks = [
+      this.getSafetyFactorLine(),
+      'Your original investment is safe. If you deposit 100 tokens, you will always get at least 100 tokens back, unless due to below reasons.',
+      'The deposits are supplied on Vesu, a lending protocol that, while unlikely, has a risk of accumulating bad debt.',
+      'Fully automated risk monitoring systems actively monitor and rebalance the pool to maintain a health factor of 1.05-1.1.',
+      'The strategy involves exposure to smart contracts, which inherently carry risks like hacks, albeit relatively low',
+      'APYs shown are just indicative and do not promise exact returns',
+    ];
   }
 
   depositMethods = async (inputs: DepositActionInputs) => {

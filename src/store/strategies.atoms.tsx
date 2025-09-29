@@ -285,8 +285,35 @@ export function getStrategies() {
         alerts: [
           {
             type: 'info',
-            text: 'Depending on the current position range and price, your input amounts are automatially adjusted to nearest required amounts',
-            tab: 'all',
+            text: (
+              <p>
+                Depending on the current position range and price, your input
+                amounts are automatically adjusted to nearest required amounts.
+                If you have insufficient tokens, you can acquire the required
+                tokens on{' '}
+                <Link
+                  href="https://avnu.fi"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  marginLeft={'2px'}
+                  textDecoration={'underline'}
+                >
+                  Avnu
+                </Link>
+              </p>
+            ),
+            tab: 'deposit',
+          },
+          {
+            type: 'info',
+            text: (
+              <>
+                Depending on the current position range and price, you may
+                receive both of the tokens or one of the tokens depending on the
+                price
+              </>
+            ),
+            tab: 'withdraw',
           },
         ],
         isInstantWithdrawal: true,
@@ -296,6 +323,7 @@ export function getStrategies() {
         tags: v.additionalInfo.lstContract
           ? [StrategyTag.EKUBO, StrategyTag.Endur]
           : [StrategyTag.EKUBO],
+        hideNetEarnings: true,
         isTransactionHistDisabled: v.additionalInfo.lstContract ? true : false,
       },
     );
@@ -321,9 +349,8 @@ export function getStrategies() {
             type: 'info',
           },
         ],
-        isAudited: true,
-        auditUrl:
-          'https://github.com/zenith-security/reports/blob/main/reports/Forge%20-%20Zenith%20Audit%20Report.pdf',
+        isAudited: uni.auditUrl ? true : false,
+        auditUrl: uni.auditUrl,
         tags: [StrategyTag.EVERGREEN],
         hideHarvestInfo: true,
         isInstantWithdrawal: false,
@@ -346,18 +373,35 @@ export function getStrategies() {
       StrategyLiveStatus.HOT,
       {
         maxTVL: 0,
-        isAudited: true,
-        auditUrl:
-          'https://github.com/zenith-security/reports/blob/main/reports/Forge%20-%20Zenith%20Audit%20Report.pdf',
         isPaused: false,
         alerts: [
-          // {
-          //   tab: 'deposit',
-          //   text: `Pro tip: You can deposit ${baseToken} or ${lstToken} by selecting the token from above dropdown. ${baseToken} is auto-converted to ${lstToken} before depositing`,
-          //   type: 'info',
-          // },
+          {
+            tab: 'withdraw',
+            text: 'On withdrawal, you will receive an NFT representing your withdrawal request. The funds will be automatically sent to your wallet (NFT owner) in 1-2 hours. You can monitor the status in transactions tab.',
+            type: 'info',
+          },
+          {
+            tab: 'deposit',
+            text: (
+              <>
+                To acquire the LST, please visit{' '}
+                <Link
+                  href="https://app.endur.fi"
+                  target="_blank"
+                  marginLeft={'3px'}
+                  rel="noopener noreferrer"
+                  textDecoration={'underline'}
+                >
+                  endur.fi
+                </Link>
+              </>
+            ),
+            type: 'info',
+          },
         ],
         tags: [StrategyTag.Endur],
+        isAudited: hyper.auditUrl ? true : false,
+        auditUrl: hyper.auditUrl,
         hideHarvestInfo: true,
         isInstantWithdrawal: false,
         quoteToken: convertToV2TokenInfo(hyper.depositTokens[0]),
