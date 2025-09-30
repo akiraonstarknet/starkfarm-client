@@ -269,6 +269,46 @@ export function getStrategies() {
     );
   });
 
+  const ekuboAlert1: any = {
+    type: 'info',
+    text: (
+      <p>
+        Depending on the current position range and price, your input amounts
+        are automatically adjusted to nearest required amounts. If you have
+        insufficient tokens, you can acquire the required tokens on{' '}
+        <Link
+          href="https://avnu.fi"
+          target="_blank"
+          rel="noopener noreferrer"
+          marginLeft={'2px'}
+          textDecoration={'underline'}
+        >
+          Avnu
+        </Link>
+      </p>
+    ),
+    tab: 'deposit',
+  };
+
+  const lstAlert: any = {
+    tab: 'deposit',
+    text: (
+      <>
+        To acquire the LST, please visit{' '}
+        <Link
+          href="https://app.endur.fi"
+          target="_blank"
+          marginLeft={'3px'}
+          rel="noopener noreferrer"
+          textDecoration={'underline'}
+        >
+          endur.fi
+        </Link>
+      </>
+    ),
+    type: 'info',
+  };
+
   const ekuboCLStrats = EkuboCLVaultStrategies.map((v) => {
     return new EkuboClStrategy(
       v.name,
@@ -283,27 +323,9 @@ export function getStrategies() {
         auditUrl: v.auditUrl,
         isPaused: false,
         alerts: [
-          {
-            type: 'info',
-            text: (
-              <p>
-                Depending on the current position range and price, your input
-                amounts are automatically adjusted to nearest required amounts.
-                If you have insufficient tokens, you can acquire the required
-                tokens on{' '}
-                <Link
-                  href="https://avnu.fi"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  marginLeft={'2px'}
-                  textDecoration={'underline'}
-                >
-                  Avnu
-                </Link>
-              </p>
-            ),
-            tab: 'deposit',
-          },
+          ...(v.additionalInfo.lstContract
+            ? [lstAlert, ekuboAlert1]
+            : [ekuboAlert1]),
           {
             type: 'info',
             text: (
@@ -375,6 +397,11 @@ export function getStrategies() {
         maxTVL: 0,
         isPaused: false,
         alerts: [
+          {
+            tab: 'withdraw',
+            text: 'Liquid staking just launched, while we ensure executions happen at minimal slippages, there may be delays in withdrawals upto 24hrs during the launch to ensure minimal slippage.',
+            type: 'warning',
+          },
           {
             tab: 'withdraw',
             text: 'On withdrawal, you will receive an NFT representing your withdrawal request. The funds will be automatically sent to your wallet (NFT owner) in 1-2 hours. You can monitor the status in transactions tab.',
