@@ -21,10 +21,10 @@ const footerLinks = [
     links: [
       {
         label: 'Open-source',
-        href: 'https://app.onlydust.com/p/strkfarm',
+        href: 'https://github.com/trovesfi/troves-contracts',
         isExternal: true,
       },
-      { label: 'Audit', href: 'https://www.troves.fi/audit' },
+      { label: 'Audit', href: 'https://docs.troves.fi/p/security' },
       {
         label: 'Github',
         href: 'https://github.com/trovesfi',
@@ -35,7 +35,6 @@ const footerLinks = [
   {
     heading: 'General',
     links: [
-      { label: 'Defi Spring', href: 'https://defispring.starknet.io/' },
       {
         label: 'Branding kit',
         href: 'https://drive.google.com/drive/folders/1-D6uizWgdH2XwbP0f3Fc22wQgxhr_RUY?usp=sharing',
@@ -158,7 +157,7 @@ const Footer: React.FC = () => {
           gap="4px"
         >
           <Text fontSize="sm" color="text_subtle">
-            © 2024 Troves. All right reserved.
+            © 2024 Unwrap Labs. All right reserved.
           </Text>
           <Flex align="center" gap={6}>
             <Text

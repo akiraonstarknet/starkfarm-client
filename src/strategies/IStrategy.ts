@@ -108,6 +108,7 @@ export enum StrategyTag {
   EVERGREEN = 'Evergreen',
   Vesu = 'Vesu',
   Endur = 'Endur',
+  BTC = 'BTC',
 }
 
 export interface IStrategySettings {

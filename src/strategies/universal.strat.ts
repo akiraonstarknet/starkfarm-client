@@ -30,8 +30,12 @@ import { getBalanceAtom } from '@/store/balance.atoms';
 import { atom } from 'jotai';
 import { ReactNode } from 'react';
 
-export class UniversalStrategyClass extends IStrategy<UniversalStrategySettings> {
-  universalStrategy: UniversalStrategy<UniversalStrategySettings>;
+export class UniversalStrategyClass<
+  T extends new (
+    ...args: any[]
+  ) => UniversalStrategy<UniversalStrategySettings>,
+> extends IStrategy<UniversalStrategySettings> {
+  universalStrategy: InstanceType<T>;
   asset: TokenInfo;
   fee_factor = 0.1; // 10%
   constructor(
@@ -42,6 +46,7 @@ export class UniversalStrategyClass extends IStrategy<UniversalStrategySettings>
     strategy: IStrategyMetadata<UniversalStrategySettings>,
     liveStatus: StrategyLiveStatus,
     settings: IStrategySettings,
+    StrategyClass: T,
   ) {
     const rewardTokens = [{ logo: CONSTANTS.LOGOS.STRK }];
     const holdingTokens: TokenInfo[] = [
@@ -57,7 +62,7 @@ export class UniversalStrategyClass extends IStrategy<UniversalStrategySettings>
     const config = getMainnetConfig(process.env.NEXT_PUBLIC_RPC_URL!, 'latest');
     const tokens = Global.getDefaultTokens();
     const pricer = new PricerFromApi(config, tokens);
-    const universalStrategy = new UniversalStrategy(config, pricer, strategy);
+    const universalStrategy = new StrategyClass(config, pricer, strategy);
 
     super(
       id,
@@ -72,7 +77,7 @@ export class UniversalStrategyClass extends IStrategy<UniversalStrategySettings>
     );
 
     this.asset = token;
-    this.universalStrategy = universalStrategy;
+    this.universalStrategy = universalStrategy as InstanceType<T>;
     this.riskFactor = strategy.risk.netRisk;
 
     const risks = [...this.risks];

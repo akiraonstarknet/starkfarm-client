@@ -85,7 +85,8 @@ const theme = extendTheme({
 
     text_subtle: '#a0a2b0',
     text_subtle_50p: '#a0a2b080',
-
+    btc_card_gradient:
+      'linear-gradient(220deg,rgba(18, 18, 18, 1) 0%, rgba(33, 27, 22, 1) 86%, rgba(41, 25, 14, 1) 91%, rgba(79, 37, 1, 1) 96%, rgba(102, 61, 0, 1) 100%)',
     connect_button_gradient:
       'linear-gradient(93.94deg, #9069f0 3.22%, #4a14cd 101.67%)',
   },

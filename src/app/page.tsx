@@ -16,13 +16,15 @@ import {
   Tabs,
   TabIndicator,
   Text,
+  Image as ChakraImage,
+  Flex,
 } from '@chakra-ui/react';
 import { useAccount } from '@starknet-react/core';
 import Autoplay from 'embla-carousel-autoplay';
 import useEmblaCarousel from 'embla-carousel-react';
 import mixpanel from 'mixpanel-browser';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { ReactNode, useEffect, useMemo, useState } from 'react';
 
 const banner_images: any[] = [
   // {
@@ -42,22 +44,38 @@ const banner_images: any[] = [
   // },
 ];
 
+const BTCTokenAddr =
+  'https://static-assets-8zct.onrender.com/integrations/tokens/btc.svg';
+
 const TABs: {
-  name: string;
+  name: string | ReactNode;
   tags?: StrategyTag[];
   id: string;
   question: string;
   answer: string;
 }[] = [
   {
-    name: 'All Strategies✨',
+    name: '✨ All Strategies',
     id: 'all',
     question: 'What are strategies?',
     answer:
       'Strategies are structured investment plans that combine multiple liquidity pools or protocols to optimize returns. They automate the process of maximizing yield by intelligently allocating assets across opportunities.',
   },
   {
-    name: 'Evergreen Strategies',
+    name: (
+      <Flex gap={2}>
+        <ChakraImage src={BTCTokenAddr} width={'20px'} height={'20px'} />
+        <span> BTC Strategies</span>
+      </Flex>
+    ),
+    id: 'btc',
+    question: 'What are BTC strategies?',
+    answer:
+      'BTC strategies are strategies that are structured investment plans that combine multiple liquidity pools or protocols to optimize returns linked to BTC tokens. They automate the process of maximizing yield by intelligently allocating assets across opportunities.',
+    tags: [StrategyTag.BTC],
+  },
+  {
+    name: '🌱 Evergreen Strategies',
     tags: [StrategyTag.EVERGREEN],
     id: 'evergreen',
     question: 'What are Evergreen strategies?',
@@ -83,7 +101,7 @@ const TABs: {
 ];
 
 export default function Home() {
-  const [tabIndex, setTabIndex] = useState(0);
+  const [tabIndex, setTabIndex] = useState(1);
 
   const { address } = useAccount();
   const searchParams = useSearchParams();

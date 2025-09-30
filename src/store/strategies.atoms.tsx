@@ -17,8 +17,10 @@ import { DeltaNeutralMMVesuEndur } from '@/strategies/delta_neutral_mm_vesu_endu
 import { Box, Link, Text } from '@chakra-ui/react';
 import {
   EkuboCLVaultStrategies,
+  HyperLSTStrategies,
   SenseiStrategies,
   UniversalStrategies,
+  UniversalStrategy,
   VesuRebalanceStrategies,
 } from '@strkfarm/sdk';
 import { VesuRebalanceStrategy } from '@/strategies/vesu_rebalance';
@@ -26,6 +28,7 @@ import { atomWithQuery } from 'jotai-tanstack-query';
 import { EkuboClStrategy } from '@/strategies/ekubo_cl_vault';
 import { ReactNode } from 'react';
 import { UniversalStrategyClass } from '@/strategies/universal.strat';
+import { HyperLSTStrategy } from '@/strategies/hyper-lst.strat';
 
 export interface StrategyInfo<T> extends IStrategyProps<T> {
   name: string;
@@ -266,6 +269,46 @@ export function getStrategies() {
     );
   });
 
+  const ekuboAlert1: any = {
+    type: 'info',
+    text: (
+      <p>
+        Depending on the current position range and price, your input amounts
+        are automatically adjusted to nearest required amounts. If you have
+        insufficient tokens, you can acquire the required tokens on{' '}
+        <Link
+          href="https://avnu.fi"
+          target="_blank"
+          rel="noopener noreferrer"
+          marginLeft={'2px'}
+          textDecoration={'underline'}
+        >
+          Avnu
+        </Link>
+      </p>
+    ),
+    tab: 'deposit',
+  };
+
+  const lstAlert: any = {
+    tab: 'deposit',
+    text: (
+      <>
+        To acquire the LST, please visit{' '}
+        <Link
+          href="https://app.endur.fi"
+          target="_blank"
+          marginLeft={'3px'}
+          rel="noopener noreferrer"
+          textDecoration={'underline'}
+        >
+          endur.fi
+        </Link>
+      </>
+    ),
+    type: 'info',
+  };
+
   const ekuboCLStrats = EkuboCLVaultStrategies.map((v) => {
     return new EkuboClStrategy(
       v.name,
@@ -280,10 +323,19 @@ export function getStrategies() {
         auditUrl: v.auditUrl,
         isPaused: false,
         alerts: [
+          ...(v.additionalInfo.lstContract
+            ? [lstAlert, ekuboAlert1]
+            : [ekuboAlert1]),
           {
             type: 'info',
-            text: 'Depending on the current position range and price, your input amounts are automatially adjusted to nearest required amounts',
-            tab: 'all',
+            text: (
+              <>
+                Depending on the current position range and price, you may
+                receive both of the tokens or one of the tokens depending on the
+                price
+              </>
+            ),
+            tab: 'withdraw',
           },
         ],
         isInstantWithdrawal: true,
@@ -297,16 +349,9 @@ export function getStrategies() {
         isTransactionHistDisabled: v.additionalInfo.lstContract ? true : false,
       },
     );
-  })
-    .filter((s) => {
-      return s.name != 'Ekubo tBTC/USDC'; // disable for now
-    })
-    .filter((s) => {
-      if (s.name.toLowerCase().includes('xstrk')) {
-        return true;
-      }
-      return !s.metadata.additionalInfo.lstContract;
-    });
+  }).filter((s) => {
+    return s.name != 'Ekubo tBTC/USDC'; // disable for now
+  });
 
   const evergreenStrategies = UniversalStrategies.map((uni) => {
     return new UniversalStrategyClass(
@@ -318,7 +363,6 @@ export function getStrategies() {
       StrategyLiveStatus.ACTIVE,
       {
         maxTVL: 0,
-        isAudited: false,
         isPaused: false,
         alerts: [
           {
@@ -327,25 +371,71 @@ export function getStrategies() {
             type: 'info',
           },
         ],
+        isAudited: uni.auditUrl ? true : false,
+        auditUrl: uni.auditUrl,
         tags: [StrategyTag.EVERGREEN],
         hideHarvestInfo: true,
         isInstantWithdrawal: false,
         quoteToken: convertToV2TokenInfo(uni.depositTokens[0]),
         showWithdrawalWarningModal: true, // Enable withdrawal warning modal for evergreen strategies
       },
+      UniversalStrategy,
     );
   });
 
-  // const xSTRKStrategy = new AutoXSTRKStrategy(
-  //   'Stake STRK',
-  //   'Endur is Starknet's dedicated staking platform, where you can stake STRK to earn staking rewards. This strategy, built on Endur, is an incentivized vault that boosts returns by offering additional rewards. In the future, it may transition to auto-compounding on DeFi Spring, reinvesting rewards for maximum growth. Changes will be announced at least three days in advance on our socials.',
-  //   CONSTANTS.CONTRACTS.AutoxTroves,
-  //   {
-  //     maxTVL: 2000000,
-  //     alerts: [],
-  //     is_promoted: true,
-  //   },
-  // );
+  const hyperLSTStrategies = HyperLSTStrategies.map((hyper) => {
+    const lstToken = hyper.depositTokens[0].symbol;
+    const baseToken = lstToken.replace('x', '');
+    return new HyperLSTStrategy(
+      `hyper_${hyper.depositTokens[0]?.symbol.toLowerCase()}`,
+      getTokenInfoFromName(hyper.depositTokens[0]?.symbol || ''),
+      hyper.name,
+      hyper.description as ReactNode,
+      hyper,
+      StrategyLiveStatus.HOT,
+      {
+        maxTVL: 0,
+        isPaused: false,
+        alerts: [
+          {
+            tab: 'withdraw',
+            text: 'Liquid staking just launched, while we ensure executions happen at minimal slippages, there may be delays in withdrawals upto 24hrs during the launch to ensure minimal slippage.',
+            type: 'warning',
+          },
+          {
+            tab: 'withdraw',
+            text: 'On withdrawal, you will receive an NFT representing your withdrawal request. The funds will be automatically sent to your wallet (NFT owner) in 1-2 hours. You can monitor the status in transactions tab.',
+            type: 'info',
+          },
+          {
+            tab: 'deposit',
+            text: (
+              <>
+                To acquire the LST, please visit{' '}
+                <Link
+                  href="https://app.endur.fi"
+                  target="_blank"
+                  marginLeft={'3px'}
+                  rel="noopener noreferrer"
+                  textDecoration={'underline'}
+                >
+                  endur.fi
+                </Link>
+              </>
+            ),
+            type: 'info',
+          },
+        ],
+        tags: [StrategyTag.Endur],
+        isAudited: hyper.auditUrl ? true : false,
+        auditUrl: hyper.auditUrl,
+        hideHarvestInfo: true,
+        isInstantWithdrawal: false,
+        quoteToken: convertToV2TokenInfo(hyper.depositTokens[0]),
+        showWithdrawalWarningModal: false, // Enable withdrawal warning modal for evergreen strategies
+      },
+    );
+  });
 
   // undo
   const strategies: IStrategy<any>[] = [
@@ -359,8 +449,17 @@ export function getStrategies() {
     ...vesuRebalanceStrats,
     ...ekuboCLStrats,
     ...evergreenStrategies,
+    ...hyperLSTStrategies,
     // xSTRKStrategy,
   ];
+
+  // Add BTC tags if applicable
+  strategies
+    .filter((s) => s.name.toLowerCase().includes('btc'))
+    .map((s) => {
+      s.settings.tags?.push(StrategyTag.BTC);
+      return s;
+    });
 
   return strategies;
 }

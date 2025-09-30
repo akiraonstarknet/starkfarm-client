@@ -41,17 +41,20 @@ export default function Strategies({
 }) {
   const strkFarmPoolsRes = useAtomValue(TrovesBaseAPYsAtom);
   const allStrategies = getStrategies();
+
   const strkFarmPools = useMemo(() => {
     if (!strkFarmPoolsRes || !strkFarmPoolsRes.data)
       return [] as TrovesStrategyAPIResult[];
     return strkFarmPoolsRes.data.strategies.filter((strategy) => {
-      if (!tags) return true;
       const strategyObj = allStrategies.find(
         (strat) => strat.id == strategy.id,
       );
+      strategy.tags = strategyObj?.settings.tags || [];
+      if (!tags) return true;
       return tags.some((tag) => strategyObj?.settings.tags?.includes(tag));
     });
   }, [strkFarmPoolsRes]);
+
   const address = useAtomValue(addressAtom);
 
   const _filteredPools = useAtomValue(filteredPools);

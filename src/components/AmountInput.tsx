@@ -119,6 +119,24 @@ const AmountInput = forwardRef(
       }
       return true;
     }, [inputsInfo]);
+
+    const availableBalance = useMemo(() => {
+      // Reserve gas amounts for specific tokens
+      let reducedBalance = balance;
+      if (props.isDeposit) {
+        if (selectedMarket.name === 'STRK') {
+          reducedBalance = balance.subtract(
+            MyNumber.fromEther('1.5', selectedMarket.decimals),
+          );
+        } else if (selectedMarket.name === 'ETH') {
+          reducedBalance = balance.subtract(
+            MyNumber.fromEther('0.001', selectedMarket.decimals),
+          );
+        }
+      }
+      return reducedBalance;
+    }, [balance, selectedMarket, props.isDeposit]);
+
     /**
      * Calculate maximum allowed amount based on:
      * - TVL limits for deposits
@@ -139,19 +157,7 @@ const AmountInput = forwardRef(
         selectedMarket.decimals,
       );
 
-      // Reserve gas amounts for specific tokens
-      let reducedBalance = balance;
-      if (props.isDeposit) {
-        if (selectedMarket.name === 'STRK') {
-          reducedBalance = balance.subtract(
-            MyNumber.fromEther('1.5', selectedMarket.decimals),
-          );
-        } else if (selectedMarket.name === 'ETH') {
-          reducedBalance = balance.subtract(
-            MyNumber.fromEther('0.001', selectedMarket.decimals),
-          );
-        }
-      }
+      const reducedBalance = availableBalance;
 
       // simulation check
       const postSimulationMax = MyNumber.min(
@@ -174,6 +180,7 @@ const AmountInput = forwardRef(
       props.isDeposit,
       tvlInfo,
       simulatedMaxAmount.amount,
+      availableBalance,
     ]);
 
     function onAmountChange(
@@ -670,10 +677,11 @@ const AmountInput = forwardRef(
             color="red"
             fontSize={'13px'}
           >
-            Amount must be less than{' '}
-            {maxAmount.toEtherToFixedDecimals(
-              selectedMarket.displayDecimals || 2,
-            )}
+            {inputInfo.amount.gt(availableBalance.toEtherToFixedDecimals(12))
+              ? 'Insufficient balance'
+              : `Amount must be less than ${maxAmount.toEtherToFixedDecimals(
+                  selectedMarket.displayDecimals || 2,
+                )}`}
           </Text>
         )}
       </Box>

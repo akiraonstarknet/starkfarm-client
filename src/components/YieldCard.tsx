@@ -45,9 +45,12 @@ export interface YieldCardProps {
 }
 
 export function getStratCardBg(
-  status: StrategyLiveStatus | StrategyTag,
+  tags: (StrategyLiveStatus | StrategyTag)[],
   index: number,
 ) {
+  // if (tags.includes(StrategyTag.BTC)) {
+  //   return 'btc_card_gradient';
+  // }
   // if (isLive(status)) {
   //   return index % 2 === 0 ? 'mycard_dark' : 'mycard_dark';
   // }
@@ -72,10 +75,19 @@ function getStratCardBadgeBg(status: StrategyLiveStatus) {
 export function StrategyInfo(props: YieldCardProps) {
   const { pool } = props;
 
+  const allCategoryTags = [
+    StrategyTag.BTC,
+    StrategyTag.EVERGREEN,
+    StrategyTag.EKUBO,
+    StrategyTag.Endur,
+    StrategyTag.Vesu,
+  ];
   const tags = useMemo(() => {
     if (!pool.additional || !pool.additional.tags) return [];
     return pool.additional.tags.filter(
-      (tag) => tag != StrategyLiveStatus.ACTIVE,
+      (tag) =>
+        tag != StrategyLiveStatus.ACTIVE &&
+        !allCategoryTags.includes(tag as StrategyTag),
     );
   }, [pool.additional]);
 
@@ -540,7 +552,7 @@ function StrategyMobileCard(props: YieldCardProps) {
         display={{ base: 'flex', md: 'none' }}
         flexDirection="column"
         bg={getStratCardBg(
-          pool.additional?.tags?.[0] || StrategyLiveStatus.ACTIVE,
+          pool.additional?.tags || [StrategyLiveStatus.ACTIVE],
           index,
         )}
         filter={isRetired ? 'opacity(0.5)' : 'none'}
@@ -619,13 +631,41 @@ export default function YieldCard(props: YieldCardProps) {
     return isPoolRetired(pool);
   }, [pool]);
 
+  // Create metallic gradient background
+  const metallicBg = `
+    linear-gradient(
+      90deg,
+      #121212 0%,
+      #121212 40%,
+      #2a2a2a 50%,
+      #3d3d3d 60%,
+      #4a4a4a 70%,
+      #2a2a2a 80%,
+      #121212 100%
+    )
+  `;
+
+  // Animated metallic overlay
+  const animatedOverlay = `
+    linear-gradient(
+      90deg,
+      transparent 0%,
+      transparent 40%,
+      rgba(255, 255, 255, 0.1) 45%,
+      rgba(255, 255, 255, 0.3) 50%,
+      rgba(255, 255, 255, 0.1) 55%,
+      transparent 60%,
+      transparent 100%
+    )
+  `;
+
   return (
     <>
       <Tr
         color={'white'}
         display={{ base: 'none', md: 'table-row' }}
         bg={getStratCardBg(
-          pool.additional?.tags?.[0] || StrategyLiveStatus.ACTIVE,
+          pool.additional?.tags || [StrategyLiveStatus.ACTIVE],
           index,
         )}
         filter={isRetired ? 'opacity(0.7)' : 'none'}
