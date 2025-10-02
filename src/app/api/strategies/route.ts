@@ -172,9 +172,18 @@ export async function GET(req: Request) {
     // sort based on risk factor, live status and apy
     // const aRisk = a.riskFactor;
     // const bRisk = b.riskFactor;
-    const aLive = a.status.number < 5 ? 0 : a.status.number;
-    const bLive = b.status.number < 5 ? 0 : b.status.number;
-    if (aLive !== bLive) return aLive - bLive;
+
+    // Priority: status < 5 (priority 0), then status 5 (priority 1), then others (priority 2)
+    const getPriority = (statusNumber: number) => {
+      if (statusNumber < 5) return 0;
+      if (statusNumber === 5) return 1;
+      return 2;
+    };
+
+    const aPriority = getPriority(a.status.number);
+    const bPriority = getPriority(b.status.number);
+
+    if (aPriority !== bPriority) return aPriority - bPriority;
     // if (aRisk !== bRisk) return aRisk - bRisk;
     return b.apy - a.apy;
   });
