@@ -174,6 +174,7 @@ export async function GET(req: Request) {
     // const bRisk = b.riskFactor;
 
     // Priority: status < 5 (priority 0), then status 5 (priority 1), then others (priority 2)
+    // console.log('statusNumber', a.status, b.status, a.name, b.name);
     const getPriority = (statusNumber: number) => {
       if (statusNumber < 5) return 0;
       if (statusNumber === 5) return 1;
@@ -183,7 +184,7 @@ export async function GET(req: Request) {
     const aPriority = getPriority(a.status.number);
     const bPriority = getPriority(b.status.number);
 
-    if (aPriority !== bPriority) return aPriority - bPriority;
+    // if (aPriority !== bPriority) return aPriority - bPriority;
     // if (aRisk !== bRisk) return aRisk - bRisk;
     return b.apy - a.apy;
   });

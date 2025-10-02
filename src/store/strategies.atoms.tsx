@@ -439,12 +439,12 @@ export function getStrategies() {
 
   // undo
   const strategies: IStrategy<any>[] = [
-    autoStrkStrategy,
-    autoUSDCStrategy,
-    deltaNeutralMMUSDCETH,
-    deltaNeutralMMETHUSDC,
-    deltaNeutralMMSTRKETH,
-    deltaNeutralMMETHUSDCReverse,
+    // autoStrkStrategy,
+    // autoUSDCStrategy,
+    // deltaNeutralMMUSDCETH,
+    // deltaNeutralMMETHUSDC,
+    // deltaNeutralMMSTRKETH,
+    // deltaNeutralMMETHUSDCReverse,
     deltaNeutralxSTRKSTRK,
     ...vesuRebalanceStrats,
     ...ekuboCLStrats,
