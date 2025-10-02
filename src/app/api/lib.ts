@@ -54,27 +54,27 @@ export const getRewardsInfo = async (
     {
       token: 'ETH',
       maxAPY: 100, // in %
-      maxRewardsPerDay: 0.538755 / 30, // tokem amount / days
+      maxRewardsPerDay: 0, // tokem amount / days
     },
     {
       token: 'WBTC',
       maxAPY: 100, // in %
-      maxRewardsPerDay: 0.02191182 / 30, // tokem amount / days
+      maxRewardsPerDay: 0, // tokem amount / days
     },
     {
       token: 'USDC',
       maxAPY: 100, // in %
-      maxRewardsPerDay: 2306 / 30, // tokem amount / days
+      maxRewardsPerDay: 0, // tokem amount / days
     },
     {
       token: 'USDT',
       maxAPY: 75, // in %
-      maxRewardsPerDay: 1349 / 30, // tokem amount / days
+      maxRewardsPerDay: 0, // tokem amount / days
     },
     {
       token: 'STRK',
       maxAPY: 75, // in %
-      maxRewardsPerDay: 10500 / 30, // tokem amount / days
+      maxRewardsPerDay: 0, // tokem amount / days
     },
   ];
   const allowedStrats = UniversalStrategies.map((u) => {
