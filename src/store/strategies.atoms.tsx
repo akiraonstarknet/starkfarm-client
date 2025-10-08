@@ -383,6 +383,14 @@ export function getStrategies() {
     );
   });
 
+  const lstMaxTVLs = {
+    xWBTC: 18,
+    xLBTC: 5,
+    xtBTC: 5,
+    xsBTC: 5,
+    xstrk: 200000,
+  };
+
   const hyperLSTStrategies = HyperLSTStrategies.map((hyper) => {
     const lstToken = hyper.depositTokens[0].symbol;
     const baseToken = lstToken.replace('x', '');
@@ -394,7 +402,7 @@ export function getStrategies() {
       hyper,
       StrategyLiveStatus.HOT,
       {
-        maxTVL: 0,
+        maxTVL: lstMaxTVLs[lstToken as keyof typeof lstMaxTVLs],
         isPaused: false,
         alerts: [
           {
