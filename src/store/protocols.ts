@@ -1,11 +1,7 @@
 import trovesLogo from '@public/logo.png';
 import { atom } from 'jotai';
-import CarmineAtoms, { carmine } from './carmine.store';
 import EkuboAtoms, { ekubo } from './ekobu.store';
 import EndurAtoms, { endur } from './endur.store';
-import NostraDegenAtoms, { nostraDegen } from './nostradegen.store';
-import NostraDexAtoms, { nostraDex } from './nostradex.store';
-import NostraLendingAtoms, { nostraLending } from './nostralending.store';
 import { Category, isPoolRetired, PoolInfo, PoolType } from './pools';
 import { getLiveStatusEnum } from '@/utils/strategyStatus';
 import TrovesAtoms, { troves, TrovesStrategyAPIResult } from './troves.atoms';
@@ -38,21 +34,21 @@ export const getProtocols = () => [
   //   class: tenkswap,
   //   atoms: TenkSwapAtoms,
   // },
-  {
-    name: nostraDex.name,
-    class: nostraDex,
-    atoms: NostraDexAtoms,
-  },
-  {
-    name: nostraDegen.name,
-    class: nostraDegen,
-    atoms: NostraDegenAtoms,
-  },
-  {
-    name: carmine.name,
-    class: carmine,
-    atoms: CarmineAtoms,
-  },
+  // {
+  //   name: nostraDex.name,
+  //   class: nostraDex,
+  //   atoms: NostraDexAtoms,
+  // },
+  // {
+  //   name: nostraDegen.name,
+  //   class: nostraDegen,
+  //   atoms: NostraDegenAtoms,
+  // },
+  // {
+  //   name: carmine.name,
+  //   class: carmine,
+  //   atoms: CarmineAtoms,
+  // },
   // {
   //   name: starkDefi.name,
   //   class: starkDefi,
@@ -63,11 +59,11 @@ export const getProtocols = () => [
   //   class: sithswap,
   //   atoms: SithswapAtoms,
   // },
-  {
-    name: nostraLending.name,
-    class: nostraLending,
-    atoms: NostraLendingAtoms,
-  },
+  // {
+  //   name: nostraLending.name,
+  //   class: nostraLending,
+  //   atoms: NostraLendingAtoms,
+  // },
   {
     name: vesu.name,
     class: vesu,

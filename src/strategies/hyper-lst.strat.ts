@@ -11,9 +11,11 @@ import {
   DepositActionInputs,
   IStrategySettings,
   StrategyLiveStatus,
+  StrategyStatus,
   TokenInfo,
 } from './IStrategy';
 import { buildStrategyActionHook, DummyStrategyActionHook } from '@/utils';
+import { PoolInfo } from '@/store/pools';
 
 export class HyperLSTStrategy extends UniversalStrategyClass<
   typeof UniversalLstMultiplierStrategy
@@ -104,4 +106,26 @@ export class HyperLSTStrategy extends UniversalStrategyClass<
       // buildStrategyActionHook([...swapCalls.calls, ...calls], [lstUnderlying]),
     ];
   };
+
+  async solve(pools: PoolInfo[], amount: string) {
+    const yieldInfo = await this.universalStrategy.netAPY();
+    // todo to deduct fee
+    const LSTYield = yieldInfo.splits.find((split) => split.id == 'lst_apy');
+    if (!LSTYield) {
+      throw new Error('LST yield not found');
+    }
+    console.log(
+      `${this.metadata.name}::LST APY: ${LSTYield.apy}, net APY: ${yieldInfo.net}, fee factor: ${this.fee_factor}`,
+    );
+    this.netYield =
+      LSTYield.apy + (yieldInfo.net - LSTYield.apy) * (1 - this.fee_factor);
+    console.log('netYield2', this.netYield, Number(amount));
+    this.leverage = 1;
+
+    this.investmentFlows = [];
+
+    this.postSolve();
+
+    this.status = StrategyStatus.SOLVED;
+  }
 }
