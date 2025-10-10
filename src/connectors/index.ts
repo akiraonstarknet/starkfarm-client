@@ -10,6 +10,7 @@ import { InjectedConnector } from 'starknetkit/injected';
 import { WebWalletConnector } from 'starknetkit/webwallet';
 import { getStarknet } from '@starknet-io/get-starknet-core';
 import { constants } from 'starknet';
+import { StarknetkitConnector } from 'starknetkit';
 
 const isMobileDevice = () => {
   if (typeof window === 'undefined') {
@@ -61,11 +62,31 @@ export const availableConnectors = () => {
       name: 'Keplr',
     },
   });
+  const fordefiConnector = new InjectedConnector({
+    options: {
+      id: 'fordefi',
+      name: 'Fordefi',
+    },
+  });
+
+  const xverseConnector = new InjectedConnector({
+    options: {
+      id: 'xverse',
+      name: 'Xverse',
+    },
+  });
+
+  const webWalletConnector = new WebWalletConnector({
+    url: 'https://web.argent.xyz',
+  }) as StarknetkitConnector;
 
   const injectedConnectors = [
     argentXConnector,
     braavosConnector,
     keplrConnector,
+    xverseConnector,
+    fordefiConnector,
+    webWalletConnector,
   ];
 
   // Check which wallets are installed
@@ -96,19 +117,13 @@ export const availableConnectors = () => {
     return 1;
   });
 
+  const isMobile = isMobileDevice();
   // Add other connectors after sorted injected connectors
-  return [
-    ...sortedInjectedConnectors,
-    ArgentMobileConnector.init({
-      options: {
-        url: typeof window !== 'undefined' ? window.location.href : '',
-        dappName: 'Troves',
-        chainId: constants.NetworkName.SN_MAIN,
-      },
-    }),
-    isMobileDevice() ? BraavosMobileConnector.init({}) : null,
-    new WebWalletConnector({ url: 'https://web.argent.xyz', theme: 'dark' }),
-  ].filter((connector) => connector !== null);
+  if (isMobile) {
+    return [BraavosMobileConnector.init({}), webWalletConnector];
+  }
+
+  return sortedInjectedConnectors;
 };
 
 export const connectors = availableConnectors();
