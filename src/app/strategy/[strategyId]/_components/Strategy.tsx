@@ -27,6 +27,7 @@ import {
 import { atom, useAtomValue, useSetAtom } from 'jotai';
 import mixpanel from 'mixpanel-browser';
 import { useRouter, useSearchParams } from 'next/navigation';
+import NextLink from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { APYInfo } from '@/components/APYInfo';
@@ -417,7 +418,7 @@ const Strategy = ({ params }: StrategyParams) => {
         gap={'48px'}
       >
         <Box>
-          <Link href="/?tab=strategies">
+          <Link as={NextLink} href="/?tab=strategies">
             <Button
               bg={'mycard_light'}
               color={'text_primary'}
