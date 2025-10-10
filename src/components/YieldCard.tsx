@@ -36,6 +36,7 @@ import { ContractAddr } from '@strkfarm/sdk';
 import { useAtomValue } from 'jotai';
 import mixpanel from 'mixpanel-browser';
 import { useMemo } from 'react';
+import NextLink from 'next/link';
 
 export interface YieldCardProps {
   pool: PoolInfo;
@@ -119,7 +120,11 @@ export function StrategyInfo(props: YieldCardProps) {
                   label="Audited smart contract. Click to view the audit report."
                   {...MYSTYLES.TOOLTIP.STANDARD}
                 >
-                  <Link href={pool.additional.auditUrl} target="_blank">
+                  <Link
+                    as={NextLink}
+                    href={pool.additional.auditUrl}
+                    target="_blank"
+                  >
                     <Box
                       width={'24px'}
                       height={'24px'}
@@ -547,7 +552,11 @@ function StrategyMobileCard(props: YieldCardProps) {
   }, [pool]);
 
   return (
-    <Link {...getLinkProps(pool, props.showProtocolName)} width="100%">
+    <Link
+      as={NextLink}
+      {...getLinkProps(pool, props.showProtocolName)}
+      width="100%"
+    >
       <Box
         display={{ base: 'flex', md: 'none' }}
         flexDirection="column"
@@ -676,13 +685,13 @@ export default function YieldCard(props: YieldCardProps) {
         borderRadius={'lg'}
       >
         <Td width={'40%'} borderLeftRadius={'lg'}>
-          <a {...getLinkProps(pool, props.showProtocolName)}>
+          <Link as={NextLink} {...getLinkProps(pool, props.showProtocolName)}>
             <StrategyInfo
               pool={pool}
               index={index}
               showProtocolName={props.showProtocolName}
             />
-          </a>
+          </Link>
         </Td>
         <Td width={'15%'}>
           {isRetired ? (

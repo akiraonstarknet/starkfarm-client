@@ -1,7 +1,9 @@
+import React from 'react';
 import { GoogleAnalytics } from '@next/third-parties/google';
 import { Analytics } from '@vercel/analytics/react';
 import type { Metadata } from 'next';
-import React from 'react';
+
+import Providers from '@/components/Providers';
 
 import './globals.css';
 
@@ -59,7 +61,7 @@ export default function RootLayout({
         />
       </head>
       <body style={{ background: 'black' }}>
-        {children}
+        <Providers>{children}</Providers>
         <Analytics />
       </body>
       <GoogleAnalytics gaId="G-K05JV94KM9" />

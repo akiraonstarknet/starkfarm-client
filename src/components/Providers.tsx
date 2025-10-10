@@ -1,9 +1,7 @@
 'use client';
 
-import Navbar, { getConnectors } from '@/components/Navbar';
-import { MY_STORE } from '@/store';
+import React from 'react';
 import {
-  Center,
   ChakraBaseProvider,
   Container,
   Flex,
@@ -14,14 +12,14 @@ import { mainnet } from '@starknet-react/chains';
 import { StarknetConfig, jsonRpcProvider, voyager } from '@starknet-react/core';
 import { Provider as JotaiProvider } from 'jotai';
 import mixpanel from 'mixpanel-browser';
-import Image from 'next/image';
-import { usePathname } from 'next/navigation';
-import * as React from 'react';
+import { Inter } from 'next/font/google';
 import { Toaster } from 'react-hot-toast';
 
+import Navbar from '@/components/Navbar';
+import { MY_STORE } from '@/store';
 import Footer from '@/components/Footer';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { Inter } from 'next/font/google';
+import { connectors } from '@/connectors';
+
 const inter = Inter({ subsets: ['latin'] });
 
 mixpanel.init('118f29da6a372f0ccb6f541079cad56b');
@@ -121,26 +119,13 @@ BigInt.prototype.toJSON = function () {
   return this.toString();
 };
 
-export const CONNECTOR_NAMES = ['Braavos', 'Argent X', 'Argent (mobile)']; // 'Argent Web Wallet'];
-
-export default function Template({ children }: { children: React.ReactNode }) {
+export default function Providers({ children }: { children: React.ReactNode }) {
   const chains = [mainnet];
-  const pathname = usePathname();
   const provider = jsonRpcProvider({
     rpc: (chain) => {
       return { nodeUrl: process.env.NEXT_PUBLIC_RPC_URL! };
     },
   });
-
-  function getIconNode(icon: typeof import('*.svg'), alt: string) {
-    return (
-      <Center className="my-menu-button" width="100%" marginLeft={'-20px'}>
-        <Image src={icon} alt={alt} />
-      </Center>
-    );
-  }
-
-  const isMobile = useIsMobile();
 
   function Loading() {
     return (
@@ -167,7 +152,7 @@ export default function Template({ children }: { children: React.ReactNode }) {
       <StarknetConfig
         chains={chains}
         provider={provider}
-        connectors={getConnectors(isMobile)}
+        connectors={connectors}
         explorer={voyager}
         autoConnect={true}
       >
@@ -180,10 +165,7 @@ export default function Template({ children }: { children: React.ReactNode }) {
                 width={'100%'}
                 padding="0px"
               >
-                <Navbar
-                  hideTg={pathname.includes('slinks')}
-                  forceShowConnect={pathname.includes('slinks')}
-                />
+                <Navbar />
                 {children}
                 <Toaster />
                 <Footer />
