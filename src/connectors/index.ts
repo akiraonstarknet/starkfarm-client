@@ -33,16 +33,16 @@ const isMobileDevice = () => {
 };
 
 export const availableConnectors = () => {
+  const argentMobileConnector = ArgentMobileConnector.init({
+    options: {
+      url: typeof window !== 'undefined' ? window.location.href : '',
+      dappName: 'Troves',
+      chainId: constants.NetworkName.SN_MAIN,
+    },
+  });
+
   if (isInArgentMobileAppBrowser()) {
-    return [
-      ArgentMobileConnector.init({
-        options: {
-          url: typeof window !== 'undefined' ? window.location.href : '',
-          dappName: 'Troves',
-          chainId: constants.NetworkName.SN_MAIN,
-        },
-      }),
-    ];
+    return [argentMobileConnector];
   }
 
   if (isInBraavosMobileAppBrowser()) {
@@ -120,7 +120,11 @@ export const availableConnectors = () => {
   const isMobile = isMobileDevice();
   // Add other connectors after sorted injected connectors
   if (isMobile) {
-    return [BraavosMobileConnector.init({}), webWalletConnector];
+    return [
+      argentMobileConnector,
+      BraavosMobileConnector.init({}),
+      webWalletConnector,
+    ];
   }
 
   return sortedInjectedConnectors;
