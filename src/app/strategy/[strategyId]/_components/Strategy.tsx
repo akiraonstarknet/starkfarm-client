@@ -51,6 +51,7 @@ import { ManageTab } from './ManageTab';
 import { RiskTab } from './RiskTab';
 import { StrategyInfoComponent } from './StrategyInfo';
 import { TransactionsTab } from './TransactionsTab';
+import { VaultHoldingsTab } from './VaultHoldingsTab';
 import { getTokenInfoFromAddr } from '@/utils';
 
 function HoldingsText({
@@ -224,6 +225,9 @@ const Strategy = ({ params }: StrategyParams) => {
       case 4:
         setRoute('transactions');
         break;
+      case 5:
+        setRoute('vault-holdings');
+        break;
       default:
         setRoute('manage');
         break;
@@ -253,6 +257,9 @@ const Strategy = ({ params }: StrategyParams) => {
           break;
         case 'transactions':
           setTabIndex(4);
+          break;
+        case 'vault-holdings':
+          setTabIndex(5);
           break;
         default:
           setTabIndex(0);
@@ -522,6 +529,15 @@ const Strategy = ({ params }: StrategyParams) => {
               >
                 Transactions
               </Tab>
+              <Tab
+                color={'text_secondary'}
+                _selected={{ color: 'purple', fontWeight: 'bold' }}
+                onClick={() => {
+                  mixpanel.track('Vault Holdings clicked');
+                }}
+              >
+                Vault Holdings
+              </Tab>
             </TabList>
             <TabIndicator
               mt="-1.5px"
@@ -554,6 +570,9 @@ const Strategy = ({ params }: StrategyParams) => {
                 {strategy && (
                   <TransactionsTab strategy={strategy} txHistory={txHistory} />
                 )}
+              </TabPanel>
+              <TabPanel width={'100%'} padding={0}>
+                {strategy && <VaultHoldingsTab strategy={strategy} />}
               </TabPanel>
             </TabPanels>
           </Tabs>
@@ -612,6 +631,10 @@ const Strategy = ({ params }: StrategyParams) => {
                         isMobile
                       />
                     ),
+                  },
+                  {
+                    label: 'Vault Holdings',
+                    content: <VaultHoldingsTab strategy={strategy} isMobile />,
                   },
                 ].map((item, index) => (
                   <AccordionItem

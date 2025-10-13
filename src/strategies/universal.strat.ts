@@ -16,6 +16,7 @@ import {
   Global,
   IStrategyMetadata,
   PricerFromApi,
+  VaultPosition,
   Web3Number,
   UniversalStrategySettings,
   UniversalStrategy,
@@ -174,5 +175,18 @@ export class UniversalStrategyClass<
     this.postSolve();
 
     this.status = StrategyStatus.SOLVED;
+  }
+
+  /**
+   * Get vault positions for this strategy
+   * @returns Promise<VaultPosition[]> - Array of vault positions
+   */
+  async getVaultPositions(): Promise<VaultPosition[]> {
+    try {
+      return await this.universalStrategy.getVaultPositions();
+    } catch (error) {
+      console.error('Error fetching vault positions:', error);
+      return [];
+    }
   }
 }
