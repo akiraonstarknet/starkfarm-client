@@ -117,7 +117,7 @@ export class Vesu extends IDapp<VesuPool[]> {
       // cause names are like "STRK (Genesis)"
       const symbol = p.pool.name.split(' (')[0];
       const arr = myData[symbol];
-      if (arr.length === 0) return p;
+      if (!arr || arr.length === 0) return p;
 
       const aprSplit: APRSplit = {
         apr: arr[arr.length - 1].strk_grant_apr_nrs,
