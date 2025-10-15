@@ -103,12 +103,13 @@ export class DeltaNeutralMMVesuEndur extends IStrategy<SenseiVaultSettings> {
     const endurXSTRK = pools.find((p) => p.pool.id == 'endur_strk');
 
     // get Rewards APR and offset my fee
-    const STRKRewardsAPR =
+    let STRKRewardsAPR =
       xSTRKPool?.aprSplits.find((a) => a.title == 'STRK rewards')?.apr || 0;
     if (STRKRewardsAPR == 'Err' || STRKRewardsAPR == 0) {
-      throw new Error(
-        'Failed to fetch STRK rewards APR. Please try again later.',
-      );
+      // throw new Error(
+      //   'Failed to fetch STRK rewards APR. Please try again later.',
+      // );
+      STRKRewardsAPR = 0;
     }
     const collateralAPY = (xSTRKPool?.apr || 0) + (endurXSTRK?.apr || 0);
     const feeAdjustedColAPY = collateralAPY - STRKRewardsAPR * this.fee_factor;
