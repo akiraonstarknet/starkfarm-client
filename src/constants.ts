@@ -12,6 +12,8 @@ const LOGOS = {
   DAI: 'https://assets.troves.fi/integrations/tokens/dai.svg?w=20',
   xSTRK: '/imagedelivery/c1f44170-c1b0-4531-3d3b-5f0bacfe1300/logo',
   tBTC: 'https://assets.troves.fi/integrations/tokens/tbtc.svg?w=20',
+  solvBTC: 'https://assets.troves.fi/integrations/tokens/solvbtc.svg?w=20',
+  LBTC: 'https://assets.troves.fi/integrations/tokens/lbtc.svg?w=20',
 };
 
 export type TokenName =
@@ -55,7 +57,7 @@ export const CONSTANTS = {
     BASE_APR_API: '/haiko/markets?network=mainnet',
   },
   Troves: {
-    BASE_APR_API: 'https://app.troves.fi/api/strategies',
+    BASE_APR_API: '/api/strategies',
   },
   MY_SWAP: {
     POOLS_API: '/myswap/data/pools/all.json',
@@ -98,6 +100,48 @@ export const TOKENS: TokenInfo[] = [
     isERC4626: false,
     logo: token.logo,
   })),
+  // BTC tokens
+  {
+    token: '0x03fe2b97c1fd336e750087d68b9b867997fd64a2661ff3ca5a7c771641e8e7ac',
+    name: 'WBTC',
+    decimals: 8,
+    displayDecimals: 6,
+    logo: CONSTANTS.LOGOS.WBTC,
+    isERC4626: false,
+  },
+  {
+    token: '0x4daa17763b286d1e59b97c283c0b8c949994c361e426a28f743c67bdfe9a32f',
+    name: 'tBTC',
+    decimals: 18,
+    displayDecimals: 6,
+    logo: CONSTANTS.LOGOS.tBTC,
+    isERC4626: false,
+  },
+  {
+    token: '0x0593e034dda23eea82d2ba9a30960ed42cf4a01502cc2351dc9b9881f9931a68',
+    name: 'solvBTC',
+    decimals: 18,
+    displayDecimals: 6,
+    logo: CONSTANTS.LOGOS.solvBTC,
+    isERC4626: false,
+  },
+  {
+    token: '0x036834a40984312f7f7de8d31e3f6305b325389eaeea5b1c0664b2fb936461a4',
+    name: 'LBTC',
+    decimals: 8,
+    displayDecimals: 6,
+    logo: CONSTANTS.LOGOS.LBTC,
+    isERC4626: false,
+  },
+  // STRK token
+  {
+    token: '0x4718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d',
+    name: 'STRK',
+    decimals: 18,
+    displayDecimals: 2,
+    logo: CONSTANTS.LOGOS.STRK,
+    isERC4626: false,
+  },
   {
     token: '0x06d8fa671ef84f791b7f601fa79fea8f6ceb70b5fa84189e3159d532162efc21',
     name: 'zSTRK',

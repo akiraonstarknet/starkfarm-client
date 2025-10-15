@@ -17,6 +17,7 @@ import { StrategyInfo } from '@/store/strategies.atoms';
 import { VaultPosition } from '@strkfarm/sdk';
 import { convertToMyNumber } from '@/utils';
 import { useCallback, useEffect, useState } from 'react';
+import { getPriceFromMyAPI } from '@/utils';
 
 interface VaultHoldingsTabProps {
   strategy: StrategyInfo<any>;
@@ -30,11 +31,33 @@ function getProtocolName(position: VaultPosition): string {
   return 'Vesu';
 }
 
+async function calculateCumulativeAssetSum(
+  positions: VaultPosition[],
+  currentIndex: number,
+  baseAssetTokenInfo: any,
+): Promise<number> {
+  const baseAssetPrice = await getPriceFromMyAPI(baseAssetTokenInfo);
+
+  return positions.slice(0, currentIndex + 1).reduce((sum, pos) => {
+    // If it's debt, subtract the USD value; otherwise add it
+    const isDebt = pos.remarks.toLowerCase().includes('debt');
+    const usdValue = isDebt ? -pos.usdValue : pos.usdValue;
+
+    // Convert USD value to base asset amount
+    const baseAssetAmount = usdValue / baseAssetPrice;
+    return sum + baseAssetAmount;
+  }, 0);
+}
+
 export function VaultHoldingsTab(props: VaultHoldingsTabProps) {
   const { strategy, isMobile } = props;
   const [positions, setPositions] = useState<VaultPosition[]>([]);
+  console.log('positions', positions);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [cumulativeAssetValues, setCumulativeAssetValues] = useState<number[]>(
+    [],
+  );
 
   const fetchVaultPositions = useCallback(async () => {
     try {
@@ -43,6 +66,21 @@ export function VaultHoldingsTab(props: VaultHoldingsTabProps) {
       const vaultPositions = await strategy.getVaultPositions();
       console.log('vaultPositions', vaultPositions);
       setPositions(vaultPositions);
+
+      // Calculate cumulative asset values
+      if (vaultPositions.length > 0 && strategy.holdingTokens.length > 0) {
+        const baseAsset = strategy.holdingTokens[0];
+        const cumulativeValues = [];
+        for (let i = 0; i < vaultPositions.length; i++) {
+          const cumulativeValue = await calculateCumulativeAssetSum(
+            vaultPositions,
+            i,
+            baseAsset,
+          );
+          cumulativeValues.push(cumulativeValue);
+        }
+        setCumulativeAssetValues(cumulativeValues);
+      }
     } catch (err) {
       console.error('Error fetching vault positions:', err);
       setError('Failed to load vault positions');
@@ -115,6 +153,27 @@ export function VaultHoldingsTab(props: VaultHoldingsTabProps) {
               </Text>
               <Text fontSize="14px" color="text_secondary">
                 {getProtocolName(position)}
+              </Text>
+            </Flex>
+            <Flex justifyContent="space-between" alignItems="center" mb={2}>
+              <Text fontSize="14px" color="text_secondary">
+                USD Value
+              </Text>
+              <Text fontSize="14px" color="text_secondary" fontWeight="600">
+                ${position.usdValue.toFixed(2)}
+              </Text>
+            </Flex>
+            <Flex justifyContent="space-between" alignItems="center" mb={2}>
+              <Text fontSize="14px" color="text_secondary">
+                Cumulative asset (In{' '}
+                {strategy.holdingTokens[0]?.name || 'Asset'})
+              </Text>
+              <Text fontSize="14px" color="text_secondary" fontWeight="600">
+                {cumulativeAssetValues[index] !== undefined
+                  ? `${cumulativeAssetValues[index].toFixed(
+                      strategy.holdingTokens[0]?.name === 'STRK' ? 2 : 6,
+                    )} ${strategy.holdingTokens[0]?.name || 'Asset'}`
+                  : 'Loading...'}
               </Text>
             </Flex>
             <Flex alignItems="center" gap={2} mb={2}>
@@ -211,6 +270,18 @@ export function VaultHoldingsTab(props: VaultHoldingsTabProps) {
                   fontSize={'14px'}
                   fontWeight={'600'}
                   textTransform={'capitalize'}
+                >
+                  Cumulative asset (In{' '}
+                  <Text as="span" textTransform={'none'}>
+                    {strategy.holdingTokens[0]?.name || 'Asset'}
+                  </Text>
+                  )
+                </Th>
+                <Th
+                  color={'white'}
+                  fontSize={'14px'}
+                  fontWeight={'600'}
+                  textTransform={'capitalize'}
                   borderTopRightRadius={'lg'}
                 >
                   Purpose / Remarks
@@ -224,44 +295,56 @@ export function VaultHoldingsTab(props: VaultHoldingsTabProps) {
                     {index + 1}.
                   </Td>
                   <Td color={'text_secondary'} fontSize={'14px'}>
-                    <Flex gap={1}>
-                      <Avatar
-                        size="xs"
-                        src={position.token.logo}
-                        name={position.token.name}
-                      />
-                      <Text
-                        mt={'2px'}
-                        color={
-                          position.remarks.toLowerCase().includes('debt')
-                            ? 'red'
-                            : 'text_secondary'
-                        }
-                      >
-                        {position.remarks.toLowerCase().includes('debt')
-                          ? '-'
-                          : ''}
-                        {convertToMyNumber(
-                          position.amount,
-                        ).toEtherToFixedDecimals(
-                          position.token.displayDecimals || 2,
-                        )}{' '}
-                        {position.token.symbol}
-                        {position.remarks.toLowerCase().includes('debt') && (
-                          <Text
-                            as="span"
-                            color={'text_secondary'}
-                            fontSize={'12px'}
-                            ml={1}
-                          >
-                            (Debt)
-                          </Text>
-                        )}
+                    <Flex gap={1} flexDirection="column">
+                      <Flex gap={1}>
+                        <Avatar
+                          size="xs"
+                          src={position.token.logo}
+                          name={position.token.name}
+                        />
+                        <Text
+                          mt={'2px'}
+                          color={
+                            position.remarks.toLowerCase().includes('debt')
+                              ? 'red'
+                              : 'text_secondary'
+                          }
+                        >
+                          {position.remarks.toLowerCase().includes('debt')
+                            ? '-'
+                            : ''}
+                          {convertToMyNumber(
+                            position.amount,
+                          ).toEtherToFixedDecimals(
+                            position.token.displayDecimals || 2,
+                          )}{' '}
+                          {position.token.symbol}
+                          {position.remarks.toLowerCase().includes('debt') && (
+                            <Text
+                              as="span"
+                              color={'text_secondary'}
+                              fontSize={'12px'}
+                              ml={1}
+                            >
+                              (Debt)
+                            </Text>
+                          )}
+                        </Text>
+                      </Flex>
+                      <Text fontSize={'12px'} color={'text_secondary'} ml={6}>
+                        ${position.usdValue.toFixed(2)}
                       </Text>
                     </Flex>
                   </Td>
                   <Td color={'text_secondary'} fontSize={'14px'}>
                     {getProtocolName(position)}
+                  </Td>
+                  <Td color={'text_secondary'} fontSize={'14px'}>
+                    {cumulativeAssetValues[index] !== undefined
+                      ? `${cumulativeAssetValues[index].toFixed(
+                          strategy.holdingTokens[0]?.name === 'STRK' ? 2 : 6,
+                        )} ${strategy.holdingTokens[0]?.name || 'Asset'}`
+                      : 'Loading...'}
                   </Td>
                   <Td color={'text_secondary'} fontSize={'14px'}>
                     {position.remarks}
