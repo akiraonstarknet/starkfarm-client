@@ -51,7 +51,7 @@ const nextConfig = {
       },
       {
         source: '/vesu/:path*',
-        destination: 'https://api.vesu.xyz/:path*',
+        destination: 'https://staging.api.vesu.xyz/:path*',
       },
       {
         source: '/api/price/:path*',

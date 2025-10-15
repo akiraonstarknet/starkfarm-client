@@ -39,8 +39,9 @@ export function ContractDetails(props: { strategy: StrategyInfo<any> }) {
               lineHeight={'20px'}
               color={'text_secondary'}
             >
-              {props.strategy.metadata.contractDetails.map(
-                (contract, index) => (
+              {props.strategy.metadata.contractDetails
+                .filter((contract) => !contract.name.includes('AUM'))
+                .map((contract, index) => (
                   <Flex
                     key={index}
                     fontSize={'14px'}
@@ -61,8 +62,7 @@ export function ContractDetails(props: { strategy: StrategyInfo<any> }) {
                       <ExternalLinkIcon />
                     </a>
                   </Flex>
-                ),
-              )}
+                ))}
             </AccordionPanel>
           </AccordionItem>
         </Accordion>

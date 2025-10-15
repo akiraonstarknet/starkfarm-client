@@ -97,18 +97,19 @@ export class DeltaNeutralMMVesuEndur extends IStrategy<SenseiVaultSettings> {
   async solve(pools: PoolInfo[], amount: string) {
     this.status = StrategyStatus.SOLVING;
     const re7PoolID =
-      '2345856225134458665876812536882617294246962319062565703131100435311373119841';
+      '0x052fb52363939c3aa848f8f4ac28f0a51379f8d1b971d8444de25fbd77d8f161';
     const xSTRKPool = pools.find((p) => p.pool.id == `Vesu_${re7PoolID}_xSTRK`);
     const STRKPool = pools.find((p) => p.pool.id == `Vesu_${re7PoolID}_STRK`);
     const endurXSTRK = pools.find((p) => p.pool.id == 'endur_strk');
 
     // get Rewards APR and offset my fee
-    const STRKRewardsAPR =
+    let STRKRewardsAPR =
       xSTRKPool?.aprSplits.find((a) => a.title == 'STRK rewards')?.apr || 0;
     if (STRKRewardsAPR == 'Err' || STRKRewardsAPR == 0) {
-      throw new Error(
-        'Failed to fetch STRK rewards APR. Please try again later.',
-      );
+      // throw new Error(
+      //   'Failed to fetch STRK rewards APR. Please try again later.',
+      // );
+      STRKRewardsAPR = 0;
     }
     const collateralAPY = (xSTRKPool?.apr || 0) + (endurXSTRK?.apr || 0);
     const feeAdjustedColAPY = collateralAPY - STRKRewardsAPR * this.fee_factor;
