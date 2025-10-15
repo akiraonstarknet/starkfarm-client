@@ -20,6 +20,7 @@ import {
   IStrategyMetadata,
   SingleActionAmount,
   TokenInfo as TokenInfoV2,
+  VaultPosition,
   Web3Number,
 } from '@strkfarm/sdk';
 import { Atom, atom } from 'jotai';
@@ -318,6 +319,15 @@ export class IStrategyProps<T> {
     const decimals = tokenInfo.decimals;
     const quoteDecimals = quoteToken.decimals;
     return new Web3Number(amt.toString(), quoteToken.decimals);
+  }
+
+  /**
+   * Get vault positions for this strategy
+   * @returns Promise<VaultPosition[]> - Array of vault positions
+   */
+  async getVaultPositions(): Promise<VaultPosition[]> {
+    // Default implementation returns empty array for legacy strategies
+    return [];
   }
 }
 

@@ -17,6 +17,7 @@ import {
   Global,
   IStrategyMetadata,
   PricerFromApi,
+  VaultPosition,
   Web3Number,
   CLVaultStrategySettings,
   EkuboCLVault,
@@ -389,4 +390,13 @@ export class EkuboClStrategy extends IStrategy<CLVaultStrategySettings> {
       };
     });
   };
+
+  /**
+   * Get vault positions for this strategy
+   * @returns Promise<VaultPosition[]> - Array of vault positions
+   */
+  async getVaultPositions(): Promise<VaultPosition[]> {
+    // Ekubo CL vaults don't support vault positions yet
+    return [];
+  }
 }
