@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { atom } from 'jotai';
 import { PoolInfo, PoolType } from '@/store/pools';
-import { RpcProvider } from 'starknet';
 import { getLiveStatusNumber, getStrategies } from '@/store/strategies.atoms';
 import MyNumber from '@/utils/MyNumber';
 import { IStrategy, NFTInfo, TokenInfo } from '@/strategies/IStrategy';
@@ -11,6 +10,7 @@ import VesuAtoms, { vesu } from '@/store/vesu.store';
 import EndurAtoms, { endur } from '@/store/endur.store';
 import { setDataToRedis, getDataFromRedis, getRewardsInfo } from '../lib';
 import { DEFAULT_APY_METHODLOGY } from '@/constants';
+import { getProvider } from '@/lib/provider';
 
 export const revalidate = 1800; // 30 minutes
 export const dynamic = 'force-dynamic';
@@ -25,8 +25,6 @@ const allPoolsAtom = atom<PoolInfo[]>((get) => {
 
 async function getPools(store: any, retry = 0) {
   const allPools: PoolInfo[] | undefined = store.get(allPoolsAtom);
-
-  console.log('allPools', allPools?.length);
   // undo
   const minProtocolsRequired: string[] = [vesu.name, endur.name];
   const hasRequiredPools = minProtocolsRequired.every((p) => {
@@ -51,9 +49,7 @@ async function getPools(store: any, retry = 0) {
   return allPools;
 }
 
-const provider = new RpcProvider({
-  nodeUrl: process.env.RPC_URL || 'https://starknet-mainnet.public.blastapi.io',
-});
+const provider = getProvider();
 
 async function getStrategyInfo(
   strategy: IStrategy<any>,

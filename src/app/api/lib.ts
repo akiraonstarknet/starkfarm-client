@@ -1,7 +1,8 @@
 import { TrovesStrategyAPIResult } from '@/store/troves.atoms';
 import { UniversalStrategies } from '@strkfarm/sdk';
 import { Redis } from '@upstash/redis';
-import { Contract, RpcProvider } from 'starknet';
+import { Contract } from 'starknet';
+import { getProvider } from '@/lib/provider';
 
 const kvRedis = new Redis({
   url: process.env.VK_REDIS_KV_REST_API_URL,
@@ -96,9 +97,7 @@ export const getRewardsInfo = async (
     };
   });
 
-  const provider = new RpcProvider({
-    nodeUrl: process.env.RPC_URL!,
-  });
+  const provider = getProvider();
 
   const rewardsInfo: {
     id: string;

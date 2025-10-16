@@ -6,11 +6,12 @@ import { capitalize, standariseAddress } from '@/utils';
 import MyNumber from '@/utils/MyNumber';
 import { Getter, Setter, atom } from 'jotai';
 import toast from 'react-hot-toast';
-import { RpcProvider, TransactionExecutionStatus } from 'starknet';
+import { TransactionExecutionStatus } from 'starknet';
 import { StrategyInfo, strategiesAtom } from './strategies.atoms';
 import { atomWithQuery } from 'jotai-tanstack-query';
 import { gql } from '@apollo/client';
 import apolloClient from '@/utils/apolloClient';
+import { getProvider } from '@/lib/provider';
 
 export interface StrategyTxProps {
   strategyId: string;
@@ -215,9 +216,7 @@ async function waitForTransaction(
   get: Getter,
   set: Setter,
 ) {
-  const provider = new RpcProvider({
-    nodeUrl: process.env.NEXT_PUBLIC_RPC_URL,
-  });
+  const provider = getProvider();
   console.log('waitForTransaction', tx);
   await isTxAccepted(tx.tx_hash);
 
@@ -230,9 +229,7 @@ async function waitForTransaction(
 // Somehow waitForTransaction is giving delayed confirmation
 // even with 5s retry interval. So, using this function instead
 async function isTxAccepted(tx_hash: string) {
-  const provider = new RpcProvider({
-    nodeUrl: process.env.NEXT_PUBLIC_RPC_URL,
-  });
+  const provider = getProvider();
   let keepChecking = true;
   const maxRetries = 30;
   let retry = 0;
