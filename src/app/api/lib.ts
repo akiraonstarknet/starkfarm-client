@@ -4,10 +4,25 @@ import { Redis } from '@upstash/redis';
 import { Contract } from 'starknet';
 import { getProvider } from '@/lib/provider';
 
-const kvRedis = new Redis({
-  url: process.env.VK_REDIS_KV_REST_API_URL,
-  token: process.env.VK_REDIS_KV_REST_API_TOKEN,
-});
+let kvRedis: Redis | null = null;
+
+function getRedisClient() {
+  if (
+    !process.env.VK_REDIS_KV_REST_API_URL ||
+    !process.env.VK_REDIS_KV_REST_API_TOKEN
+  ) {
+    return null;
+  }
+
+  if (!kvRedis) {
+    kvRedis = new Redis({
+      url: process.env.VK_REDIS_KV_REST_API_URL,
+      token: process.env.VK_REDIS_KV_REST_API_TOKEN,
+    });
+  }
+
+  return kvRedis;
+}
 
 export async function getDataFromRedis(
   key: string,
@@ -19,11 +34,12 @@ export async function getDataFromRedis(
     return null;
   }
 
-  if (!process.env.VK_REDIS_KV_REST_API_URL) {
+  const redis = getRedisClient();
+  if (!redis) {
     return null;
   }
 
-  const cacheData: any = await kvRedis.get(key);
+  const cacheData: any = await redis.get(key);
   if (
     cacheData &&
     new Date().getTime() - new Date(cacheData.lastUpdated).getTime() <
@@ -37,11 +53,12 @@ export async function getDataFromRedis(
 }
 
 export async function setDataToRedis(key: string, data: any) {
-  if (!process.env.VK_REDIS_KV_REST_API_URL) {
+  const redis = getRedisClient();
+  if (!redis) {
     return;
   }
 
-  await kvRedis.set(key, data);
+  await redis.set(key, data);
   console.log(`Cache set for ${key}`);
 }
 

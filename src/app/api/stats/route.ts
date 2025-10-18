@@ -1,6 +1,6 @@
 import { getStrategies } from '@/store/strategies.atoms';
 import { NextResponse } from 'next/server';
-import { getDataFromRedis } from '../lib';
+import { getDataFromRedis, setDataToRedis } from '../lib';
 
 export const revalidate = 1800;
 export const dynamic = 'force-dynamic';
@@ -19,8 +19,6 @@ export async function GET(_req: Request) {
   }
 
   const strategies = getStrategies();
-
-  console.log('strategies', strategies.length);
 
   const values = strategies.map(async (strategy, index) => {
     if (strategy.isLive()) {
@@ -47,14 +45,35 @@ export async function GET(_req: Request) {
 
   const result = await Promise.all(values);
 
-  const response = NextResponse.json({
+  const data = {
     tvl: result.reduce((a, b) => a + b, 0),
     lastUpdated: new Date().toISOString(),
-  });
+  };
 
-  response.headers.set(
-    'Cache-Control',
-    `s-maxage=${revalidate}, stale-while-revalidate=180`,
-  );
-  return response;
+  try {
+    await setDataToRedis(REDIS_KEY, data);
+    const response = NextResponse.json(data);
+    response.headers.set(
+      'Cache-Control',
+      `s-maxage=${revalidate}, stale-while-revalidate=300`,
+    );
+    return response;
+  } catch (err) {
+    console.error('Error /api/stats', err);
+    const errorResponse = NextResponse.json(
+      {
+        status: false,
+        tvl: 0,
+        lastUpdated: new Date().toISOString(),
+      },
+      { status: 500 },
+    );
+    errorResponse.headers.set(
+      'Cache-Control',
+      'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
+    );
+    errorResponse.headers.set('Pragma', 'no-cache');
+    errorResponse.headers.set('Expires', '0');
+    return errorResponse;
+  }
 }
