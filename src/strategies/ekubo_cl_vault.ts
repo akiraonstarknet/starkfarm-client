@@ -272,24 +272,34 @@ export class EkuboClStrategy extends IStrategy<CLVaultStrategySettings> {
   };
 
   async solve(pools: PoolInfo[], amount: string) {
-    // for LSTs, we use 30d, else 7d for the yield calculation
-    // TODO Make the block compute more dynamic
-    const blocksDiff = this.metadata.additionalInfo.lstContract
-      ? 600000
-      : 600000 / 4;
-    const yieldInfo = await this.clVault.netAPY(
-      'latest',
-      blocksDiff,
-      '7d' as any,
-    );
-    this.netYield = yieldInfo;
-    this.leverage = 1;
+    try {
+      // for LSTs, we use 30d, else 7d for the yield calculation
+      // TODO Make the block compute more dynamic
+      const blocksDiff = this.metadata.additionalInfo.lstContract
+        ? 600000
+        : 600000 / 4;
+      const yieldInfo = await this.clVault.netAPY(
+        'latest',
+        blocksDiff,
+        '7d' as any,
+      );
+      this.netYield = yieldInfo;
+      this.leverage = 1;
 
-    this.investmentFlows = await this.clVault.getInvestmentFlows();
+      this.investmentFlows = await this.clVault.getInvestmentFlows();
 
-    this.postSolve();
+      this.postSolve();
 
-    this.status = StrategyStatus.SOLVED;
+      this.status = StrategyStatus.SOLVED;
+    } catch (error) {
+      console.error(`${this.metadata.name}::Error in solve():`, error);
+      // Set safe defaults to prevent API failure
+      this.netYield = 0;
+      this.leverage = 1;
+      this.investmentFlows = [];
+      this.postSolve();
+      this.status = StrategyStatus.SOLVED;
+    }
   }
 
   getEkuboStratBalanceAtom = (underlyingToken: TokenInfo) => {

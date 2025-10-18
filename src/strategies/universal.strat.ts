@@ -164,17 +164,27 @@ export class UniversalStrategyClass<
   };
 
   async solve(pools: PoolInfo[], amount: string) {
-    const yieldInfo = await this.universalStrategy.netAPY();
-    // todo to deduct fee
-    this.netYield = yieldInfo.net * (1 - this.fee_factor);
-    console.log('netYield2', this.netYield, Number(amount));
-    this.leverage = 1;
+    try {
+      const yieldInfo = await this.universalStrategy.netAPY();
+      // todo to deduct fee
+      this.netYield = yieldInfo.net * (1 - this.fee_factor);
+      console.log('netYield2', this.netYield, Number(amount));
+      this.leverage = 1;
 
-    this.investmentFlows = [];
+      this.investmentFlows = [];
 
-    this.postSolve();
+      this.postSolve();
 
-    this.status = StrategyStatus.SOLVED;
+      this.status = StrategyStatus.SOLVED;
+    } catch (error) {
+      console.error(`${this.metadata.name}::Error in solve():`, error);
+      // Set safe defaults to prevent API failure
+      this.netYield = 0;
+      this.leverage = 1;
+      this.investmentFlows = [];
+      this.postSolve();
+      this.status = StrategyStatus.SOLVED;
+    }
   }
 
   /**

@@ -152,22 +152,43 @@ export class VesuRebalanceStrategy extends IStrategy<VesuRebalanceSettings> {
   };
 
   async solve(pools: PoolInfo[], amount: string) {
-    const poolsInfo = await this.vesuRebalance.getPools();
-    if (poolsInfo.isError) {
-      throw new Error('Failed to fetch pools for Vesu rebalance');
+    try {
+      const poolsInfo = await this.vesuRebalance.getPools();
+      if (poolsInfo.isError) {
+        console.error(
+          `${this.metadata.name}::Failed to fetch pools. isErrorPositionsAPI: ${poolsInfo.isErrorPositionsAPI}, isErrorPoolsAPI: ${poolsInfo.isErrorPoolsAPI}`,
+        );
+        // Set safe defaults instead of crashing
+        this.netYield = 0;
+        this.leverage = 1;
+        this.investmentFlows = [];
+        this.postSolve();
+        this.status = StrategyStatus.SOLVED;
+        return;
+      }
+
+      const yieldInfo = await this.vesuRebalance.netAPYGivenPools(
+        poolsInfo.data,
+      );
+      this.netYield = yieldInfo;
+      console.log('netYield2', this.netYield, Number(amount));
+      this.leverage = 1;
+
+      this.investmentFlows = await this.vesuRebalance.getInvestmentFlows(
+        poolsInfo.data,
+      );
+
+      this.postSolve();
+
+      this.status = StrategyStatus.SOLVED;
+    } catch (error) {
+      console.error(`${this.metadata.name}::Error in solve():`, error);
+      // Set safe defaults to prevent API failure
+      this.netYield = 0;
+      this.leverage = 1;
+      this.investmentFlows = [];
+      this.postSolve();
+      this.status = StrategyStatus.SOLVED;
     }
-
-    const yieldInfo = await this.vesuRebalance.netAPYGivenPools(poolsInfo.data);
-    this.netYield = yieldInfo;
-    console.log('netYield2', this.netYield, Number(amount));
-    this.leverage = 1;
-
-    this.investmentFlows = await this.vesuRebalance.getInvestmentFlows(
-      poolsInfo.data,
-    );
-
-    this.postSolve();
-
-    this.status = StrategyStatus.SOLVED;
   }
 }

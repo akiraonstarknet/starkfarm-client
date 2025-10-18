@@ -51,8 +51,8 @@ export class HyperLSTStrategy extends UniversalStrategyClass<
   }
 
   depositMethods = async (inputs: DepositActionInputs) => {
-    const { amount, address, provider } = inputs;
-    const lstUnderlying = this.universalStrategy.getLSTUnderlyingTokenInfo();
+    const { amount, address } = inputs;
+    // const lstUnderlying = this.universalStrategy.getLSTUnderlyingTokenInfo();
     if (!address || address == '0x0') {
       return [
         DummyStrategyActionHook([this.asset]),
@@ -108,24 +108,27 @@ export class HyperLSTStrategy extends UniversalStrategyClass<
   };
 
   async solve(pools: PoolInfo[], amount: string) {
-    const yieldInfo = await this.universalStrategy.netAPY();
-    // todo to deduct fee
-    const LSTYield = yieldInfo.splits.find((split) => split.id == 'lst_apy');
-    if (!LSTYield) {
-      throw new Error('LST yield not found');
+    try {
+      const yieldInfo = await this.universalStrategy.netAPY();
+
+      this.netYield = yieldInfo.net * (1 - this.fee_factor);
+
+      console.log('netYield2', this.netYield, Number(amount));
+      this.leverage = 1;
+
+      this.investmentFlows = [];
+
+      this.postSolve();
+
+      this.status = StrategyStatus.SOLVED;
+    } catch (error) {
+      console.error(`${this.metadata.name}::Error in solve():`, error);
+      // Set defaults to prevent total failure
+      this.netYield = 0;
+      this.leverage = 1;
+      this.investmentFlows = [];
+      this.postSolve();
+      this.status = StrategyStatus.SOLVED;
     }
-    console.log(
-      `${this.metadata.name}::LST APY: ${LSTYield.apy}, net APY: ${yieldInfo.net}, fee factor: ${this.fee_factor}`,
-    );
-    this.netYield =
-      LSTYield.apy + (yieldInfo.net - LSTYield.apy) * (1 - this.fee_factor);
-    console.log('netYield2', this.netYield, Number(amount));
-    this.leverage = 1;
-
-    this.investmentFlows = [];
-
-    this.postSolve();
-
-    this.status = StrategyStatus.SOLVED;
   }
 }

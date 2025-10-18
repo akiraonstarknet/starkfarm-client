@@ -95,44 +95,64 @@ export class DeltaNeutralMMVesuEndur extends IStrategy<SenseiVaultSettings> {
   }
 
   async solve(pools: PoolInfo[], amount: string) {
-    this.status = StrategyStatus.SOLVING;
-    const re7PoolID =
-      '0x052fb52363939c3aa848f8f4ac28f0a51379f8d1b971d8444de25fbd77d8f161';
-    const xSTRKPool = pools.find((p) => p.pool.id == `Vesu_${re7PoolID}_xSTRK`);
-    const STRKPool = pools.find((p) => p.pool.id == `Vesu_${re7PoolID}_STRK`);
-    const endurXSTRK = pools.find((p) => p.pool.id == 'endur_strk');
-
-    // get Rewards APR and offset my fee
-    let STRKRewardsAPR =
-      xSTRKPool?.aprSplits.find((a) => a.title == 'STRK rewards')?.apr || 0;
-    if (STRKRewardsAPR == 'Err' || STRKRewardsAPR == 0) {
-      // throw new Error(
-      //   'Failed to fetch STRK rewards APR. Please try again later.',
-      // );
-      STRKRewardsAPR = 0;
-    }
-    const collateralAPY = (xSTRKPool?.apr || 0) + (endurXSTRK?.apr || 0);
-    const feeAdjustedColAPY = collateralAPY - STRKRewardsAPR * this.fee_factor;
-    const borrowAPY = STRKPool?.borrow.apr || 0;
-
-    const { collateralUSDValue, debtUSDValue } =
-      await this.senseiVault.getPositionInfo();
-
-    const expectedLeverage = await this.expectedLeverage();
-    if (expectedLeverage <= 0) {
-      this.status = StrategyStatus.UNINTIALISED;
-      throw new Error(
-        'Strategy is not solvable at the moment: expectedLeverage <= 0',
+    try {
+      this.status = StrategyStatus.SOLVING;
+      const re7PoolID =
+        '0x052fb52363939c3aa848f8f4ac28f0a51379f8d1b971d8444de25fbd77d8f161';
+      const xSTRKPool = pools.find(
+        (p) => p.pool.id == `Vesu_${re7PoolID}_xSTRK`,
       );
-    }
-    this.setMetadataPoints(Number(expectedLeverage.toFixed(1)));
+      const STRKPool = pools.find((p) => p.pool.id == `Vesu_${re7PoolID}_STRK`);
+      const endurXSTRK = pools.find((p) => p.pool.id == 'endur_strk');
 
-    const PAYOFF =
-      Number(collateralUSDValue.toFixed(6)) * feeAdjustedColAPY -
-      Number(debtUSDValue.toFixed(6)) * borrowAPY;
-    const investment =
-      Number(collateralUSDValue.toFixed(6)) - Number(debtUSDValue.toFixed(6));
-    this.netYield = investment == 0 ? 0 : PAYOFF / investment;
+      // get Rewards APR and offset my fee
+      let STRKRewardsAPR =
+        xSTRKPool?.aprSplits.find((a) => a.title == 'STRK rewards')?.apr || 0;
+      if (STRKRewardsAPR == 'Err' || STRKRewardsAPR == 0) {
+        // throw new Error(
+        //   'Failed to fetch STRK rewards APR. Please try again later.',
+        // );
+        STRKRewardsAPR = 0;
+      }
+      const collateralAPY = (xSTRKPool?.apr || 0) + (endurXSTRK?.apr || 0);
+      const feeAdjustedColAPY =
+        collateralAPY - STRKRewardsAPR * this.fee_factor;
+      const borrowAPY = STRKPool?.borrow.apr || 0;
+
+      const { collateralUSDValue, debtUSDValue } =
+        await this.senseiVault.getPositionInfo();
+
+      const expectedLeverage = await this.expectedLeverage();
+      if (expectedLeverage <= 0) {
+        console.warn(
+          `${this.metadata.name}::expectedLeverage <= 0, using safe defaults`,
+        );
+        this.netYield = 0;
+        this.leverage = 1;
+        this.status = StrategyStatus.SOLVED;
+        this.postSolve();
+        return;
+      }
+      this.setMetadataPoints(Number(expectedLeverage.toFixed(1)));
+
+      const PAYOFF =
+        Number(collateralUSDValue.toFixed(6)) * feeAdjustedColAPY -
+        Number(debtUSDValue.toFixed(6)) * borrowAPY;
+      const investment =
+        Number(collateralUSDValue.toFixed(6)) - Number(debtUSDValue.toFixed(6));
+      this.netYield = investment == 0 ? 0 : PAYOFF / investment;
+      this.leverage = expectedLeverage;
+      this.status = StrategyStatus.SOLVED;
+      this.postSolve();
+    } catch (error) {
+      console.error(`${this.metadata.name}::Error in solve():`, error);
+      // Set safe defaults to prevent API failure
+      this.netYield = 0;
+      this.leverage = 1;
+      this.investmentFlows = [];
+      this.status = StrategyStatus.SOLVED;
+      this.postSolve();
+    }
   }
 
   getUserTVL = async (user: string): Promise<AmountsInfo> => {
