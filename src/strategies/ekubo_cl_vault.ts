@@ -13,10 +13,7 @@ import {
 } from './IStrategy';
 import {
   ContractAddr,
-  getMainnetConfig,
-  Global,
   IStrategyMetadata,
-  PricerFromApi,
   VaultPosition,
   Web3Number,
   CLVaultStrategySettings,
@@ -43,6 +40,10 @@ import {
 import { atomWithQuery } from 'jotai-tanstack-query';
 import { addressAtom } from '@/store/claims.atoms';
 import { ReactNode } from 'react';
+import {
+  getSharedConfig,
+  getSharedPricer,
+} from '@/lib/sharedStrategyResources';
 
 export class EkuboClStrategy extends IStrategy<CLVaultStrategySettings> {
   clVault: EkuboCLVault;
@@ -67,9 +68,8 @@ export class EkuboClStrategy extends IStrategy<CLVaultStrategySettings> {
       },
     ];
 
-    const config = getMainnetConfig(process.env.NEXT_PUBLIC_RPC_URL!, 'latest');
-    const tokens = Global.getDefaultTokens();
-    const pricer = new PricerFromApi(config, tokens);
+    const config = getSharedConfig();
+    const pricer = getSharedPricer();
     const clVault = new EkuboCLVault(config, pricer, strategy);
 
     const token0Info = getTokenInfoFromName(strategy.depositTokens[0].symbol);

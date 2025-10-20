@@ -1,6 +1,5 @@
 import { addressAtom } from '@/store/claims.atoms';
 import { referralCodeAtom } from '@/store/referral.store';
-import { strategiesAtom } from '@/store/strategies.atoms';
 import { dAppStatsAtom, userStatsAtom } from '@/store/utils.atoms';
 import { MYSTYLES } from '@/style';
 import { copyReferralLink, getHosturl } from '@/utils';
@@ -21,7 +20,6 @@ import Link from 'next/link';
 import React from 'react';
 
 const TVL: React.FC = () => {
-  const _strategies = useAtomValue(strategiesAtom);
   const { data, isPending } = useAtomValue(dAppStatsAtom);
   const { data: userData, isPending: userStatsPending } =
     useAtomValue(userStatsAtom);

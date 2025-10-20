@@ -12,10 +12,7 @@ import {
 } from './IStrategy';
 import {
   ContractAddr,
-  getMainnetConfig,
-  Global,
   IStrategyMetadata,
-  PricerFromApi,
   VaultPosition,
   Web3Number,
   UniversalStrategySettings,
@@ -30,6 +27,10 @@ import {
 import { getBalanceAtom } from '@/store/balance.atoms';
 import { atom } from 'jotai';
 import { ReactNode } from 'react';
+import {
+  getSharedConfig,
+  getSharedPricer,
+} from '@/lib/sharedStrategyResources';
 
 export class UniversalStrategyClass<
   T extends new (
@@ -60,9 +61,8 @@ export class UniversalStrategyClass<
       },
     ];
 
-    const config = getMainnetConfig(process.env.NEXT_PUBLIC_RPC_URL!, 'latest');
-    const tokens = Global.getDefaultTokens();
-    const pricer = new PricerFromApi(config, tokens);
+    const config = getSharedConfig();
+    const pricer = getSharedPricer();
     const universalStrategy = new StrategyClass(config, pricer, strategy);
 
     super(

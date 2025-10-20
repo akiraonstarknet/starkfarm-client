@@ -54,6 +54,7 @@ const provider = getProvider();
 async function getStrategyInfo(
   strategy: IStrategy<any>,
 ): Promise<TrovesStrategyAPIResult> {
+  // Get TVL directly from strategy
   const tvl = await strategy.getTVL();
 
   const defaultAPYMethodology = DEFAULT_APY_METHODLOGY;
@@ -113,6 +114,7 @@ async function getStrategyInfo(
     }),
     investmentFlows: strategy.investmentFlows,
     curator: strategy.metadata.curator,
+    tags: strategy.settings.tags || [],
   };
 
   const rewardsInfo = await getRewardsInfo([
@@ -154,13 +156,6 @@ export async function GET(req: Request) {
     });
 
     await Promise.all(proms);
-    // strategies.forEach((strategy) => {
-    //   try {
-    //     strategy.solve(allPools, '1000');
-    //   } catch (err) {
-    //     console.error('Error solving strategy', strategy.name, err);
-    //   }
-    // });
 
     const stratsDataProms: Promise<TrovesStrategyAPIResult>[] = [];
     for (let i = 0; i < strategies.length; i++) {
@@ -169,23 +164,6 @@ export async function GET(req: Request) {
     const stratsData = await Promise.all(stratsDataProms);
 
     const _strats = stratsData.sort((a, b) => {
-      // sort based on risk factor, live status and apy
-      // const aRisk = a.riskFactor;
-      // const bRisk = b.riskFactor;
-
-      // Priority: status < 5 (priority 0), then status 5 (priority 1), then others (priority 2)
-      // console.log('statusNumber', a.status, b.status, a.name, b.name);
-      // const getPriority = (statusNumber: number) => {
-      //   if (statusNumber < 5) return 0;
-      //   if (statusNumber === 5) return 1;
-      //   return 2;
-      // };
-
-      // const _aPriority = getPriority(a.status.number);
-      // const _bPriority = getPriority(b.status.number);
-
-      // if (_aPriority !== _bPriority) return _aPriority - _bPriority;
-      // if (aRisk !== bRisk) return aRisk - bRisk;
       return b.apy - a.apy;
     });
 

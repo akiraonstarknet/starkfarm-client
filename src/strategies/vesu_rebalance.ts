@@ -12,11 +12,8 @@ import {
 } from './IStrategy';
 import {
   ContractAddr,
-  getMainnetConfig,
-  Global,
   IStrategyMetadata,
   VesuRebalance,
-  PricerFromApi,
   Web3Number,
   VesuRebalanceSettings,
 } from '@strkfarm/sdk';
@@ -28,6 +25,10 @@ import {
 } from '@/utils';
 import { getBalanceAtom } from '@/store/balance.atoms';
 import { atom } from 'jotai';
+import {
+  getSharedConfig,
+  getSharedPricer,
+} from '@/lib/sharedStrategyResources';
 
 export class VesuRebalanceStrategy extends IStrategy<VesuRebalanceSettings> {
   vesuRebalance: VesuRebalance;
@@ -51,9 +52,8 @@ export class VesuRebalanceStrategy extends IStrategy<VesuRebalanceSettings> {
       },
     ];
 
-    const config = getMainnetConfig(process.env.NEXT_PUBLIC_RPC_URL!, 'latest');
-    const tokens = Global.getDefaultTokens();
-    const pricer = new PricerFromApi(config, tokens);
+    const config = getSharedConfig();
+    const pricer = getSharedPricer();
     const vesuRebalance = new VesuRebalance(config, pricer, strategy);
 
     super(

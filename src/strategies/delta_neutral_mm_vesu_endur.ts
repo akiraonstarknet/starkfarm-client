@@ -26,15 +26,16 @@ import {
   Web3Number,
   SenseiVaultSettings,
   SenseiVault,
-  getMainnetConfig,
-  Global,
-  PricerFromApi,
   ContractAddr,
 } from '@strkfarm/sdk';
 import axios from 'axios';
 import React from 'react';
 import { getBalanceAtom } from '@/store/balance.atoms';
 import { atom } from 'jotai';
+import {
+  getSharedConfig,
+  getSharedPricer,
+} from '@/lib/sharedStrategyResources';
 
 export class DeltaNeutralMMVesuEndur extends IStrategy<SenseiVaultSettings> {
   senseiVault: SenseiVault;
@@ -77,9 +78,8 @@ export class DeltaNeutralMMVesuEndur extends IStrategy<SenseiVaultSettings> {
     ];
     this.risks = risks;
 
-    const config = getMainnetConfig(process.env.NEXT_PUBLIC_RPC_URL!, 'latest');
-    const tokens = Global.getDefaultTokens();
-    const pricer = new PricerFromApi(config, tokens);
+    const config = getSharedConfig();
+    const pricer = getSharedPricer();
     this.senseiVault = new SenseiVault(config, pricer, strategy);
     this.fee_factor = this.metadata.additionalInfo.feeBps / 10000; // convert bps to decimal
   }
