@@ -432,7 +432,7 @@ export function getStrategies() {
           },
           {
             tab: 'deposit',
-            text: 'It can upto 1 week before your deposit appreciates in value. This is because, the LST price is taken from DEXes and prices are not updated realtime.',
+            text: 'It may take up to one week for your deposit to appreciate in value. This delay occurs because the LST price is sourced from DEXes and liquidity is usually rebased once a week.',
             type: 'info',
           },
         ],
