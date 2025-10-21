@@ -409,6 +409,8 @@ function InternalDeposit(props: DepositProps) {
               <Text color="text_secondary" fontWeight={'500'}>
                 {!tvlInfo || !tvlInfo?.data ? (
                   <Spinner size="2xs" />
+                ) : isTVLFull ? (
+                  props.strategy.settings.maxTVL.toLocaleString()
                 ) : (
                   Number(
                     tvlInfo.data?.amounts[0].amount.toFixed(2),
