@@ -384,7 +384,7 @@ export function getStrategies() {
   });
 
   const lstMaxTVLs = {
-    xWBTC: 18,
+    xWBTC: 5,
     xLBTC: 5,
     xtBTC: 5,
     xsBTC: 5,
