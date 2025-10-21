@@ -430,6 +430,11 @@ export function getStrategies() {
             ),
             type: 'info',
           },
+          {
+            tab: 'deposit',
+            text: 'It can upto 1 week before your deposit appreciates in value. This is because, the LST price is taken from DEXes and prices are not updated realtime.',
+            type: 'info',
+          },
         ],
         tags: [StrategyTag.Endur],
         isAudited: hyper.auditUrl ? true : false,
