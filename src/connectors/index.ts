@@ -95,6 +95,7 @@ export const availableConnectors = () => {
     xverseConnector,
     fordefiConnector,
     webWalletConnector,
+    argentMobileConnector,
   ];
 
   // Check which wallets are installed
