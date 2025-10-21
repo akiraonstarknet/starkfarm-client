@@ -76,7 +76,7 @@
     "react-share": "5.1.0",
     "sharp": "0.33.4",
     "starknet": "8.5.2",
-    "starknetkit": "^3.0.3",
+    "starknetkit": "3.3.0",
     "swr": "2.2.5",
     "wonka": "6.3.4"
   },

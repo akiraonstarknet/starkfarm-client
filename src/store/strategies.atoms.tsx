@@ -7,9 +7,6 @@ import {
 } from '@/strategies/IStrategy';
 import CONSTANTS from '@/constants';
 import { convertToV2TokenInfo, getTokenInfoFromName } from '@/utils';
-import { allPoolsAtomUnSorted, privatePoolsAtom } from './protocols';
-import { endur } from './endur.store';
-import { PoolInfo } from './pools';
 import { AutoTokenStrategy } from '@/strategies/auto_strk.strat';
 import { DeltaNeutralMM } from '@/strategies/delta_neutral_mm';
 import { DeltaNeutralMM2 } from '@/strategies/delta_neutral_mm_2';
@@ -486,27 +483,19 @@ const strategiesAtomAsync = atomWithQuery((get) => {
     queryKey: ['strategies'],
     queryFn: async () => {
       const strategies = getStrategies();
-      const allPools = get(allPoolsAtomUnSorted);
-      const requiredPools = allPools.filter(
-        (p) =>
-          p.protocol.name === 'Nostra' ||
-          p.protocol.name === 'Vesu' ||
-          p.protocol.name === endur.name,
-      );
-
-      const privatePools: PoolInfo[] = get(privatePoolsAtom);
-      const proms = strategies.map((s) =>
-        s.solve([...requiredPools, ...privatePools], '1000'),
-      );
-      await Promise.all(proms);
 
       strategies.sort((a, b) => {
         const status1 = getLiveStatusNumber(a.liveStatus);
         const status2 = getLiveStatusNumber(b.liveStatus);
-        return status1 - status2 || b.netYield - a.netYield;
+        return status1 - status2;
       });
+
       return strategies;
     },
+    staleTime: 10 * 60 * 1000, // 10 minutes - strategies rarely change
+    gcTime: 30 * 60 * 1000, // 30 minutes
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   };
 });
 

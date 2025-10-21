@@ -3,8 +3,9 @@ import { NextResponse } from 'next/server';
 import { LATEST_TNC_DOC_VERSION, SIGNING_DATA } from '@/constants';
 import { db } from '@/db';
 import { standariseAddress } from '@/utils';
-import { Account, CallData, RpcProvider, stark } from 'starknet';
+import { Account, CallData, stark } from 'starknet';
 import { toBigInt } from 'ethers';
+import { getProvider } from '@/lib/provider';
 import Mixpanel from 'mixpanel';
 const mixpanel = Mixpanel.init('118f29da6a372f0ccb6f541079cad56b');
 
@@ -48,9 +49,7 @@ export async function POST(req: Request) {
     });
   }
 
-  const provider = new RpcProvider({
-    nodeUrl: process.env.NEXT_PUBLIC_RPC_URL!,
-  });
+  const provider = getProvider();
 
   const myAccount = new Account({ provider, address, signer: '' });
 
@@ -158,18 +157,6 @@ export async function POST(req: Request) {
     user: updatedUser,
   });
 }
-
-// async function debug() {
-//   console.log(`Running debug`);
-//   const account2 = new Account(new RpcProvider({
-//     nodeUrl: process.env.NEXT_PUBLIC_RPC_URL!,
-//   }), '0x073448fb5c57632829cDC5f014Af419E28881Bb10C151d37AB574f937c2f6B3e', '')
-//   const hash = await account2.hashMessage(SIGNING_DATA)
-//   console.log('hash', hash);
-//   const sigs = ["3565633945756883893490426218715167970058391855954437480882888797359972920441","337184694287002111775330352252049732144049661396453597385999869726916801093"]
-//   console.log("verifyMessageHash2", await verifyMessageHash(account2, hash, sigs));
-//   console.log(`End debug`);
-// }
 
 async function verifyMessageHash(
   account: Account,

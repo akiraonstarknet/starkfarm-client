@@ -1,6 +1,6 @@
-import { getStrategies } from '@/store/strategies.atoms';
 import { NextResponse } from 'next/server';
-import { getDataFromRedis } from '../lib';
+import { getDataFromRedis, setDataToRedis } from '../lib';
+import { getStrategies } from '@/store/strategies.atoms';
 
 export const revalidate = 1800;
 export const dynamic = 'force-dynamic';
@@ -20,18 +20,16 @@ export async function GET(_req: Request) {
 
   const strategies = getStrategies();
 
-  console.log('strategies', strategies.length);
-
   const values = strategies.map(async (strategy, index) => {
     if (strategy.isLive()) {
       let retry = 0;
       while (retry < 3) {
         try {
           const tvlInfo = await strategy.getTVL();
-          console.log('tvlInfo', index, tvlInfo);
+          console.log('[Stats] tvlInfo', index, tvlInfo);
           return tvlInfo.usdValue;
         } catch (e) {
-          console.log(e);
+          console.log('[Stats] Error fetching TVL:', e);
           if (retry < 3) {
             await new Promise((resolve) => setTimeout(resolve, 1000));
             retry++;
@@ -47,14 +45,16 @@ export async function GET(_req: Request) {
 
   const result = await Promise.all(values);
 
-  const response = NextResponse.json({
+  const data = {
     tvl: result.reduce((a, b) => a + b, 0),
     lastUpdated: new Date().toISOString(),
-  });
+  };
 
+  await setDataToRedis(REDIS_KEY, data);
+  const response = NextResponse.json(data);
   response.headers.set(
     'Cache-Control',
-    `s-maxage=${revalidate}, stale-while-revalidate=180`,
+    `s-maxage=${revalidate}, stale-while-revalidate=300`,
   );
   return response;
 }

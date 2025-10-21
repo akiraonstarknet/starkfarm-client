@@ -84,6 +84,9 @@ export const dAppStatsAtom = atomWithQuery((get) => ({
     if (!res) return { tvl: 0 };
     return await res.json();
   },
+  refetchInterval: 30 * 60 * 1000, // 30 minutes
+  staleTime: 25 * 60 * 1000, // 25 minutes - data considered fresh
+  gcTime: 60 * 60 * 1000, // 1 hour - keep in cache even when unmounted
 }));
 
 export interface StrategyWise {

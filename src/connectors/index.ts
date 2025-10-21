@@ -6,6 +6,10 @@ import {
   BraavosMobileConnector,
   isInBraavosMobileAppBrowser,
 } from 'starknetkit/braavosMobile';
+import {
+  isInKeplrMobileAppBrowser,
+  KeplrMobileConnector,
+} from 'starknetkit/keplrMobile';
 import { InjectedConnector } from 'starknetkit/injected';
 import { WebWalletConnector } from 'starknetkit/webwallet';
 import { getStarknet } from '@starknet-io/get-starknet-core';
@@ -47,6 +51,10 @@ export const availableConnectors = () => {
 
   if (isInBraavosMobileAppBrowser()) {
     return [BraavosMobileConnector.init({})];
+  }
+
+  if (isInKeplrMobileAppBrowser()) {
+    return [KeplrMobileConnector.init()];
   }
 
   // Create injected connectors

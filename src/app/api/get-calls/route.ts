@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { RpcProvider } from 'starknet';
 import { getStrategies } from '@/store/strategies.atoms';
 import MyNumber from '@/utils/MyNumber';
 import {
@@ -8,13 +7,12 @@ import {
   Quote,
 } from '@avnu/avnu-sdk';
 import { TOKENS } from '@/constants';
+import { getProvider } from '@/lib/provider';
 
 export const revalidate = 0;
 export const dynamic = 'force-dynamic';
 
-const provider = new RpcProvider({
-  nodeUrl: process.env.RPC_URL || 'https://starknet-mainnet.public.blastapi.io',
-});
+const provider = getProvider();
 
 interface GetCallsRequest {
   strategyId: string;

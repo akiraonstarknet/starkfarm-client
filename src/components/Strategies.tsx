@@ -28,7 +28,6 @@ import { YieldStrategyCard } from './YieldCard';
 import { addressAtom } from '@/store/claims.atoms';
 import { QuestionIcon } from '@chakra-ui/icons';
 import { StrategyTag } from '@/strategies/IStrategy';
-import { getStrategies } from '@/store/strategies.atoms';
 
 export default function Strategies({
   tags,
@@ -40,20 +39,17 @@ export default function Strategies({
   answer: string;
 }) {
   const strkFarmPoolsRes = useAtomValue(TrovesBaseAPYsAtom);
-  const allStrategies = getStrategies();
 
   const strkFarmPools = useMemo(() => {
     if (!strkFarmPoolsRes || !strkFarmPoolsRes.data)
       return [] as TrovesStrategyAPIResult[];
+    // Filter strategies by tags if provided
+    // Tags are now included in API response, no need for client-side getStrategies()
     return strkFarmPoolsRes.data.strategies.filter((strategy) => {
-      const strategyObj = allStrategies.find(
-        (strat) => strat.id == strategy.id,
-      );
-      strategy.tags = strategyObj?.settings.tags || [];
       if (!tags) return true;
-      return tags.some((tag) => strategyObj?.settings.tags?.includes(tag));
+      return tags.some((tag) => strategy.tags?.includes(tag));
     });
-  }, [strkFarmPoolsRes]);
+  }, [strkFarmPoolsRes, tags]);
 
   const address = useAtomValue(addressAtom);
 

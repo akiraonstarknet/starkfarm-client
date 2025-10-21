@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { atom } from 'jotai';
 import { PoolInfo, PoolType } from '@/store/pools';
-import { RpcProvider } from 'starknet';
 import { getLiveStatusNumber, getStrategies } from '@/store/strategies.atoms';
 import MyNumber from '@/utils/MyNumber';
 import { IStrategy, NFTInfo, TokenInfo } from '@/strategies/IStrategy';
@@ -11,6 +10,7 @@ import VesuAtoms, { vesu } from '@/store/vesu.store';
 import EndurAtoms, { endur } from '@/store/endur.store';
 import { setDataToRedis, getDataFromRedis, getRewardsInfo } from '../lib';
 import { DEFAULT_APY_METHODLOGY } from '@/constants';
+import { getProvider } from '@/lib/provider';
 
 export const revalidate = 1800; // 30 minutes
 export const dynamic = 'force-dynamic';
@@ -25,8 +25,6 @@ const allPoolsAtom = atom<PoolInfo[]>((get) => {
 
 async function getPools(store: any, retry = 0) {
   const allPools: PoolInfo[] | undefined = store.get(allPoolsAtom);
-
-  console.log('allPools', allPools?.length);
   // undo
   const minProtocolsRequired: string[] = [vesu.name, endur.name];
   const hasRequiredPools = minProtocolsRequired.every((p) => {
@@ -51,13 +49,12 @@ async function getPools(store: any, retry = 0) {
   return allPools;
 }
 
-const provider = new RpcProvider({
-  nodeUrl: process.env.RPC_URL || 'https://starknet-mainnet.public.blastapi.io',
-});
+const provider = getProvider();
 
 async function getStrategyInfo(
   strategy: IStrategy<any>,
 ): Promise<TrovesStrategyAPIResult> {
+  // Get TVL directly from strategy
   const tvl = await strategy.getTVL();
 
   const defaultAPYMethodology = DEFAULT_APY_METHODLOGY;
@@ -97,7 +94,7 @@ async function getStrategyInfo(
     logos: strategy.metadata.depositTokens.map((t) => t.logo),
     isAudited: strategy.settings.auditUrl ? true : false,
     auditUrl: strategy.settings.auditUrl,
-    actions: strategy.actions.map((action) => {
+    actions: (strategy.actions || []).map((action) => {
       return {
         name: action.name || '',
         protocol: {
@@ -106,15 +103,18 @@ async function getStrategyInfo(
         },
         token: {
           name: action.pool.pool.name,
-          logo: action.pool.pool.logos[0],
+          logo: action.pool.pool.logos?.[0] || '',
         },
         amount: action.amount,
         isDeposit: action.isDeposit,
-        apy: action.isDeposit ? action.pool.apr : -action.pool.borrow.apr,
+        apy: action.isDeposit
+          ? action.pool.apr
+          : -(action.pool.borrow?.apr || 0),
       };
     }),
     investmentFlows: strategy.investmentFlows,
     curator: strategy.metadata.curator,
+    tags: strategy.settings.tags || [],
   };
 
   const rewardsInfo = await getRewardsInfo([
@@ -135,67 +135,46 @@ const REDIS_KEY = `${process.env.VK_REDIS_PREFIX}::strategies`;
 
 export async function GET(req: Request) {
   console.log('GET /api/strategies', req.url);
-  const cacheData = await getDataFromRedis(REDIS_KEY, req.url, revalidate);
-  if (cacheData) {
-    const resp = NextResponse.json(cacheData);
-    resp.headers.set(
-      'Cache-Control',
-      `s-maxage=${revalidate}, stale-while-revalidate=300`,
-    );
-    return resp;
-  }
-
-  const allPools = await getPools(MY_STORE);
-  const strategies = getStrategies();
-
-  const proms = strategies.map((strategy) => {
-    if (!strategy.isLive()) return;
-    return strategy.solve(allPools, '1000');
-  });
-
-  await Promise.all(proms);
-  // strategies.forEach((strategy) => {
-  //   try {
-  //     strategy.solve(allPools, '1000');
-  //   } catch (err) {
-  //     console.error('Error solving strategy', strategy.name, err);
-  //   }
-  // });
-
-  const stratsDataProms: Promise<TrovesStrategyAPIResult>[] = [];
-  for (let i = 0; i < strategies.length; i++) {
-    stratsDataProms.push(getStrategyInfo(strategies[i]));
-  }
-  const stratsData = await Promise.all(stratsDataProms);
-
-  const _strats = stratsData.sort((a, b) => {
-    // sort based on risk factor, live status and apy
-    // const aRisk = a.riskFactor;
-    // const bRisk = b.riskFactor;
-
-    // Priority: status < 5 (priority 0), then status 5 (priority 1), then others (priority 2)
-    // console.log('statusNumber', a.status, b.status, a.name, b.name);
-    const getPriority = (statusNumber: number) => {
-      if (statusNumber < 5) return 0;
-      if (statusNumber === 5) return 1;
-      return 2;
-    };
-
-    const aPriority = getPriority(a.status.number);
-    const bPriority = getPriority(b.status.number);
-
-    // if (aPriority !== bPriority) return aPriority - bPriority;
-    // if (aRisk !== bRisk) return aRisk - bRisk;
-    return b.apy - a.apy;
-  });
 
   try {
+    const cacheData = await getDataFromRedis(REDIS_KEY, req.url, revalidate);
+    if (cacheData) {
+      const resp = NextResponse.json(cacheData);
+      resp.headers.set(
+        'Cache-Control',
+        `s-maxage=${revalidate}, stale-while-revalidate=300`,
+      );
+      return resp;
+    }
+
+    const allPools = await getPools(MY_STORE);
+    const strategies = getStrategies();
+
+    const proms = strategies.map((strategy) => {
+      if (!strategy.isLive()) return;
+      return strategy.solve(allPools, '1000');
+    });
+
+    await Promise.all(proms);
+
+    const stratsDataProms: Promise<TrovesStrategyAPIResult>[] = [];
+    for (let i = 0; i < strategies.length; i++) {
+      stratsDataProms.push(getStrategyInfo(strategies[i]));
+    }
+    const stratsData = await Promise.all(stratsDataProms);
+
+    const _strats = stratsData.sort((a, b) => {
+      return b.apy - a.apy;
+    });
+
     const data = {
       status: true,
       strategies: _strats,
       lastUpdated: new Date().toISOString(),
     };
+
     await setDataToRedis(REDIS_KEY, data);
+
     const response = NextResponse.json(data);
     response.headers.set(
       'Cache-Control',
@@ -203,12 +182,18 @@ export async function GET(req: Request) {
     );
     return response;
   } catch (err) {
-    console.error('Error /api/strategies', err);
+    console.error('Error /api/strategies:', err);
+    console.error(
+      'Error stack:',
+      err instanceof Error ? err.stack : 'No stack',
+    );
+
     const errorResponse = NextResponse.json(
       {
         status: false,
         strategies: [],
         lastUpdated: new Date().toISOString(),
+        error: err instanceof Error ? err.message : 'Internal server error',
       },
       { status: 500 },
     );
