@@ -402,14 +402,14 @@ export function getStrategies() {
         maxTVL: lstMaxTVLs[lstToken as keyof typeof lstMaxTVLs],
         isPaused: false,
         alerts: [
+          // {
+          //   tab: 'withdraw',
+          //   text: 'Liquid staking just launched, while we ensure executions happen at minimal slippages, there may be delays in withdrawals upto 24hrs during the launch to ensure minimal slippage.',
+          //   type: 'warning',
+          // },
           {
             tab: 'withdraw',
-            text: 'Liquid staking just launched, while we ensure executions happen at minimal slippages, there may be delays in withdrawals upto 24hrs during the launch to ensure minimal slippage.',
-            type: 'warning',
-          },
-          {
-            tab: 'withdraw',
-            text: 'On withdrawal, you will receive an NFT representing your withdrawal request. The funds will be automatically sent to your wallet (NFT owner) in 1-2 hours. You can monitor the status in transactions tab.',
+            text: 'On withdrawal, you will receive an NFT representing your withdrawal request. The funds will be automatically sent to your wallet (NFT owner) in 24 hours (In this initial phase of Launch). You can monitor the status in transactions tab.',
             type: 'info',
           },
           {
