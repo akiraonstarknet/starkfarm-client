@@ -121,7 +121,7 @@ export function getERC20BalanceAtom(token: TokenInfo | undefined) {
       queryFn: async ({ queryKey }: any): Promise<BalanceResult> => {
         return getERC20Balance(token, get(addressAtom));
       },
-      refetchInterval: 30000,
+      refetchInterval: 5000,
     };
   });
 }
@@ -133,7 +133,7 @@ function getERC4626BalanceAtom(token: TokenInfo | undefined) {
       queryFn: async ({ queryKey }: any): Promise<BalanceResult> => {
         return getERC4626Balance(token, get(addressAtom));
       },
-      refetchInterval: 30000,
+      refetchInterval: 5000,
     };
   });
 }
@@ -149,7 +149,7 @@ function getERC721PositionValueAtom(token: NFTInfo | undefined) {
           return returnEmptyBal();
         }
       },
-      refetchInterval: 30000,
+      refetchInterval: 5000,
     };
   });
 }
