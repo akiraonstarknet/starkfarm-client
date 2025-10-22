@@ -34,6 +34,8 @@ export const CONSTANTS = {
     '/strk-incentives/fetchFile?file=prod-api/lending/lending_strk_grant.json',
   LOGOS,
   COMMUNITY_TG: 'https://troves.fi/tg',
+  COMMUNITY_DISCORD: 'https://troves.fi/discord',
+  COMMUNITY_TWITTER: 'https://troves.fi/twitter',
   NOSTRA: {
     LENDING_GRAPH_URL: '/nostra/app/data-yqlpb/endpoint/data/v1/action/find',
   },
