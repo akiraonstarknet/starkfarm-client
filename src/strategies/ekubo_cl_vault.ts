@@ -13,10 +13,8 @@ import {
 } from './IStrategy';
 import {
   ContractAddr,
-  getMainnetConfig,
-  Global,
   IStrategyMetadata,
-  PricerFromApi,
+  VaultPosition,
   Web3Number,
   CLVaultStrategySettings,
   EkuboCLVault,
@@ -42,6 +40,10 @@ import {
 import { atomWithQuery } from 'jotai-tanstack-query';
 import { addressAtom } from '@/store/claims.atoms';
 import { ReactNode } from 'react';
+import {
+  getSharedConfig,
+  getSharedPricer,
+} from '@/lib/sharedStrategyResources';
 
 export class EkuboClStrategy extends IStrategy<CLVaultStrategySettings> {
   clVault: EkuboCLVault;
@@ -66,9 +68,8 @@ export class EkuboClStrategy extends IStrategy<CLVaultStrategySettings> {
       },
     ];
 
-    const config = getMainnetConfig(process.env.NEXT_PUBLIC_RPC_URL!, 'latest');
-    const tokens = Global.getDefaultTokens();
-    const pricer = new PricerFromApi(config, tokens);
+    const config = getSharedConfig();
+    const pricer = getSharedPricer();
     const clVault = new EkuboCLVault(config, pricer, strategy);
 
     const token0Info = getTokenInfoFromName(strategy.depositTokens[0].symbol);
@@ -271,24 +272,34 @@ export class EkuboClStrategy extends IStrategy<CLVaultStrategySettings> {
   };
 
   async solve(pools: PoolInfo[], amount: string) {
-    // for LSTs, we use 30d, else 7d for the yield calculation
-    // TODO Make the block compute more dynamic
-    const blocksDiff = this.metadata.additionalInfo.lstContract
-      ? 600000
-      : 600000 / 4;
-    const yieldInfo = await this.clVault.netAPY(
-      'latest',
-      blocksDiff,
-      '7d' as any,
-    );
-    this.netYield = yieldInfo;
-    this.leverage = 1;
+    try {
+      // for LSTs, we use 30d, else 7d for the yield calculation
+      // TODO Make the block compute more dynamic
+      const blocksDiff = this.metadata.additionalInfo.lstContract
+        ? 600000
+        : 600000 / 4;
+      const yieldInfo = await this.clVault.netAPY(
+        'latest',
+        blocksDiff,
+        '7d' as any,
+      );
+      this.netYield = yieldInfo;
+      this.leverage = 1;
 
-    this.investmentFlows = await this.clVault.getInvestmentFlows();
+      this.investmentFlows = await this.clVault.getInvestmentFlows();
 
-    this.postSolve();
+      this.postSolve();
 
-    this.status = StrategyStatus.SOLVED;
+      this.status = StrategyStatus.SOLVED;
+    } catch (error) {
+      console.error(`${this.metadata.name}::Error in solve():`, error);
+      // Set safe defaults to prevent API failure
+      this.netYield = 0;
+      this.leverage = 1;
+      this.investmentFlows = [];
+      this.postSolve();
+      this.status = StrategyStatus.SOLVED;
+    }
   }
 
   getEkuboStratBalanceAtom = (underlyingToken: TokenInfo) => {
@@ -393,4 +404,13 @@ export class EkuboClStrategy extends IStrategy<CLVaultStrategySettings> {
       };
     });
   };
+
+  /**
+   * Get vault positions for this strategy
+   * @returns Promise<VaultPosition[]> - Array of vault positions
+   */
+  async getVaultPositions(): Promise<VaultPosition[]> {
+    // Ekubo CL vaults don't support vault positions yet
+    return [];
+  }
 }

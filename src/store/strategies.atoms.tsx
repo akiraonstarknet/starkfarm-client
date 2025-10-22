@@ -7,9 +7,6 @@ import {
 } from '@/strategies/IStrategy';
 import CONSTANTS from '@/constants';
 import { convertToV2TokenInfo, getTokenInfoFromName } from '@/utils';
-import { allPoolsAtomUnSorted, privatePoolsAtom } from './protocols';
-import { endur } from './endur.store';
-import { PoolInfo } from './pools';
 import { AutoTokenStrategy } from '@/strategies/auto_strk.strat';
 import { DeltaNeutralMM } from '@/strategies/delta_neutral_mm';
 import { DeltaNeutralMM2 } from '@/strategies/delta_neutral_mm_2';
@@ -405,14 +402,14 @@ export function getStrategies() {
         maxTVL: lstMaxTVLs[lstToken as keyof typeof lstMaxTVLs],
         isPaused: false,
         alerts: [
+          // {
+          //   tab: 'withdraw',
+          //   text: 'Liquid staking just launched, while we ensure executions happen at minimal slippages, there may be delays in withdrawals upto 24hrs during the launch to ensure minimal slippage.',
+          //   type: 'warning',
+          // },
           {
             tab: 'withdraw',
-            text: 'Liquid staking just launched, while we ensure executions happen at minimal slippages, there may be delays in withdrawals upto 24hrs during the launch to ensure minimal slippage.',
-            type: 'warning',
-          },
-          {
-            tab: 'withdraw',
-            text: 'On withdrawal, you will receive an NFT representing your withdrawal request. The funds will be automatically sent to your wallet (NFT owner) in 1-2 hours. You can monitor the status in transactions tab.',
+            text: 'On withdrawal, you will receive an NFT representing your withdrawal request. The funds will be automatically sent to your wallet (NFT owner) in 24 hours (In this initial phase of Launch). You can monitor the status in transactions tab.',
             type: 'info',
           },
           {
@@ -431,6 +428,11 @@ export function getStrategies() {
                 </Link>
               </>
             ),
+            type: 'info',
+          },
+          {
+            tab: 'deposit',
+            text: 'It may take up to one week for your deposit to appreciate in value. This delay occurs because the LST price is sourced from DEXes and liquidity is usually rebased once a week.',
             type: 'info',
           },
         ],
@@ -486,27 +488,19 @@ const strategiesAtomAsync = atomWithQuery((get) => {
     queryKey: ['strategies'],
     queryFn: async () => {
       const strategies = getStrategies();
-      const allPools = get(allPoolsAtomUnSorted);
-      const requiredPools = allPools.filter(
-        (p) =>
-          p.protocol.name === 'Nostra' ||
-          p.protocol.name === 'Vesu' ||
-          p.protocol.name === endur.name,
-      );
-
-      const privatePools: PoolInfo[] = get(privatePoolsAtom);
-      const proms = strategies.map((s) =>
-        s.solve([...requiredPools, ...privatePools], '1000'),
-      );
-      await Promise.all(proms);
 
       strategies.sort((a, b) => {
         const status1 = getLiveStatusNumber(a.liveStatus);
         const status2 = getLiveStatusNumber(b.liveStatus);
-        return status1 - status2 || b.netYield - a.netYield;
+        return status1 - status2;
       });
+
       return strategies;
     },
+    staleTime: 10 * 60 * 1000, // 10 minutes - strategies rarely change
+    gcTime: 30 * 60 * 1000, // 30 minutes
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   };
 });
 

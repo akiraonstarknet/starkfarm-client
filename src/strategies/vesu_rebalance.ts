@@ -12,11 +12,8 @@ import {
 } from './IStrategy';
 import {
   ContractAddr,
-  getMainnetConfig,
-  Global,
   IStrategyMetadata,
   VesuRebalance,
-  PricerFromApi,
   Web3Number,
   VesuRebalanceSettings,
 } from '@strkfarm/sdk';
@@ -28,6 +25,10 @@ import {
 } from '@/utils';
 import { getBalanceAtom } from '@/store/balance.atoms';
 import { atom } from 'jotai';
+import {
+  getSharedConfig,
+  getSharedPricer,
+} from '@/lib/sharedStrategyResources';
 
 export class VesuRebalanceStrategy extends IStrategy<VesuRebalanceSettings> {
   vesuRebalance: VesuRebalance;
@@ -51,9 +52,8 @@ export class VesuRebalanceStrategy extends IStrategy<VesuRebalanceSettings> {
       },
     ];
 
-    const config = getMainnetConfig(process.env.NEXT_PUBLIC_RPC_URL!, 'latest');
-    const tokens = Global.getDefaultTokens();
-    const pricer = new PricerFromApi(config, tokens);
+    const config = getSharedConfig();
+    const pricer = getSharedPricer();
     const vesuRebalance = new VesuRebalance(config, pricer, strategy);
 
     super(
@@ -152,22 +152,43 @@ export class VesuRebalanceStrategy extends IStrategy<VesuRebalanceSettings> {
   };
 
   async solve(pools: PoolInfo[], amount: string) {
-    const poolsInfo = await this.vesuRebalance.getPools();
-    if (poolsInfo.isError) {
-      throw new Error('Failed to fetch pools for Vesu rebalance');
+    try {
+      const poolsInfo = await this.vesuRebalance.getPools();
+      if (poolsInfo.isError) {
+        console.error(
+          `${this.metadata.name}::Failed to fetch pools. isErrorPositionsAPI: ${poolsInfo.isErrorPositionsAPI}, isErrorPoolsAPI: ${poolsInfo.isErrorPoolsAPI}`,
+        );
+        // Set safe defaults instead of crashing
+        this.netYield = 0;
+        this.leverage = 1;
+        this.investmentFlows = [];
+        this.postSolve();
+        this.status = StrategyStatus.SOLVED;
+        return;
+      }
+
+      const yieldInfo = await this.vesuRebalance.netAPYGivenPools(
+        poolsInfo.data,
+      );
+      this.netYield = yieldInfo;
+      console.log('netYield2', this.netYield, Number(amount));
+      this.leverage = 1;
+
+      this.investmentFlows = await this.vesuRebalance.getInvestmentFlows(
+        poolsInfo.data,
+      );
+
+      this.postSolve();
+
+      this.status = StrategyStatus.SOLVED;
+    } catch (error) {
+      console.error(`${this.metadata.name}::Error in solve():`, error);
+      // Set safe defaults to prevent API failure
+      this.netYield = 0;
+      this.leverage = 1;
+      this.investmentFlows = [];
+      this.postSolve();
+      this.status = StrategyStatus.SOLVED;
     }
-
-    const yieldInfo = await this.vesuRebalance.netAPYGivenPools(poolsInfo.data);
-    this.netYield = yieldInfo;
-    console.log('netYield2', this.netYield, Number(amount));
-    this.leverage = 1;
-
-    this.investmentFlows = await this.vesuRebalance.getInvestmentFlows(
-      poolsInfo.data,
-    );
-
-    this.postSolve();
-
-    this.status = StrategyStatus.SOLVED;
   }
 }

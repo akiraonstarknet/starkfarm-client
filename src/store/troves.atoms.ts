@@ -69,7 +69,6 @@ export class Troves extends IDapp<TrovesStrategyAPIResult> {
 
   _computePoolsInfo(data: any) {
     const rawPools: TrovesStrategyAPIResult[] = data.strategies;
-    const pools: PoolInfo[] = [];
     const allStrategies = getStrategies();
 
     return rawPools.map((rawPool) => {
@@ -157,17 +156,20 @@ export class Troves extends IDapp<TrovesStrategyAPIResult> {
   }
 }
 
-export const TrovesBaseAPYsAtom = atomWithQuery((get) => ({
+export const TrovesBaseAPYsAtom = atomWithQuery((_get) => ({
   queryKey: ['troves_base_aprs'],
-  queryFn: async ({
-    queryKey,
-  }): Promise<{
+  queryFn: async (): Promise<{
     strategies: TrovesStrategyAPIResult[];
   }> => {
     const response = await fetch(`${CONSTANTS.Troves.BASE_APR_API}`);
     const data = await response.json();
     return data;
   },
+  staleTime: 5 * 60 * 1000, // 5 minutes - data stays fresh
+  gcTime: 10 * 60 * 1000, // 10 minutes - keep in cache even if unused
+  refetchOnWindowFocus: false, // Don't refetch when user switches tabs
+  refetchOnMount: false, // Don't refetch on component remount if data is fresh
+  refetchInterval: 5 * 60 * 1000, // Auto-refresh every 5 minutes in background
 }));
 
 export const troves = new Troves();

@@ -2,7 +2,7 @@ import ERC4626Abi from '@/abi/erc4626.abi.json';
 import { NFTInfo, TokenInfo } from '@/strategies/IStrategy';
 import MyNumber from '@/utils/MyNumber';
 import { NFTS } from '@/constants';
-import { Contract, RpcProvider, num, uint256 } from 'starknet';
+import { Contract, num, uint256 } from 'starknet';
 import { atomWithQuery } from 'jotai-tanstack-query';
 import { addressAtom } from '@/store/claims.atoms';
 import ERC20Abi from '@/abi/erc20.abi.json';
@@ -14,6 +14,7 @@ import {
   getTokenInfoFromName,
   standariseAddress,
 } from '@/utils';
+import { getProvider } from '@/lib/provider';
 
 export interface BalanceResult {
   amount: MyNumber;
@@ -35,9 +36,7 @@ export async function getERC20Balance(
   if (!token) return returnEmptyBal();
   if (!address) return returnEmptyBal();
 
-  const provider = new RpcProvider({
-    nodeUrl: process.env.NEXT_PUBLIC_RPC_URL,
-  });
+  const provider = getProvider();
   const erc20Contract = new Contract({
     abi: ERC20Abi,
     address: token.token,
@@ -58,9 +57,7 @@ export async function getERC4626Balance(
   if (!address) return returnEmptyBal();
 
   const bal = await getERC20Balance(token, address);
-  const provider = new RpcProvider({
-    nodeUrl: process.env.NEXT_PUBLIC_RPC_URL,
-  });
+  const provider = getProvider();
   const erc4626Contract = new Contract({
     abi: ERC4626Abi,
     address: token.token,
@@ -88,9 +85,7 @@ export async function getERC721PositionValue(
   if (!token) return returnEmptyBal();
   if (!address) return returnEmptyBal();
 
-  const provider = new RpcProvider({
-    nodeUrl: process.env.NEXT_PUBLIC_RPC_URL,
-  });
+  const provider = getProvider();
   let result: any = null;
   try {
     const erc721Contract = new Contract({

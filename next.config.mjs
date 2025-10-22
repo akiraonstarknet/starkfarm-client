@@ -56,7 +56,11 @@ const nextConfig = {
       {
         source: '/api/price/:path*',
         destination: 'https://cache-server-t2me.onrender.com/api/price/:path*',
-      }
+      },
+      {
+        source: '/endur/:path*',
+        destination: 'https://app.endur.fi/:path*',
+      },
     ];
   },
   async redirects() {

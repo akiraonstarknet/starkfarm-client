@@ -226,7 +226,7 @@ export async function getPriceFromMyAPI(tokenInfo: MyMultiTokenInfo) {
   console.log('getPrice from redis', tokenInfo.name);
 
   const endpoint = getEndpoint();
-  const url = `${endpoint}/api/price/${convertToV2TokenInfo(tokenInfo).symbol}`;
+  const url = `https://app.troves.fi/api/price/${convertToV2TokenInfo(tokenInfo).symbol}`;
   console.log('getPrice url', url);
   const priceInfoRes = await fetch(url);
   const priceInfo = await priceInfoRes.json();
