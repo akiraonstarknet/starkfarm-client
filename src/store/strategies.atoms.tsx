@@ -351,17 +351,32 @@ export function getStrategies() {
   });
 
   const evergreenStrategies = UniversalStrategies.map((uni) => {
+    const depositSymbol = uni.depositTokens[0]?.symbol;
     return new UniversalStrategyClass(
-      `evergreen_${uni.depositTokens[0]?.symbol.toLowerCase()}`,
+      `evergreen_${depositSymbol.toLowerCase()}`,
       getTokenInfoFromName(uni.depositTokens[0]?.symbol || ''),
       uni.name,
       uni.description as ReactNode,
       uni,
       StrategyLiveStatus.ACTIVE,
       {
-        maxTVL: 0,
+        maxTVL: depositSymbol == 'USDT' ? 10000 : 0,
         isPaused: false,
         alerts: [
+          ...((depositSymbol == 'USDT'
+            ? [
+                {
+                  tab: 'deposit',
+                  text: 'Due to limited liquidity of USDT on Vesu, we are not accepting more deposits at the moment. Once we upgrade the strategy, we will accept deposits again.',
+                  type: 'info',
+                },
+                {
+                  tab: 'withdraw',
+                  text: 'Due to limited liquidity of USDT on Vesu, to avoid longer wait times for redemption, we suggest spliting large withdraw requests to smaller (e.g. $10k)',
+                  type: 'warning',
+                },
+              ]
+            : []) as any),
           {
             tab: 'withdraw',
             text: 'On withdrawal, you will receive an NFT representing your withdrawal request. The funds will be automatically sent to your wallet (NFT owner) in 1-2 hours. You can monitor the status in transactions tab.',
