@@ -372,16 +372,17 @@ export function getStrategies() {
                 },
                 {
                   tab: 'withdraw',
-                  text: 'Due to limited liquidity of USDT on Vesu, to avoid longer wait times for redemption, we suggest spliting large withdraw requests to smaller (e.g. $10k)',
+                  text: "Due to limited liquidity of USDT on Vesu, withdrawals are taking longer than usual to complete. To avoid longer wait times for redemption, we suggest spliting large withdraw requests to smaller (e.g. $10k). This doesn't assure faster redemption, but it will help you get your funds back sooner.",
                   type: 'warning',
                 },
               ]
-            : []) as any),
-          {
-            tab: 'withdraw',
-            text: 'On withdrawal, you will receive an NFT representing your withdrawal request. The funds will be automatically sent to your wallet (NFT owner) in 1-2 hours. You can monitor the status in transactions tab.',
-            type: 'info',
-          },
+            : [
+                {
+                  tab: 'withdraw',
+                  text: 'On withdrawal, you will receive an NFT representing your withdrawal request. The funds will be automatically sent to your wallet (NFT owner) in 1-2 hours. You can monitor the status in transactions tab.',
+                  type: 'info',
+                },
+              ]) as any),
         ],
         isAudited: uni.auditUrl ? true : false,
         auditUrl: uni.auditUrl,
