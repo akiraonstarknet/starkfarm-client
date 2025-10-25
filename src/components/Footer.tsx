@@ -12,6 +12,7 @@ import {
 } from '@chakra-ui/react';
 import tg from '@/assets/tg.svg';
 import x from '@/assets/x.svg';
+import discord from '@/assets/discord.svg';
 import fulllogo from '@public/fulllogo.png';
 import CONSTANTS from '@/constants';
 
@@ -56,12 +57,12 @@ const footerLinks = [
 ];
 
 const socialLinks = [
-  // {
-  //   icon: discord.src,
-  //   label: 'Discord',
-  //   href: 'https://discord.gg/',
-  //   gradient: 'mycard_light',
-  // },
+  {
+    icon: discord.src,
+    label: 'Discord',
+    href: CONSTANTS.COMMUNITY_DISCORD,
+    gradient: 'mycard_light',
+  },
   {
     icon: tg.src,
     label: 'Telegram',
@@ -71,7 +72,7 @@ const socialLinks = [
   {
     icon: x.src,
     label: 'Twitter',
-    href: 'https://troves.fi/twitter',
+    href: CONSTANTS.COMMUNITY_TWITTER,
     gradient: 'mycard_light',
   },
 ];
