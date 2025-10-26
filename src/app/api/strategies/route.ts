@@ -8,7 +8,7 @@ import { TrovesStrategyAPIResult } from '@/store/troves.atoms';
 import { MY_STORE } from '@/store';
 import VesuAtoms, { vesu } from '@/store/vesu.store';
 import EndurAtoms, { endur } from '@/store/endur.store';
-import { getRewardsInfo } from '../lib';
+import { setDataToRedis, getDataFromRedis, getRewardsInfo } from '../lib';
 import { DEFAULT_APY_METHODLOGY } from '@/constants';
 import { getProvider } from '@/lib/provider';
 
@@ -137,15 +137,15 @@ export async function GET(req: Request) {
   console.log('GET /api/strategies', req.url);
 
   try {
-    // const cacheData = await getDataFromRedis(REDIS_KEY, req.url, revalidate);
-    // if (cacheData) {
-    //   const resp = NextResponse.json(cacheData);
-    //   resp.headers.set(
-    //     'Cache-Control',
-    //     `s-maxage=${revalidate}, stale-while-revalidate=300`,
-    //   );
-    //   return resp;
-    // }
+    const cacheData = await getDataFromRedis(REDIS_KEY, req.url, revalidate);
+    if (cacheData) {
+      const resp = NextResponse.json(cacheData);
+      resp.headers.set(
+        'Cache-Control',
+        `s-maxage=${revalidate}, stale-while-revalidate=300`,
+      );
+      return resp;
+    }
 
     const allPools = await getPools(MY_STORE);
     const strategies = getStrategies();
@@ -173,7 +173,7 @@ export async function GET(req: Request) {
       lastUpdated: new Date().toISOString(),
     };
 
-    // await setDataToRedis(REDIS_KEY, data);
+    await setDataToRedis(REDIS_KEY, data);
 
     const response = NextResponse.json(data);
     response.headers.set(

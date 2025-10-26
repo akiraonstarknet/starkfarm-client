@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-// import { getDataFromRedis, setDataToRedis } from '../lib';
+import { getDataFromRedis, setDataToRedis } from '../lib';
 import { getStrategies } from '@/store/strategies.atoms';
 
 export const revalidate = 1800;
@@ -8,15 +8,15 @@ export const dynamic = 'force-dynamic';
 const REDIS_KEY = `${process.env.VK_REDIS_PREFIX}::stats`;
 
 export async function GET(_req: Request) {
-  // const cacheData = await getDataFromRedis(REDIS_KEY, _req.url, revalidate);
-  // if (cacheData) {
-  //   const resp = NextResponse.json(cacheData);
-  //   resp.headers.set(
-  //     'Cache-Control',
-  //     `s-maxage=${revalidate}, stale-while-revalidate=300`,
-  //   );
-  //   return resp;
-  // }
+  const cacheData = await getDataFromRedis(REDIS_KEY, _req.url, revalidate);
+  if (cacheData) {
+    const resp = NextResponse.json(cacheData);
+    resp.headers.set(
+      'Cache-Control',
+      `s-maxage=${revalidate}, stale-while-revalidate=300`,
+    );
+    return resp;
+  }
 
   const strategies = getStrategies();
 
@@ -50,7 +50,7 @@ export async function GET(_req: Request) {
     lastUpdated: new Date().toISOString(),
   };
 
-  // await setDataToRedis(REDIS_KEY, data);
+  await setDataToRedis(REDIS_KEY, data);
   const response = NextResponse.json(data);
   response.headers.set(
     'Cache-Control',
