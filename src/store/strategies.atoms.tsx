@@ -220,6 +220,7 @@ export function getStrategies() {
       isAudited: false,
       isInstantWithdrawal: true,
       isTransactionHistDisabled: true,
+      hideHarvestInfo: true,
       quoteToken: convertToV2TokenInfo(getTokenInfoFromName('STRK')),
     },
   );
