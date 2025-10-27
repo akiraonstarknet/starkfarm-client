@@ -12,6 +12,7 @@ import {
 } from 'starknetkit/keplrMobile';
 import { InjectedConnector } from 'starknetkit/injected';
 import { WebWalletConnector } from 'starknetkit/webwallet';
+import { ControllerConnector } from 'starknetkit/controller';
 import { getStarknet } from '@starknet-io/get-starknet-core';
 import { constants } from 'starknet';
 import { StarknetkitConnector } from 'starknetkit';
@@ -83,6 +84,7 @@ export const availableConnectors = () => {
       name: 'Xverse',
     },
   });
+  const cartridgeConnector = new ControllerConnector();
 
   const webWalletConnector = new WebWalletConnector({
     url: 'https://web.argent.xyz',
@@ -93,6 +95,7 @@ export const availableConnectors = () => {
     braavosConnector,
     keplrConnector,
     xverseConnector,
+    cartridgeConnector,
     fordefiConnector,
     webWalletConnector,
     argentMobileConnector,
