@@ -136,6 +136,7 @@ export const availableConnectors = () => {
       argentMobileConnector,
       BraavosMobileConnector.init({}),
       webWalletConnector,
+      cartridgeConnector,
     ];
   }
 

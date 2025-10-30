@@ -1,88 +1,162 @@
 datasource db {
-  url      = env("DATABASE_URL")
-  provider = "postgresql"
+    url      = env("DATABASE_URL")
+    provider = "postgresql"
 }
 
 generator client {
-  provider = "prisma-client-js"
+    provider = "prisma-client-js"
 }
 
 model User {
-  id            Int           @id @default(autoincrement())
-  address       String        @unique
-  isTncSigned   Boolean?      @default(false)
-  message       String?
-  tncDocVersion String?       @default("1.0")
-  referralCode  String        @unique
-  referrals     Referral[]
-  referralCount Int?          @default(0)
-  Raffles       Raffle[]
-  og_nft_users  og_nft_users?
-  Signatures    Signatures[]
-  LuckyWinner   LuckyWinner[]
+    id            Int           @id @default(autoincrement())
+    address       String        @unique
+    isTncSigned   Boolean?      @default(false)
+    message       String?
+    tncDocVersion String?       @default("1.0")
+    referralCode  String        @unique
+    referrals     Referral[]
+    referralCount Int?          @default(0)
+    Raffles       Raffle[]
+    og_nft_users  og_nft_users?
+    Signatures    Signatures[]
+    LuckyWinner   LuckyWinner[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
+    createdAt DateTime @default(now())
+    updatedAt DateTime @default(now()) @updatedAt
 }
 
 model Raffle {
-  raffleId Int @id @default(autoincrement())
+    raffleId Int @id @default(autoincrement())
 
-  isRaffleParticipant Boolean? @default(false)
-  sharedOnX           Boolean? @default(false)
-  activeDeposits      Boolean? @default(false)
+    isRaffleParticipant Boolean? @default(false)
+    sharedOnX           Boolean? @default(false)
+    activeDeposits      Boolean? @default(false)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
+    createdAt DateTime @default(now())
+    updatedAt DateTime @default(now()) @updatedAt
 
-  User   User @relation(fields: [userId], references: [id])
-  userId Int  @unique
+    User   User @relation(fields: [userId], references: [id])
+    userId Int  @unique
 
-  LuckyWinner LuckyWinner[]
+    LuckyWinner LuckyWinner[]
 }
 
 model LuckyWinner {
-  winnerId Int @id @default(autoincrement())
-  roundId  Int @default(autoincrement())
+    winnerId Int @id @default(autoincrement())
+    roundId  Int @default(autoincrement())
 
-  updatedAt DateTime @updatedAt
-  createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    createdAt DateTime @default(now())
 
-  Raffle   Raffle @relation(fields: [raffleId], references: [raffleId])
-  raffleId Int
+    Raffle   Raffle @relation(fields: [raffleId], references: [raffleId])
+    raffleId Int
 
-  User   User @relation(fields: [userId], references: [id])
-  userId Int  @unique
+    User   User @relation(fields: [userId], references: [id])
+    userId Int  @unique
 }
 
 model Signatures {
-  id            Int      @id @default(autoincrement())
-  signature     String
-  tncDocVersion String
-  createdAt     DateTime @default(now())
+    id            Int      @id @default(autoincrement())
+    signature     String
+    tncDocVersion String
+    createdAt     DateTime @default(now())
 
-  userId Int
-  User   User @relation(fields: [userId], references: [id])
+    userId Int
+    User   User @relation(fields: [userId], references: [id])
 
-  @@unique([userId, tncDocVersion], name: "unique_signature")
+    @@unique([userId, tncDocVersion], name: "unique_signature")
 }
 
 model Referral {
-  referralId    Int      @id @default(autoincrement())
-  refreeAddress String   @unique
-  createdAt     DateTime @default(now())
+    referralId    Int      @id @default(autoincrement())
+    refreeAddress String   @unique
+    createdAt     DateTime @default(now())
 
-  User   User @relation(fields: [userId], references: [id])
-  userId Int
+    User   User @relation(fields: [userId], references: [id])
+    userId Int
 
-  @@unique([userId, refreeAddress], name: "unique_referral")
+    @@unique([userId, refreeAddress], name: "unique_referral")
 }
 
 model og_nft_users {
-  id     Int  @id @default(autoincrement())
-  userId Int  @unique
-  User   User @relation(fields: [userId], references: [id])
+    id     Int  @id @default(autoincrement())
+    userId Int  @unique
+    User   User @relation(fields: [userId], references: [id])
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+// Strategy snapshot data for fast serving
+model StrategySnapshot {
+    id         Int    @id @default(autoincrement())
+    strategyId String // e.g., "auto_strk", "delta_neutral_mm"
+    name       String
+
+    // Financial metrics
+    tvlUsd     Float @default(0)
+    apy        Float @default(0)
+    baseApy    Float @default(0)
+    rewardsApy Float @default(0)
+
+    // Strategy info
+    leverage     String?
+    riskFactor   Int     @default(0)
+    status       String  @default("active") // active, paused, deprecated
+    statusNumber Int     @default(1)
+
+    // Contract and token info (stored as JSON)
+    depositTokens   Json // Array of token info
+    contracts       Json // Array of contract addresses
+    logos           Json // Array of logo URLs
+    actions         Json? // Strategy actions
+    investmentFlows Json? // Investment flow data
+
+    // Metadata
+    isAudited      Boolean @default(false)
+    auditUrl       String?
+    apyMethodology String?
+    curator        Json? // Curator info
+    tags           Json? // Array of tags
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@unique([strategyId, createdAt])
+    @@index([strategyId])
+    @@index([updatedAt])
+}
+
+// User portfolio snapshots for tracking history
+model PortfolioSnapshot {
+    id          Int    @id @default(autoincrement())
+    userAddress String
+
+    // Portfolio values
+    totalValueUsd Float @default(0)
+
+    // Strategy-wise breakdown (stored as JSON)
+    strategyHoldings Json // Array of { strategyId, usdValue, holdings }
+
+    timestamp DateTime @default(now())
+
+    @@index([userAddress, timestamp])
+    @@index([timestamp])
+}
+
+// Job execution tracking for monitoring
+model CronJobExecution {
+    id      Int    @id @default(autoincrement())
+    jobName String // e.g., "update-strategies", "update-prices"
+    status  String // success, failed, running
+
+    duration Int? // execution time in ms
+    error    String? // error message if failed
+    metadata Json? // additional info
+
+    startedAt   DateTime  @default(now())
+    completedAt DateTime?
+
+    @@index([jobName, startedAt])
+    @@index([status])
 }
