@@ -13,7 +13,7 @@ import { PoolInfo, PoolType } from '@/store/pools';
 import VesuAtoms, { vesu } from '@/store/vesu.store';
 import EndurAtoms, { endur } from '@/store/endur.store';
 
-export const maxDuration = 300; // 5 minutes
+export const maxDuration = 60; // 1 minute
 export const dynamic = 'force-dynamic';
 
 const DEFAULT_APY_METHODLOGY =
