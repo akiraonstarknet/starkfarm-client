@@ -77,6 +77,13 @@ export const availableConnectors = () => {
     },
   });
 
+  const okx = new InjectedConnector({
+    options: {
+      id: 'okxwallet',
+      name: 'OKX',
+    },
+  });
+
   const xverseConnector = new InjectedConnector({
     options: {
       id: 'xverse',
@@ -94,6 +101,7 @@ export const availableConnectors = () => {
     keplrConnector,
     xverseConnector,
     fordefiConnector,
+    okx,
     webWalletConnector,
     argentMobileConnector,
   ];
