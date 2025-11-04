@@ -359,22 +359,17 @@ export function getStrategies() {
       uni.name,
       uni.description as ReactNode,
       uni,
-      StrategyLiveStatus.ACTIVE,
+      depositSymbol == 'USDT' ? StrategyLiveStatus.RETIRED : StrategyLiveStatus.ACTIVE,
       {
         maxTVL: depositSymbol == 'USDT' ? 10000 : 0,
-        isPaused: false,
+        isPaused: depositSymbol == 'USDT' ? true : false,
         alerts: [
           ...((depositSymbol == 'USDT'
             ? [
                 {
-                  tab: 'deposit',
-                  text: 'Due to limited liquidity of USDT on Vesu, we are not accepting more deposits at the moment. Once we upgrade the strategy, we will accept deposits again.',
+                  tab: 'all',
+                  text: 'Due to limited USDT liquidity, this vault is being closed. All deposits and withdrawals are now paused. User funds will be fully returned to their wallets by November 9, 2025 (EOD), including the remaining 14% from the 212-epoch withdrawals.',
                   type: 'info',
-                },
-                {
-                  tab: 'withdraw',
-                  text: "Due to limited liquidity of USDT on Vesu, withdrawals are taking longer than usual to complete. To avoid longer wait times for redemption, we suggest spliting large withdraw requests to smaller (e.g. $10k). This doesn't assure faster redemption, but it will help you get your funds back sooner.",
-                  type: 'warning',
                 },
               ]
             : [
