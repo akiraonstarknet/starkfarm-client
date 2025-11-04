@@ -359,7 +359,9 @@ export function getStrategies() {
       uni.name,
       uni.description as ReactNode,
       uni,
-      depositSymbol == 'USDT' ? StrategyLiveStatus.RETIRED : StrategyLiveStatus.ACTIVE,
+      depositSymbol == 'USDT'
+        ? StrategyLiveStatus.RETIRED
+        : StrategyLiveStatus.ACTIVE,
       {
         maxTVL: depositSymbol == 'USDT' ? 10000 : 0,
         isPaused: depositSymbol == 'USDT' ? true : false,
