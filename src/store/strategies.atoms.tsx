@@ -370,7 +370,7 @@ export function getStrategies() {
             ? [
                 {
                   tab: 'all',
-                  text: 'Due to limited USDT liquidity, this vault is being closed. All deposits and withdrawals are now paused. User funds will be fully returned to their wallets by November 9, 2025 (EOD), including the remaining 14% from the 212-epoch withdrawals.',
+                  text: <div>Due to limited USDT liquidity, this vault is retired. All user funds above 0.1 USDT have been returned to their wallets. <a href='https://voyager.online/tx/0x02c8b61c84decd688f3d5d173185f3a7eecc039f148df1c959e8c68dd9cead68?mtm_campaign=argent-redirect&mtm_source=argent&mtm_medium=referral' target='_blank' rel='noopener noreferrer'>[Transaction]</a></div>,
                   type: 'info',
                 },
               ]
