@@ -412,7 +412,7 @@ export function getStrategies() {
     xLBTC: 5,
     xtBTC: 5,
     xsBTC: 5,
-    xSTRK: 550000,
+    xSTRK: 3000000,
   };
 
   const hyperLSTStrategies = HyperLSTStrategies.map((hyper) => {
