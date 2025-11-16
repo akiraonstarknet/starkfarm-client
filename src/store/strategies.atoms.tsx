@@ -436,7 +436,7 @@ export function getStrategies() {
           // },
           {
             tab: 'withdraw',
-            text: 'On withdrawal, you will receive an NFT representing your withdrawal request. The funds will be automatically sent to your wallet (NFT owner) in 24 hours (In this initial phase of Launch). You can monitor the status in transactions tab.',
+            text: `${"When you withdraw, you'll receive an NFT that represents your withdrawal request. Your funds will be automatically transferred to your wallet (the NFT owner's address) within 1-2 hours under normal conditions. In rare cases like high slippage, processing may take longer. You can track your withdrawal status in real-time from the Transactions tab."}`,
             type: 'info',
           },
           {
