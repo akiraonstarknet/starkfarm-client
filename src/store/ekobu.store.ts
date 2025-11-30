@@ -200,7 +200,7 @@ export class Ekubo extends IDapp<EkuboBaseAprDoc> {
           const token1 = tokens?.find((t) => BigInt(t.l2_token_address) === t1);
           if (!token1 || token1.hidden) return;
 
-          const springPair = defiSpringData.pairs.find(
+          const springPair = defiSpringData?.pairs.find(
             (pair) =>
               BigInt(pair.token0.l2_token_address) === t0 &&
               BigInt(pair.token1.l2_token_address) === t1,
