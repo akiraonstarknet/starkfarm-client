@@ -2470,10 +2470,10 @@
     viem "^2.21.1"
     zod "^3.22.4"
 
-"@strkfarm/sdk@1.1.50":
-  version "1.1.50"
-  resolved "https://registry.yarnpkg.com/@strkfarm/sdk/-/sdk-1.1.50.tgz#f1e8cc43fff1b06494f1bc7b5d468a20e3fcd42e"
-  integrity sha512-LkqOMuO3Ea2EUVb+Rg7jxz+0p21UDnIwT+LZ2jGFi1DqZwsMLNNVd3qY8+5oN37K8KyafNJIyDRKF1KZIsAu0A==
+"@strkfarm/sdk@1.1.63":
+  version "1.1.63"
+  resolved "https://registry.yarnpkg.com/@strkfarm/sdk/-/sdk-1.1.63.tgz#600b16f7d93da79f0d0cb9651ea95c92c35708e3"
+  integrity sha512-lvBRjvf2WwYBEqq90e3qOSAdufvImAqtbbo7rFNQSOoV8j4uiEIzv9r2dLQLFwyJbyIPCZ6vnxtOHa9ku/OOPw==
   dependencies:
     "@apollo/client" "3.11.8"
     "@avnu/avnu-sdk" "3.0.2"
@@ -2481,7 +2481,7 @@
     "@noble/curves" "^1.0.0"
     "@noble/hashes" "^2.0.0"
     "@scure/starknet" "^2.0.0"
-    "@strkfarm/sdk" "link:../../Library/Caches/Yarn/v6/npm-@strkfarm-sdk-1.1.50-f1e8cc43fff1b06494f1bc7b5d468a20e3fcd42e-integrity/node_modules/@strkfarm/sdk"
+    "@strkfarm/sdk" "link:../../Library/Caches/Yarn/v6/npm-@strkfarm-sdk-1.1.63-600b16f7d93da79f0d0cb9651ea95c92c35708e3-integrity/node_modules/@strkfarm/sdk"
     bignumber.js "4.0.4"
     browser-assert "^1.2.1"
     chalk "^4.1.2"

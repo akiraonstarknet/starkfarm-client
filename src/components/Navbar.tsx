@@ -82,14 +82,22 @@ export default function Navbar() {
           color="white"
         >
           <span style={{ display: 'flex', gap: '2px' }}>
-            ⚡ New name. Bigger vision. STRKFarm is now{' '}
+            Native USDC by Circle is live on Starknet. Earlier USDC is renamed
+            as USDC.e
             <b
               style={{
                 color: 'var(--chakra-colors-purple)',
                 fontWeight: 'bold',
+                marginLeft: '4px',
               }}
             >
-              Troves
+              <a
+                href="https://www.circle.com/blog/native-usdc-cctp-v2-are-coming-to-starknet-what-you-need-to-know"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                [Read more]
+              </a>
             </b>
           </span>
         </Text>

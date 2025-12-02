@@ -74,8 +74,21 @@ export class EkuboClStrategy extends IStrategy<CLVaultStrategySettings> {
 
     const token0Info = getTokenInfoFromName(strategy.depositTokens[0].symbol);
     const token1Info = getTokenInfoFromName(strategy.depositTokens[1].symbol);
+    let id = `ekubo_cl_${strategy.name.split(' ')[1].toLowerCase().replaceAll('/', '')}`;
+
+    // USDC was renamed on starknet to USDC.e due to introduction of
+    // official USDC from circle. All visual references of old USDC got renamed to
+    // USDC.e but we want to retain same IDs.
+    if (id.includes('usdc.e')) {
+      // retain original ids
+      id = id.replaceAll('usdc.e', 'usdc');
+    } else if (id.includes('usdc')) {
+      // the official circle USDC is bring renamed to v2 on Starknet
+      // only effects ids and url links
+      id = id.replaceAll('usdc', 'usdc_v2');
+    }
     super(
-      `ekubo_cl_${strategy.name.split(' ')[1].toLowerCase().replaceAll('/', '')}`,
+      id,
       name,
       name,
       description,

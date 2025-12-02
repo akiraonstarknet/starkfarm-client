@@ -1,7 +1,5 @@
 import { TrovesStrategyAPIResult } from '@/store/troves.atoms';
-import { UniversalStrategies } from '@strkfarm/sdk';
 import { Redis } from '@upstash/redis';
-import { Contract } from 'starknet';
 import { getProvider } from '@/lib/provider';
 
 let kvRedis: Redis | null = null;
@@ -95,24 +93,24 @@ export const getRewardsInfo = async (
       maxRewardsPerDay: 0, // tokem amount / days
     },
   ];
-  const allowedStrats = UniversalStrategies.map((u) => {
-    const tokenWiseInfo = tokenWiseConfig.find(
-      (t) => t.token === u.depositTokens[0].symbol,
-    );
-    if (!tokenWiseInfo) {
-      throw new Error(`No token config found for ${u.depositTokens[0].symbol}`);
-    }
-    return {
-      id: `evergreen_${u.depositTokens[0].symbol.toLowerCase()}`,
-      // ! consider exchange rate of vToken
-      maxRewardsPerDay: tokenWiseInfo.maxRewardsPerDay || 0,
-      maxAPY: tokenWiseInfo.maxAPY || 0,
-      underlyingTokenName: u.depositTokens[0].symbol,
-      decimals: u.depositTokens[0].decimals,
-      rewardToken: u.depositTokens[0].address.address,
-      rewardReceiver: u.additionalInfo.vaultAllocator.address,
-    };
-  });
+  // const allowedStrats = UniversalStrategies.map((u) => {
+  //   const tokenWiseInfo = tokenWiseConfig.find(
+  //     (t) => t.token === u.depositTokens[0].symbol,
+  //   );
+  //   if (!tokenWiseInfo) {
+  //     throw new Error(`No token config found for ${u.depositTokens[0].symbol}`);
+  //   }
+  //   return {
+  //     id: `evergreen_${u.depositTokens[0].symbol.toLowerCase()}`,
+  //     // ! consider exchange rate of vToken
+  //     maxRewardsPerDay: tokenWiseInfo.maxRewardsPerDay || 0,
+  //     maxAPY: tokenWiseInfo.maxAPY || 0,
+  //     underlyingTokenName: u.depositTokens[0].symbol,
+  //     decimals: u.depositTokens[0].decimals,
+  //     rewardToken: u.depositTokens[0].address.address,
+  //     rewardReceiver: u.additionalInfo.vaultAllocator.address,
+  //   };
+  // });
 
   const provider = getProvider();
 
@@ -127,94 +125,94 @@ export const getRewardsInfo = async (
     funder: string;
     receiver: string;
   }[] = [];
-  for (const strat of strategies) {
-    const stratId = strat.id;
-    const stratAllowed = allowedStrats.find(
-      (allowedStrat) => allowedStrat.id === stratId,
-    );
-    if (stratAllowed) {
-      // Fetch the price of the underlying token
-      const priceResponse = await fetch(
-        `${process.env.HOSTNAME}/api/price/${stratAllowed.underlyingTokenName}`,
-      );
-      const priceData = await priceResponse.json();
-      // consider token price of vToken
-      // const clsVToken = await provider.getClassAt(stratAllowed.rewardToken);
+  // for (const strat of strategies) {
+  //   const stratId = strat.id;
+  //   const stratAllowed = allowedStrats.find(
+  //     (allowedStrat) => allowedStrat.id === stratId,
+  //   );
+  //   if (stratAllowed) {
+  //     // Fetch the price of the underlying token
+  //     const priceResponse = await fetch(
+  //       `${process.env.HOSTNAME}/api/price/${stratAllowed.underlyingTokenName}`,
+  //     );
+  //     const priceData = await priceResponse.json();
+  //     // consider token price of vToken
+  //     // const clsVToken = await provider.getClassAt(stratAllowed.rewardToken);
 
-      // useful math when reward token is a ERC4626 token
-      // const tokenContractVToken = new Contract(
-      //   clsVToken.abi,
-      //   stratAllowed.rewardToken,
-      //   provider,
-      // );
-      // const shareValue = await tokenContractVToken.call('convert_to_assets', [
-      //   uint256.bnToUint256((1e18).toString()),
-      // ]);
-      // console.log(`shareValue::${stratId}::${shareValue}`);
-      const tokenPrice = priceData.price;
-      // (priceData.price *
-      //   Number(
-      //     (BigInt(shareValue.toString()) * BigInt(10000)) /
-      //       BigInt((1e18).toString()),
-      //   )) /
-      // 10000;
-      console.log(
-        `RewardCalc::${stratId}::tokenPrice::${tokenPrice}, underlyingTokenPrice::${priceData.price}`,
-      );
+  //     // useful math when reward token is a ERC4626 token
+  //     // const tokenContractVToken = new Contract(
+  //     //   clsVToken.abi,
+  //     //   stratAllowed.rewardToken,
+  //     //   provider,
+  //     // );
+  //     // const shareValue = await tokenContractVToken.call('convert_to_assets', [
+  //     //   uint256.bnToUint256((1e18).toString()),
+  //     // ]);
+  //     // console.log(`shareValue::${stratId}::${shareValue}`);
+  //     const tokenPrice = priceData.price;
+  //     // (priceData.price *
+  //     //   Number(
+  //     //     (BigInt(shareValue.toString()) * BigInt(10000)) /
+  //     //       BigInt((1e18).toString()),
+  //     //   )) /
+  //     // 10000;
+  //     console.log(
+  //       `RewardCalc::${stratId}::tokenPrice::${tokenPrice}, underlyingTokenPrice::${priceData.price}`,
+  //     );
 
-      const tvlUsd = strat.tvlUsd;
-      console.log(`RewardCalc::${stratId}::tvlUsd::${tvlUsd}`);
+  //     const tvlUsd = strat.tvlUsd;
+  //     console.log(`RewardCalc::${stratId}::tvlUsd::${tvlUsd}`);
 
-      // Calculate the hourly reward based on TVL and token price
-      const rewardBasedOnTVL =
-        (tvlUsd * stratAllowed.maxAPY) / (100 * 365 * 24 * tokenPrice);
-      console.log(
-        `RewardCalc::${stratId}::ewardBasedOnTVL::${rewardBasedOnTVL}`,
-      );
-      console.log(`RewardCalc::${stratId}::tvl::${tvlUsd}`);
+  //     // Calculate the hourly reward based on TVL and token price
+  //     const rewardBasedOnTVL =
+  //       (tvlUsd * stratAllowed.maxAPY) / (100 * 365 * 24 * tokenPrice);
+  //     console.log(
+  //       `RewardCalc::${stratId}::ewardBasedOnTVL::${rewardBasedOnTVL}`,
+  //     );
+  //     console.log(`RewardCalc::${stratId}::tvl::${tvlUsd}`);
 
-      // Ensure the reward does not exceed max rewards per day
-      let finalReward = Math.min(
-        rewardBasedOnTVL,
-        stratAllowed.maxRewardsPerDay / 24,
-      );
-      console.log(`RewardCalc::${stratId}::finalReward::${finalReward}`);
+  //     // Ensure the reward does not exceed max rewards per day
+  //     let finalReward = Math.min(
+  //       rewardBasedOnTVL,
+  //       stratAllowed.maxRewardsPerDay / 24,
+  //     );
+  //     console.log(`RewardCalc::${stratId}::finalReward::${finalReward}`);
 
-      // if less bal available, use the available balance
-      const rewardToken = stratAllowed.rewardToken;
-      const cls = await provider.getClassAt(rewardToken);
-      const tokenContract = new Contract({
-        abi: cls.abi,
-        address: rewardToken,
-        providerOrAccount: provider,
-      });
-      const available = await tokenContract.balanceOf(funder);
-      const availableBal =
-        Number(
-          BigInt(available.toString()) /
-            BigInt(10 ** (stratAllowed.decimals - 4)),
-        ) / 10000;
-      console.log(
-        `RewardCalc::${stratId}::availableBal::${availableBal.toString()}`,
-      );
+  //     // if less bal available, use the available balance
+  //     const rewardToken = stratAllowed.rewardToken;
+  //     const cls = await provider.getClassAt(rewardToken);
+  //     const tokenContract = new Contract({
+  //       abi: cls.abi,
+  //       address: rewardToken,
+  //       providerOrAccount: provider,
+  //     });
+  //     const available = await tokenContract.balanceOf(funder);
+  //     const availableBal =
+  //       Number(
+  //         BigInt(available.toString()) /
+  //           BigInt(10 ** (stratAllowed.decimals - 4)),
+  //       ) / 10000;
+  //     console.log(
+  //       `RewardCalc::${stratId}::availableBal::${availableBal.toString()}`,
+  //     );
 
-      finalReward = Math.min(finalReward, availableBal);
-      console.log(`RewardCalc::${stratId}::finalReward::${finalReward}`);
+  //     finalReward = Math.min(finalReward, availableBal);
+  //     console.log(`RewardCalc::${stratId}::finalReward::${finalReward}`);
 
-      // Calculate the reward APY
-      rewardsInfo.push({
-        id: stratId,
-        reward: finalReward,
-        rewardDecimals: stratAllowed.decimals,
-        tvlUsd,
-        rewardAPY: ((finalReward * 24 * 365) / (tvlUsd / tokenPrice)) * 100,
-        maxRewardsPerDay: stratAllowed.maxRewardsPerDay,
-        rewardToken: stratAllowed.rewardToken,
-        funder,
-        receiver: stratAllowed.rewardReceiver,
-      });
-    }
-  }
+  //     // Calculate the reward APY
+  //     rewardsInfo.push({
+  //       id: stratId,
+  //       reward: finalReward,
+  //       rewardDecimals: stratAllowed.decimals,
+  //       tvlUsd,
+  //       rewardAPY: ((finalReward * 24 * 365) / (tvlUsd / tokenPrice)) * 100,
+  //       maxRewardsPerDay: stratAllowed.maxRewardsPerDay,
+  //       rewardToken: stratAllowed.rewardToken,
+  //       funder,
+  //       receiver: stratAllowed.rewardReceiver,
+  //     });
+  //   }
+  // }
 
   return rewardsInfo;
 };
