@@ -220,6 +220,7 @@ export function getStrategies() {
       isAudited: false,
       isInstantWithdrawal: true,
       isTransactionHistDisabled: true,
+      hideHarvestInfo: true,
       quoteToken: convertToV2TokenInfo(getTokenInfoFromName('STRK')),
     },
   );
@@ -358,30 +359,41 @@ export function getStrategies() {
       uni.name,
       uni.description as ReactNode,
       uni,
-      StrategyLiveStatus.ACTIVE,
+      depositSymbol == 'USDT'
+        ? StrategyLiveStatus.RETIRED
+        : StrategyLiveStatus.ACTIVE,
       {
         maxTVL: depositSymbol == 'USDT' ? 10000 : 0,
-        isPaused: false,
+        isPaused: depositSymbol == 'USDT' ? true : false,
         alerts: [
           ...((depositSymbol == 'USDT'
             ? [
                 {
-                  tab: 'deposit',
-                  text: 'Due to limited liquidity of USDT on Vesu, we are not accepting more deposits at the moment. Once we upgrade the strategy, we will accept deposits again.',
+                  tab: 'all',
+                  text: (
+                    <div>
+                      Due to limited USDT liquidity, this vault is retired. All
+                      user funds above 0.1 USDT have been returned to their
+                      wallets.{' '}
+                      <a
+                        href="https://voyager.online/tx/0x02c8b61c84decd688f3d5d173185f3a7eecc039f148df1c959e8c68dd9cead68?mtm_campaign=argent-redirect&mtm_source=argent&mtm_medium=referral"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        [Transaction]
+                      </a>
+                    </div>
+                  ),
                   type: 'info',
                 },
+              ]
+            : [
                 {
                   tab: 'withdraw',
-                  text: 'Due to limited liquidity of USDT on Vesu, to avoid longer wait times for redemption, we suggest spliting large withdraw requests to smaller (e.g. $10k)',
-                  type: 'warning',
+                  text: 'On withdrawal, you will receive an NFT representing your withdrawal request. The funds will be automatically sent to your wallet (NFT owner) in 1-2 hours. You can monitor the status in transactions tab.',
+                  type: 'info',
                 },
-              ]
-            : []) as any),
-          {
-            tab: 'withdraw',
-            text: 'On withdrawal, you will receive an NFT representing your withdrawal request. The funds will be automatically sent to your wallet (NFT owner) in 1-2 hours. You can monitor the status in transactions tab.',
-            type: 'info',
-          },
+              ]) as any),
         ],
         isAudited: uni.auditUrl ? true : false,
         auditUrl: uni.auditUrl,
@@ -400,7 +412,7 @@ export function getStrategies() {
     xLBTC: 5,
     xtBTC: 5,
     xsBTC: 5,
-    xSTRK: 550000,
+    xSTRK: 3000000,
   };
 
   const hyperLSTStrategies = HyperLSTStrategies.map((hyper) => {
@@ -424,7 +436,7 @@ export function getStrategies() {
           // },
           {
             tab: 'withdraw',
-            text: 'On withdrawal, you will receive an NFT representing your withdrawal request. The funds will be automatically sent to your wallet (NFT owner) in 24 hours (In this initial phase of Launch). You can monitor the status in transactions tab.',
+            text: `${"When you withdraw, you'll receive an NFT that represents your withdrawal request. Your funds will be automatically transferred to your wallet (the NFT owner's address) within 1-2 hours under normal conditions. In rare cases like high slippage, processing may take longer. You can track your withdrawal status in real-time from the Transactions tab."}`,
             type: 'info',
           },
           {
