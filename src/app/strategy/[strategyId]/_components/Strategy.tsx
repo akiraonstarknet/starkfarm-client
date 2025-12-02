@@ -133,15 +133,17 @@ function HoldingsAndEarnings({
   balData: any;
   profit: number;
 }) {
+  const isMobile = useIsMobile();
   return (
     <Flex
       width={'100%'}
       justifyContent={'space-between'}
       gap={2}
-      minWidth={'400px'}
+      minWidth={isMobile ? 'auto' : '400px'}
+      flexWrap={'nowrap'}
     >
       <Box padding={'16px'} bg="mycard" width={'100%'} borderRadius={'lg'}>
-        <Text color={'text_secondary'}>
+        <Text color={'text_secondary'} fontSize={'14px'}>
           <b>Your Holdings </b>
         </Text>
         <Text color="purple">
