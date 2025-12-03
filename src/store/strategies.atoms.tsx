@@ -312,7 +312,9 @@ export function getStrategies() {
       v.name,
       v.description as ReactNode,
       v,
-      v.curator?.name.toLowerCase().includes('re7')
+      v.curator?.name.toLowerCase().includes('re7') &&
+      v.name.includes('USDC') &&
+      !v.name.includes('USDC.e')
         ? StrategyLiveStatus.NEW
         : StrategyLiveStatus.ACTIVE,
       {

@@ -82,8 +82,8 @@ export default function Navbar() {
           color="white"
         >
           <span style={{ display: 'flex', gap: '2px' }}>
-            Native USDC by Circle is live on Starknet. Earlier USDC is renamed
-            as USDC.e
+            Native USDC by Circle is now live on Starknet. The older version of
+            USDC is now labeled USDC.e.
             <b
               style={{
                 color: 'var(--chakra-colors-purple)',
