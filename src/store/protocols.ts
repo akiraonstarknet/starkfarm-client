@@ -1,6 +1,5 @@
 import trovesLogo from '@public/logo.png';
 import { atom } from 'jotai';
-import EkuboAtoms, { ekubo } from './ekobu.store';
 import EndurAtoms, { endur } from './endur.store';
 import { Category, isPoolRetired, PoolInfo, PoolType } from './pools';
 import { getLiveStatusEnum } from '@/utils/strategyStatus';
@@ -19,11 +18,11 @@ export const getProtocols = () => [
     class: troves,
     atoms: TrovesAtoms,
   },
-  {
-    name: ekubo.name,
-    class: ekubo,
-    atoms: EkuboAtoms,
-  },
+  // {
+  //   name: ekubo.name,
+  //   class: ekubo,
+  //   atoms: EkuboAtoms,
+  // },
   // {
   //   name: jedi.name,
   //   class: jedi,
