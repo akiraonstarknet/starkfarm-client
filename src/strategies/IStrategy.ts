@@ -131,6 +131,7 @@ export interface IStrategySettings {
   hideNetEarnings?: boolean;
   showWithdrawalWarningModal?: boolean; // Show withdrawal warning modal for this strategy
   tags?: StrategyTag[];
+  tvlCapLocked?: boolean;
 }
 
 export interface AmountInfo {

@@ -440,7 +440,7 @@ function InternalDeposit(props: DepositProps) {
             }
             isIndeterminate={!tvlInfo || !tvlInfo?.data}
           />
-          {isTVLFull && isDeposit && (
+          {isTVLFull && isDeposit && !props.strategy.settings.tvlCapLocked && (
             <Alert
               status="warning"
               bg="mycard"
