@@ -34,6 +34,7 @@ export interface TrovesStrategyAPIResult {
   apyMethodology: string;
   leverage: number;
   contract: { name: string; address: string }[];
+  contractDetails?: { name: string; address: string }[];
   tvlUsd: number;
   status: {
     number: number;

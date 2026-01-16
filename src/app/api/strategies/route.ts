@@ -85,6 +85,10 @@ async function getStrategyInfo(
       name: t.name,
       address: (<any>t).token ? (<TokenInfo>t).token : (<NFTInfo>t).address,
     })),
+    contractDetails: strategy.metadata.contractDetails.map((s) => ({
+      name: s.name,
+      address: s.address.toString(),
+    })),
     tvlUsd: tvl.usdValue || 0,
     status: {
       number: getLiveStatusNumber(strategy.liveStatus),
