@@ -2470,10 +2470,10 @@
     viem "^2.21.1"
     zod "^3.22.4"
 
-"@strkfarm/sdk@1.1.72":
-  version "1.1.72"
-  resolved "https://registry.yarnpkg.com/@strkfarm/sdk/-/sdk-1.1.72.tgz#57e8f7e22935c23c90d5ad931c97a14b2d0f626f"
-  integrity sha512-XfALA1PvicIoR8sOVgfzmiAfDN4gPkzX14m/M5rscHsRetzSWuk8zceNkX9y1QRuLWpf01GVlsjrRFvJdG0ovA==
+"@strkfarm/sdk@1.1.75":
+  version "1.1.75"
+  resolved "https://registry.yarnpkg.com/@strkfarm/sdk/-/sdk-1.1.75.tgz#6f88c2495e292f26ec8698eaa7d2de8dc379c35d"
+  integrity sha512-7cPQdlFTB17rlj0Nqas0jPGpA+dd4tmd9vHn5lmkkV06uthYiDSDTdLAi5v6PIhAZamAnXEU/bu0rheRUkcklg==
   dependencies:
     "@apollo/client" "3.11.8"
     "@avnu/avnu-sdk" "3.0.2"
