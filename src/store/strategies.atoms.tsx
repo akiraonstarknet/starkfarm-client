@@ -211,6 +211,11 @@ export function getStrategies() {
       alerts: [
         {
           type: 'warning',
+          text: 'Strategy is paused to migrate liquidity to V2. Will be available soon.',
+          tab: 'all',
+        },
+        {
+          type: 'warning',
           text: (
             <span>
               TVL for this strategy is capped at 1.5M STRK and will not be
