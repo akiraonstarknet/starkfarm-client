@@ -214,32 +214,32 @@ export function getStrategies() {
           text: 'Strategy is paused to migrate liquidity to V2. Will be available soon.',
           tab: 'all',
         },
-        {
-          type: 'warning',
-          text: (
-            <span>
-              TVL for this strategy is capped at 1.5M STRK and will not be
-              increased in the future. We recommend using{' '}
-              <a
-                href="/strategy/hyper_xstrk"
-                target="_blank"
-                style={{ textDecoration: 'underline' }}
-              >
-                Hyper xSTRK
-              </a>{' '}
-              strategy instead — the same core strategy audited, and
-              significantly more flexible
-            </span>
-          ),
-          tab: 'all',
-        },
-        {
-          type: 'info',
-          text: 'Depeg-risk: If xSTRK price on DEXes deviates from expected price, you may lose money or may have to wait for the price to recover.',
-          tab: 'all',
-        },
+        // {
+        //   type: 'warning',
+        //   text: (
+        //     <span>
+        //       TVL for this strategy is capped at 1.5M STRK and will not be
+        //       increased in the future. We recommend using{' '}
+        //       <a
+        //         href="/strategy/hyper_xstrk"
+        //         target="_blank"
+        //         style={{ textDecoration: 'underline' }}
+        //       >
+        //         Hyper xSTRK
+        //       </a>{' '}
+        //       strategy instead — the same core strategy audited, and
+        //       significantly more flexible
+        //     </span>
+        //   ),
+        //   tab: 'all',
+        // },
+        // {
+        //   type: 'info',
+        //   text: 'Depeg-risk: If xSTRK price on DEXes deviates from expected price, you may lose money or may have to wait for the price to recover.',
+        //   tab: 'all',
+        // },
       ],
-      isPaused: false,
+      isPaused: true,
       isInMaintenance: false,
       isAudited: false,
       isInstantWithdrawal: true,
