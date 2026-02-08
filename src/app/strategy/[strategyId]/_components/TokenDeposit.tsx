@@ -67,6 +67,26 @@ export function TokenDeposit(props: TokenDepositProps) {
         >
           {tabIndex == 0 && (
             <>
+              {strategy.settings.topAlerts != undefined && (
+                <VStack marginBottom={'20px'}>
+                  {strategy.settings.topAlerts
+                    .filter((a) => a.tab == 'deposit' || a.tab == 'all')
+                    .map((alert, index) => (
+                      <Alert
+                        status={alert.type}
+                        fontSize={'12px'}
+                        color={'text_secondary'}
+                        borderRadius={'10px'}
+                        bg="mycard"
+                        padding={'10px'}
+                        key={index}
+                      >
+                        <AlertIcon />
+                        {alert.text}
+                      </Alert>
+                    ))}
+                </VStack>
+              )}
               <Deposit
                 strategy={strategy}
                 buttonText="Deposit"
@@ -103,6 +123,26 @@ export function TokenDeposit(props: TokenDepositProps) {
         >
           {tabIndex == 1 && (
             <>
+              {strategy.settings.topAlerts != undefined && (
+                <VStack marginBottom={'20px'}>
+                  {strategy.settings.topAlerts
+                    .filter((a) => a.tab == 'deposit' || a.tab == 'all')
+                    .map((alert, index) => (
+                      <Alert
+                        status={alert.type}
+                        fontSize={'12px'}
+                        color={'text_secondary'}
+                        borderRadius={'10px'}
+                        bg="mycard"
+                        padding={'10px'}
+                        key={index}
+                      >
+                        <AlertIcon />
+                        {alert.text}
+                      </Alert>
+                    ))}
+                </VStack>
+              )}
               <Deposit
                 strategy={strategy}
                 buttonText="Redeem"

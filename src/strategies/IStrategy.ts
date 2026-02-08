@@ -114,6 +114,11 @@ export enum StrategyTag {
 
 export interface IStrategySettings {
   maxTVL: number;
+  topAlerts?: {
+    type: 'warning' | 'info';
+    text: string | ReactNode;
+    tab: 'all' | 'deposit' | 'withdraw';
+  }[];
   alerts?: {
     type: 'warning' | 'info';
     text: string | ReactNode;

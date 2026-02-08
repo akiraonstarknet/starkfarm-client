@@ -208,12 +208,33 @@ export function getStrategies() {
     StrategyLiveStatus.ACTIVE,
     {
       maxTVL: xSTRKStrategyInfo.maxTVL.toNumber(),
-      alerts: [
+      topAlerts: [
         {
           type: 'warning',
-          text: 'Strategy is paused to migrate liquidity to V2. Will be available soon.',
+          text: (
+            <Box>
+              Strategy is retired and all positions have been migrated to{' '}
+              <Link
+                href="/strategy/hyper_xstrk"
+                target="_blank"
+                rel="noopener noreferrer"
+                paddingLeft={'2px'}
+                textDecoration={'underline'}
+              >
+                Hyper xSTRK
+              </Link>
+              . Same strategy, just a better version.
+            </Box>
+          ),
           tab: 'all',
         },
+      ],
+      alerts: [
+        // {
+        //   type: 'warning',
+        //   text: <Box>Strategy is paused and all positions have been migrated to <Link href="/strategy/hyper_xstrk" target="_blank" rel="noopener noreferrer" paddingLeft={'2px'} textDecoration={'underline'}>Hyper xSTRK</Link>.</Box>,
+        //   tab: 'all',
+        // },
         // {
         //   type: 'warning',
         //   text: (
