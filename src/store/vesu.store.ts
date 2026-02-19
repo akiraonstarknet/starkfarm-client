@@ -149,7 +149,7 @@ export class Vesu extends IDapp<VesuPool[]> {
   async getBaseAPYs(): Promise<PoolInfo[]> {
     console.log('Fetching Vesu base APYs');
     const result = await fetchWithRetry(
-      `${CONSTANTS.CACHE_SERVER}/vesu-staging/pools`,
+      `${CONSTANTS.CACHE_SERVER}/vesu/pools`,
     ).then((res) => (res ? res.json() : null));
     if (!result) return [];
     const poolsData: VesuPool[] = result.data;
