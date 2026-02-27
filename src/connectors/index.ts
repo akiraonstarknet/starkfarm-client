@@ -76,6 +76,12 @@ export const availableConnectors = () => {
       name: 'Fordefi',
     },
   });
+  const metamaskConnector = new InjectedConnector({
+    options: {
+      id: "metamask",
+      name: "Metamask",
+    },
+  });
 
   const okx = new InjectedConnector({
     options: {
@@ -100,6 +106,7 @@ export const availableConnectors = () => {
     braavosConnector,
     keplrConnector,
     xverseConnector,
+    metamaskConnector,
     fordefiConnector,
     okx,
     webWalletConnector,
