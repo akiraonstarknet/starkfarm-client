@@ -261,10 +261,11 @@ export const LATEST_TNC_DOC_VERSION = 'tnc/v2';
 export const TnC_DOC_URL = `${getEndpoint()}/${LATEST_TNC_DOC_VERSION}`;
 export const SIGNING_DATA = {
   types: {
-    StarkNetDomain: [
-      { name: 'name', type: 'felt' },
-      { name: 'version', type: 'felt' },
-      { name: 'chainId', type: 'felt' },
+    StarknetDomain: [
+      { name: 'name', type: 'shortstring' },
+      { name: 'version', type: 'shortstring' },
+      { name: 'chainId', type: 'shortstring' },
+      { name: 'revision', type: 'shortstring' },
     ],
     Tnc: [
       { name: 'message', type: 'felt' },
@@ -276,6 +277,7 @@ export const SIGNING_DATA = {
     name: 'Troves',
     version: '2',
     chainId: getNetwork(),
+    revision: '1',
   },
   message: {
     message: 'Read and Agree T&C',

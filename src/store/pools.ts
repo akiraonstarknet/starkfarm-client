@@ -133,6 +133,7 @@ export interface ProtocolAtoms2 {
 const _StrkDexIncentivesAtom = customAtomWithFetch({
   queryKey: 'strk_dex_incentives',
   url: CONSTANTS.DEX_INCENTIVE_URL,
+  fetchOptions: { cache: 'no-store' },
 });
 
 export const StrkDexIncentivesAtom = atom((get) => {
@@ -182,6 +183,7 @@ export const StrkIncentivesQueryKeyAtom = atom([
 const _StrkLendingIncentivesAtom = customAtomWithFetch({
   queryKey: 'strk_lending_incentives',
   url: CONSTANTS.LENDING_INCENTIVES_URL,
+  fetchOptions: { cache: 'no-store' },
 });
 
 export const StrkLendingIncentivesAtom = atom((get) => {

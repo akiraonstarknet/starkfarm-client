@@ -11,6 +11,10 @@ import EndurAtoms, { endur } from '@/store/endur.store';
 import { setDataToRedis, getDataFromRedis, getRewardsInfo } from '../lib';
 import { DEFAULT_APY_METHODLOGY } from '@/constants';
 import { getProvider } from '@/lib/provider';
+import {
+  getLatestStrategySnapshots,
+  snapshotToAPIResult,
+} from '@/db/strategies';
 
 export const revalidate = 1800; // 30 minutes
 export const dynamic = 'force-dynamic';
@@ -141,9 +145,61 @@ export async function GET(req: Request) {
   console.log('GET /api/strategies', req.url);
 
   try {
+    // Priority 1: Try to get from database (fastest)
+    try {
+      const dbSnapshots = await getLatestStrategySnapshots();
+
+      if (dbSnapshots && dbSnapshots.length > 0) {
+        // Check if data is recent (within last 2 hours)
+        const latestUpdate = new Date(dbSnapshots[0].updatedAt);
+        const ageInMinutes =
+          (Date.now() - latestUpdate.getTime()) / (1000 * 60);
+
+        if (ageInMinutes < 60) {
+          // 1 hour
+          console.log(
+            '[DB] Serving from database, age:',
+            ageInMinutes.toFixed(2),
+            'minutes',
+          );
+
+          const strategies = dbSnapshots
+            .map(snapshotToAPIResult)
+            .sort((a, b) => b.apy - a.apy);
+
+          const data = {
+            status: true,
+            strategies,
+            lastUpdated: latestUpdate.toISOString(),
+            source: 'database',
+          };
+
+          const resp = NextResponse.json(data);
+          resp.headers.set(
+            'Cache-Control',
+            `s-maxage=${revalidate}, stale-while-revalidate=300`,
+          );
+          return resp;
+        }
+        console.log(
+          '[DB] Database data is stale (',
+          ageInMinutes.toFixed(2),
+          'minutes), trying other sources',
+        );
+      }
+    } catch (dbError) {
+      console.error('[DB] Error fetching from database:', dbError);
+      // Continue to fallback options
+    }
+
+    // Priority 2: Try Redis cache
     const cacheData = await getDataFromRedis(REDIS_KEY, req.url, revalidate);
     if (cacheData) {
-      const resp = NextResponse.json(cacheData);
+      console.log('[Redis] Serving from Redis cache');
+      const resp = NextResponse.json({
+        ...cacheData,
+        source: 'redis',
+      });
       resp.headers.set(
         'Cache-Control',
         `s-maxage=${revalidate}, stale-while-revalidate=300`,
@@ -151,6 +207,8 @@ export async function GET(req: Request) {
       return resp;
     }
 
+    // Priority 3: Fallback to live calculation (slowest)
+    console.log('[Live] Computing strategies live');
     const allPools = await getPools(MY_STORE);
     const strategies = getStrategies();
 
@@ -175,8 +233,10 @@ export async function GET(req: Request) {
       status: true,
       strategies: _strats,
       lastUpdated: new Date().toISOString(),
+      source: 'live',
     };
 
+    // Save to Redis for next request
     await setDataToRedis(REDIS_KEY, data);
 
     const response = NextResponse.json(data);
@@ -191,6 +251,34 @@ export async function GET(req: Request) {
       'Error stack:',
       err instanceof Error ? err.stack : 'No stack',
     );
+
+    // Last resort: Try to serve stale data from database
+    try {
+      console.log('[Fallback] Attempting to serve stale data from database');
+      const dbSnapshots = await getLatestStrategySnapshots();
+
+      if (dbSnapshots && dbSnapshots.length > 0) {
+        console.log('[Fallback] Serving stale database data');
+        const strategies = dbSnapshots
+          .map(snapshotToAPIResult)
+          .sort((a, b) => b.apy - a.apy);
+
+        const fallbackResponse = NextResponse.json({
+          status: true,
+          strategies,
+          lastUpdated: new Date(dbSnapshots[0].updatedAt).toISOString(),
+          source: 'database-stale',
+          warning: 'Serving stale data due to error',
+        });
+        fallbackResponse.headers.set(
+          'Cache-Control',
+          's-maxage=60, stale-while-revalidate=300',
+        );
+        return fallbackResponse;
+      }
+    } catch (fallbackError) {
+      console.error('[Fallback] Failed to serve stale data:', fallbackError);
+    }
 
     const errorResponse = NextResponse.json(
       {
